@@ -10,6 +10,7 @@ next 24 h from the cached forecast. The web page reads feed.json.
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import time
 from datetime import datetime, timedelta, timezone
@@ -123,6 +124,7 @@ def main(argv=None) -> None:
         "windy_model": config.WINDY_MODEL if args.source == "windy" else None,
         "nwp_model": {"openmeteo": config.OPENMETEO_MODEL, "windy": config.WINDY_MODEL}.get(args.source),
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "ref_heights_m": dict(collections.Counter(str(int(c["z"])) for c in fc_cells.values())),
         "models": {**config.WAKE_MODELS, "nowake": "No wake"},
         "hours": [iso(d) for d in past],
         "fc_hours": [iso(d) for d in future],

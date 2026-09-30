@@ -83,7 +83,8 @@ const CT=(u,ur)=>u<3||u>25?.05:u<=ur?.8:Math.max(.05,.8*Math.pow(ur/u,3));
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fmt=mw=>mw==null?"–":mw>=10000?(mw/1000).toFixed(1)+" GW":Math.round(mw).toLocaleString()+" MW";
 const fg=mw=>mw==null?"–":mw>=1000?(mw/1000).toFixed(2)+" GW":Math.round(mw)+" MW";
-F.forEach(f=>{f.lay=!!f.xy;f.inst=f.lay?f.mw*f.xy.length/2:f.cap;
+const TY=DATA.types||[];
+F.forEach(f=>{f.lay=!!f.xy;f.inst=f.lay?(f.inst||f.mw*f.xy.length/2):f.cap;f.tix=f.lay&&f.ti!=null&&TY.length?(Array.isArray(f.ti)?f.ti:Array(f.xy.length/2).fill(f.ti)):null;
  if(!f.lay){const kx=111320*Math.cos(f.lat*Math.PI/180);f.o=f.ol.map(r=>r.map((v,i)=>i%2?(v-f.lat)*110574:(v-f.lon)*kx))}});
 function sum(c){return F.filter(f=>f.c===c).reduce((a,f)=>a+f.inst,0)}
 const COUNTRIES=[...new Set([...F.map(f=>f.c),...Z.map(z=>z.c)])].sort((a,b)=>sum(b)-sum(a)||a.localeCompare(b));
@@ -105,17 +106,23 @@ function wd(m,k,j,D,ct,px,py,dx,dy,R){const s=(px-j[0])*dx+(py-j[1])*dy;if(s<=0|
  if(m==="j"){const rw=D/2+k*s,f=R?ovl(R,rw,c):(Math.abs(c)<rw?1:0);return f*2*ct2aMadsen(ct)/((rw/(D/2))**2)}
  const q=Math.sqrt(1-Math.min(.899,ct)),eps=.2*Math.sqrt(.5*(1+q)/q),sg=k*s+eps*D;
  return Math.min(1,2*ct2aMom(ct*D*D/(8*sg*sg)))*Math.exp(-c*c/(2*sg*sg))}
+function tinterp(xs,ys,x){const N=xs.length;if(!(x>=xs[0]&&x<=xs[N-1]))return 0;let lo=0,hi=N-1;while(hi-lo>1){const m=(lo+hi)>>1;if(xs[m]<=x)lo=m;else hi=m}const a=xs[lo],b=xs[hi];return b===a?ys[lo]:ys[lo]+(ys[hi]-ys[lo])*(x-a)/(b-a)}
 function run(f,m,U,dir,k){const t=dir*Math.PI/180,dx=-Math.sin(t),dy=-Math.cos(t);
- if(!f.lay){const free=PC(U,f.cap,URG);return{P:[],u:[],ct:[],pw:free*(m==="n"?1:.9),free,dx,dy}}
+ if(!f.lay){const free=PC(U,f.cap,URG);return{P:[],u:[],ct:[],pw:free*(m==="n"?1:.9),free,dx,dy,U,Dt:[]}}
  const n=f.xy.length/2,P=[];for(let i=0;i<n;i++)P.push([f.xy[2*i],f.xy[2*i+1]]);
  const ord=P.map((p,i)=>i).sort((a,b)=>(P[a][0]*dx+P[a][1]*dy)-(P[b][0]*dx+P[b][1]*dy));
- const u=new Array(n),ct=new Array(n),done=[],R=f.D/2;
+ const T=i=>f.tix?TY[f.tix[i]]:null,Dt=P.map((_,i)=>T(i)?T(i).D:f.D);
+ const pwr=(i,v)=>T(i)?tinterp(T(i).ws,T(i).p,v):PC(v,f.mw,f.ur),ctf=(i,v)=>T(i)?tinterp(T(i).ws,T(i).ct,v):CT(v,f.ur);
+ const u=new Array(n),ct=new Array(n),done=[];
  for(const i of ord){let q=0;
-  if(m==="j"){for(const j of done){const d=wd(m,k,P[j],f.D,ct[j],P[i][0],P[i][1],dx,dy,R);q+=d*d}u[i]=U*(1-Math.sqrt(q))}
-  else if(m==="g"){for(const j of done)q+=u[j]*wd(m,k,P[j],f.D,ct[j],P[i][0],P[i][1],dx,dy,0);u[i]=Math.max(0,U-q)}
+  if(m==="j"){for(const j of done){const d=wd(m,k,P[j],Dt[j],ct[j],P[i][0],P[i][1],dx,dy,Dt[i]/2);q+=d*d}u[i]=U*(1-Math.sqrt(q))}
+  else if(m==="g"){for(const j of done)q+=u[j]*wd(m,k,P[j],Dt[j],ct[j],P[i][0],P[i][1],dx,dy,0);u[i]=Math.max(0,U-q)}
   else u[i]=U;
-  ct[i]=CT(u[i],f.ur);done.push(i)}
- let pw=0;for(let i=0;i<n;i++)pw+=PC(u[i],f.mw,f.ur);return{P,u,ct,pw,free:n*PC(U,f.mw,f.ur),dx,dy,U}}
+  ct[i]=ctf(i,u[i]);done.push(i)}
+ let pw=0,free=0;for(let i=0;i<n;i++){pw+=pwr(i,u[i]);free+=pwr(i,U)}return{P,u,ct,pw,free,dx,dy,U,Dt}}
+function spacingOf(f){if(f.sp&&f.sp.min!=null)return f.sp;const n=f.xy.length/2;if(n<2)return null;const Dt=[...Array(n)].map((_,i)=>f.tix?TY[f.tix[i]].D:f.D),nn=[];
+ for(let i=0;i<n;i++){let b=1e18;for(let j=0;j<n;j++)if(j!==i){const d=(f.xy[2*i]-f.xy[2*j])**2+(f.xy[2*i+1]-f.xy[2*j+1])**2;if(d<b)b=d}nn.push(Math.sqrt(b)/Dt[i])}
+ return f.sp={min:Math.min(...nn),mean:nn.reduce((a,b)=>a+b,0)/n,max:Math.max(...nn)}}
 
 /* ---------- time series: pipeline feed, or synthetic fallback ---------- */
 const NP=24,NF=24,NT=NP+NF,N0=NP-1; // index N0 = now
@@ -155,15 +162,18 @@ function farmView(W,H){const f=F[S.farm],r=cur(f),xs=r.P.map(p=>p[0]),ys=r.P.map
  const X=x=>ox+(x-x0)*sc,Y=y=>oy+(y1-y)*sc,m=$("M").value,k=+$("K").value;
  if(f.lay&&m!=="n"){const G=[140,Math.max(20,Math.round(140*(y1-y0)/(x1-x0)))],off=document.createElement("canvas");off.width=G[0];off.height=G[1];const oc=off.getContext("2d"),im=oc.createImageData(G[0],G[1]);
   for(let gy=0;gy<G[1];gy++)for(let gx=0;gx<G[0];gx++){const px=x0+(gx+.5)/G[0]*(x1-x0),py=y1-(gy+.5)/G[1]*(y1-y0);let q=0;
-   if(m==="j"){for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],f.D,r.ct[j],px,py,r.dx,r.dy,0);q+=d*d}q=Math.sqrt(q)}
-   else for(let j=0;j<r.P.length;j++)q+=r.u[j]/r.U*wd(m,k,r.P[j],f.D,r.ct[j],px,py,r.dx,r.dy,0);
+   if(m==="j"){for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);q+=d*d}q=Math.sqrt(q)}
+   else for(let j=0;j<r.P.length;j++)q+=r.u[j]/r.U*wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);
    const d=q,o=4*(gy*G[0]+gx),e=Math.min(1,d*3);im.data[o]=255-16*e;im.data[o+1]=209-137*e;im.data[o+2]=102+9*e;im.data[o+3]=Math.min(1,d*3.2)*215}
   oc.putImageData(im,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(off,ox,oy,(x1-x0)*sc,(y1-y0)*sc)}
  cx.strokeStyle=css("--acc");cx.lineWidth=1.8;for(const q of f.o){cx.beginPath();for(let i=0;i<q.length;i+=2)i?cx.lineTo(X(q[i]),Y(q[i+1])):cx.moveTo(X(q[i]),Y(q[i+1]));cx.closePath();if(!f.lay){cx.fillStyle=css("--acc");cx.globalAlpha=.12;cx.fill();cx.globalAlpha=1}cx.stroke()}
- r.P.forEach(p=>{cx.beginPath();cx.arc(X(p[0]),Y(p[1]),Math.max(2.5,f.D/2*sc),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fill();cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=1.2;cx.stroke()});
+ r.P.forEach((p,i)=>{cx.beginPath();cx.arc(X(p[0]),Y(p[1]),Math.max(2.5,r.Dt[i]/2*sc),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fill();cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=1.2;cx.stroke()});
  const[U,D]=curWind(f),t=D*Math.PI/180,ax=46,ay=46;cx.strokeStyle=css("--ink");cx.fillStyle=css("--ink");cx.lineWidth=2;cx.beginPath();cx.moveTo(ax+Math.sin(t)*26,ay-Math.cos(t)*26);cx.lineTo(ax-Math.sin(t)*26,ay+Math.cos(t)*26);cx.stroke();
  cx.beginPath();cx.arc(ax-Math.sin(t)*26,ay+Math.cos(t)*26,5,0,7);cx.fill();cx.font="12px sans-serif";cx.fillText(U.toFixed(1)+" m/s",ax-22,ay+44);
- const bar=(x1-x0)>30000?5000:1000;cx.fillText("scale bar "+bar/1000+" km",W-110,H-16);cx.fillRect(W-110,H-12,bar*sc,2)}
+ const bar=(x1-x0)>30000?5000:1000;cx.fillText("scale bar "+bar/1000+" km",W-110,H-16);cx.fillRect(W-110,H-12,bar*sc,2);
+ const sp=f.lay&&spacingOf(f);if(sp){const l1="Spacing to nearest turbine (rotor diameters)",l2="min "+sp.min.toFixed(1)+" D  ·  mean "+sp.mean.toFixed(1)+" D  ·  max "+sp.max.toFixed(1)+" D";
+  cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+30)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,H-54,w,44);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,H-53.5,w,44);
+  cx.fillStyle=css("--mut");cx.fillText(l1,20,H-36);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,H-18);cx.font="12px sans-serif"}}
 function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
@@ -178,7 +188,7 @@ function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$
   if(S.c===null)$("list").innerHTML=COUNTRIES.map(c=>{const i=sum(c);return"<button data-c='"+c+"'><span>"+c+"</span><span class='mut'>"+(i?fmt(now(c))+" / "+fmt(i):"zones only")+"</span></button>"}).join("");
   else $("list").innerHTML=fs.length?F.map((f,i)=>f.c!==S.c?"":"<button data-i='"+i+"' class='"+(f.lay?"":"est")+"'><span>"+f.n+"</span><span class='mut'>"+fmt(cur(f).pw)+" / "+fmt(f.inst)+"</span></button>").join(""):"<div class='mut'>No operating farms here yet. Hover the zones on the map.</div>"}
  else{const f=F[S.farm],r=cur(f),[U,D]=curWind(f);$("mw").textContent=fmt(r.pw);
-  if(f.lay){$("mwsub").textContent="of "+fmt(f.inst)+" · wake loss "+(100*(1-r.pw/r.free||0)).toFixed(1)+"% · "+U.toFixed(1)+" m/s from "+D+"° at hub ("+src+")";$("sub").textContent=f.xy.length/2+" × "+f.t+" · D "+f.D+" m · hub "+f.h+" m · COD "+f.y+" · site "+f.a+" km² ("+(f.inst/f.a).toFixed(1)+" MW/km²)";
+  if(f.lay){$("mwsub").textContent="of "+fmt(f.inst)+" · wake loss "+(100*(1-r.pw/r.free||0)).toFixed(1)+"% · "+U.toFixed(1)+" m/s from "+D+"° at hub ("+src+")";const sp=spacingOf(f);$("sub").innerHTML=(f.mixed?Object.entries(f.mixed).map(([t,c])=>c+" × "+t).join(" + "):f.xy.length/2+" × "+f.t)+(f.mixed?" · hub "+f.h+" m":" · D "+f.D+" m · hub "+f.h+" m")+" · COD "+f.y+" · site "+f.a+" km² ("+(f.inst/f.a).toFixed(1)+" MW/km²)"+(sp?"<br>Spacing to nearest turbine: min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D":"");
    const kk=+$("K").value,m0=$("M").value,br={jensen:run(f,"j",U,D,m0==="j"?kk:K_DEF.j).pw,bastankhah:run(f,"g",U,D,m0==="g"?kk:K_DEF.g).pw,nowake:run(f,"n",U,D,0).pw};
    const pyw=FEED&&LIVE()&&f.S,names={jensen:"Jensen (NOJ)",bastankhah:"Bastankhah & Porté-Agel 2014",niayifar:"Niayifar & Porté-Agel 2016",turbopark:"TurbOPark (Nygaard 2022)",nowake:"No wake"};
    const keys=pyw?Object.keys(MODELS):["jensen","bastankhah","nowake"];
@@ -318,7 +328,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
  dtip(e,f.n+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fmt(f.P[h])+(f.P[h]==null?"":" · CF "+(100*f.P[h]/f.inst).toFixed(0)+"%")+(f.U48[h]!=null?" · "+f.U48[h].toFixed(1)+" m/s from "+f.D48[h]+"°":""))};
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
-$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Generic power curve P ∝ U³ up to each turbine's rated speed. <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Wake models: PyWake (DTU).";
+$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Wake models: PyWake (DTU).";
 addEventListener("resize",draw);draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;

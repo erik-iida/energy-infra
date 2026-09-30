@@ -260,7 +260,7 @@ def zone_weights(farms: list[dict]) -> dict[str, dict[str, float]]:
     for f in farms:
         cc, z = COUNTRY_CODE.get(f["c"]), farm_zone(f)
         if cc in HISTORY_AREAS and z:
-            inst = f["mw"] * len(f["xy"]) / 2 if "xy" in f else f.get("cap", 0)
+            inst = f.get("inst") or f.get("cap", 0)
             w[cc][z] += inst
     return {c: dict(v) for c, v in w.items()}
 

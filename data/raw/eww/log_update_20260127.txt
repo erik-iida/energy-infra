@@ -1,0 +1,85 @@
+Updating EEW database with new data
+Updating with OpenStreetMap data from: 20260316
+Updating with EMODnet data from: 20260127
+Updated coordinates for turbine of wind farm Avedøre Holme from (55.6023, 12.4611) to (55.6022, 12.4611) based on new OSM data.
+Updated coordinates for turbine of wind farm Borssele Kavel I and II from (51.7346, 2.9944) to (51.7347, 2.9944) based on new OSM data.
+Updated coordinates for turbine of wind farm Borssele Kavel I and II from (51.7398, 2.9751) to (51.7399, 2.975) based on new OSM data.
+Updated coordinates for turbine of wind farm East Anglia One from (52.2105, 2.5277) to (52.2104, 2.5278) based on new OSM data.
+Updated coordinates for turbine of wind farm East Anglia One from (52.2421, 2.5094) to (52.2421, 2.5095) based on new OSM data.
+Updated coordinates for turbine of wind farm Hornsea Project 2 from (53.867, 1.5137) to (53.867, 1.5138) based on new OSM data.
+Updated coordinates for turbine of wind farm Humber Gateway from (53.6578, 0.2617) to (53.6579, 0.2617) based on new OSM data.
+Updated coordinates for turbine of wind farm Mermaid from (51.7356, 2.7602) to (51.7357, 2.7602) based on new OSM data.
+Updated coordinates for turbine of wind farm Teesside from (54.6531, -1.1121) to (54.6533, -1.1123) based on new OSM data.
+Updated coordinates for turbine of wind farm Triton Knoll from (53.5269, 0.7499) to (53.5269, 0.7498) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9667, 10.3584) to (55.9667, 10.3585) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9703, 10.3585) to (55.9703, 10.3586) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9692, 10.352) to (55.9692, 10.3521) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9674, 10.352) to (55.9674, 10.3521) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9656, 10.352) to (55.9656, 10.3521) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.971, 10.3521) to (55.971, 10.3522) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9721, 10.3585) to (55.9721, 10.3586) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9685, 10.3584) to (55.9685, 10.3585) based on new OSM data.
+Updated coordinates for turbine of wind farm Tunm Knob from (55.9728, 10.3521) to (55.9728, 10.3522) based on new OSM data.
+Updated coordinates for turbine of wind farm East Anglia One from (52.2105, 2.5277) to (52.2355, 2.5129) based on new OSM data.
+Kept turbine of wind farm Frederikshavn Offshore at (57.4438, 10.5621) in database based on previous OSM data.
+Kept turbine of wind farm Frederikshavn Offshore at (57.4457, 10.5589) in database based on previous OSM data.
+Kept turbine of wind farm Frederikshavn Offshore at (57.4476, 10.5556) in database based on previous OSM data.
+Removed turbine at coordinates (54.5652, 11.6673) of wind farm Nysted from database based on new OSM data.
+Removed turbine at coordinates (54.5482, 11.7465) of wind farm Nysted from database based on new OSM data.
+Kept turbine of wind farm Renland at (56.6679, 8.2175) in database based on previous OSM data.
+Kept turbine of wind farm Renland at (56.6704, 8.2162) in database based on previous OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7227, 10.5834) to (55.7218, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7146, 10.5834) to (55.7137, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.712, 10.5834) to (55.711, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7281, 10.5834) to (55.7272, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7308, 10.5834) to (55.7299, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7335, 10.5834) to (55.7326, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7092, 10.5834) to (55.7164, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7254, 10.5834) to (55.7245, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.72, 10.5834) to (55.7191, 10.5847) based on new OSM data.
+Updated coordinates for turbine of wind farm Samsa from (55.7173, 10.5834) to (55.7353, 10.5847) based on new OSM data.
+Removed turbine at coordinates (52.6325, 1.7852) of wind farm Scroby Sands from database based on new OSM data.
+Updated coordinates for turbine of wind farm Teesside from (54.6502, -1.1194) to (54.6502, -1.1205) based on new OSM data.
+Updated coordinates for turbine of wind farm Teesside from (54.6484, -1.1152) to (54.6483, -1.1159) based on new OSM data.
+Updated coordinates for turbine of wind farm Teesside from (54.6465, -1.1111) to (54.6466, -1.1116) based on new OSM data.
+Updated coordinates for turbine of wind farm Teesside from (54.6446, -1.1068) to (54.6446, -1.1072) based on new OSM data.
+
+New wind farms added to the database:
+Kårehamn
+oem_manufacturer                         Vestas
+rated_power                                 3.0
+rotor_diameter                            112.0
+country                                  Sweden
+installed_turbines                         16.0
+decommissioned_turbines                     NaN
+hub_height                                 80.0
+turbine_type               V112-3.0 MW Offshore
+commissioning_date                      2013-10
+Name: Kårehamn, dtype: object
+
+Arklow Bank Phase 1
+oem_manufacturer           GE Energy
+rated_power                      3.6
+rotor_diameter                 111.0
+country                      Ireland
+installed_turbines               7.0
+decommissioned_turbines          NaN
+hub_height                      73.5
+turbine_type                GE-3.6sl
+commissioning_date           2004-06
+Name: Arklow Bank Phase 1, dtype: object
+
+Provence Grand Large Faraman
+oem_manufacturer           Siemens Gamesa
+rated_power                           8.0
+rotor_diameter                      167.0
+country                            France
+installed_turbines                    3.0
+decommissioned_turbines               NaN
+hub_height                          109.0
+turbine_type                SG 8.0-167 DD
+commissioning_date                2025-06
+Name: Provence Grand Large Faraman, dtype: object
+
+Manually removed decommissioned turbine of wind farm Robin Rigg West with coordinates (54.7715, -3.7006) from database
+Manually removed decommissioned turbine of wind farm Robin Rigg West with coordinates (54.7692, -3.7093) from database

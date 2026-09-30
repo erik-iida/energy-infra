@@ -12,7 +12,8 @@ forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models
 
 | Path | What it is |
 |---|---|
-| `data/raw/` | Source GeoJSONs (turbines and farm/zone outlines, WGS84) |
+| `data/raw/eww/` | Open European offshore wind turbine database (EuroWindWakes, version 2026-01-27): one row per turbine, plus power and Ct curves per turbine type |
+| `data/raw/European_offshore_wind_farm_outline.geojson` | Farm and zone outlines (own compilation, WGS84) |
 | `scripts/build_site.py` | Turns the GeoJSONs into `web/data/site.json` (run again when the data changes) |
 | `scripts/windy_test.py` | One-off check of your Windy key and which models it allows |
 | `pipeline/` | The hourly job: `config.py` (settings), `sources.py` (forecasts), `budget.py` (call cap), `wake.py` (PyWake), `run.py` (main) |
@@ -110,17 +111,20 @@ for 60 days.
 
 - **Wake models (PyWake 2.6):** Jensen/NOJ (k = 0.04), Bastankhah & Porté-Agel 2014 (k = 0.0324555, PyWake default),
   Niayifar & Porté-Agel 2016, TurbOPark (Nygaard 2022). Ambient TI 6 %.
-- **Power and thrust curves are generic:** P = rated × (U/U_rated)³ from 3 m/s, flat to 25 m/s.
-  U_rated comes from rated power and rotor diameter with Cp = 0.45. Ct = 0.8 below rated.
-  Replace with real curves per turbine type in `pipeline/wake.py` when you have them.
+- **Power and thrust curves per turbine type** come with the turbine database (35 types). They are PyWake
+  generic curves (cut-in 4 m/s, cut-out 25 m/s, TI 5 %), not manufacturer curves. Mixed farms keep each
+  turbine's own type. Farms without turbine data use a cubic curve on their stated capacity.
 - **Hub height:** log law with z0 = 0.0002 m from the forecast's reference height
   (100 m for Open-Meteo ECMWF, 120/80 m for other Open-Meteo models, 10 m for Windy surface wind, 100 m for ECMWF open data).
 - **Single direction:** wake losses are computed for the exact forecast direction. When the wind lines
   up with a row (Horns Rev I at 270°) this gives larger losses than measured 10-minute averages. Averaging
   over a few degrees of direction uncertainty is the next improvement.
 - **No farm-to-farm wakes** yet; each farm is modelled alone.
-- **Farms without turbine positions** (37 of 128, mostly in Germany and the Netherlands) use the
-  free-stream curve on their stated capacity with a flat 10 % wake loss. They show in italics.
+- **Farms without turbine positions** (5 of 127: Iles d'Yeu et de Noirmoutier, WindFloat Atlantic, BIMEP,
+  Bockstigen, Motriku) use a free-stream curve on their stated capacity with a flat 10 % wake loss (italics).
+- **Matching turbines to outlines:** the turbine database has no link to the outline file, so turbines are
+  matched by location (inside a polygon, else the nearest within 2 km, else their farm's majority polygon, else
+  a hull around the turbines). One farm = one wind farm of the turbine database.
 
 ## Feed format (`web/data/feed.json`)
 
@@ -155,7 +159,7 @@ in it.
 | What | Source | Licence |
 |---|---|---|
 | Weather forecasts | [Open-Meteo](https://open-meteo.com/) (ECMWF IFS and other models) | CC BY 4.0, free for non-commercial use |
-| Turbine positions | "Open European offshore wind turbine database", Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
+| Turbine positions, types and power/Ct curves | "Open European offshore wind turbine database" (version 2026-01-27), Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |

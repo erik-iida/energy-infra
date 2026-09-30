@@ -82,7 +82,7 @@ def main(argv=None) -> None:
         ok = np.isfinite(ws)
         P = {m: np.full(len(times), np.nan) for m in models}
         if ok.any():
-            pw = wake.farm_power(f, ws[ok], wd[ok]) if lay else wake.estimate_no_layout(f, ws[ok])
+            pw = wake.farm_power(f, site["types"], ws[ok], wd[ok]) if lay else wake.estimate_no_layout(f, ws[ok])
             for m in models:
                 P[m][ok] = pw[m]
         results[str(f["id"])] = (ws, wd, P)

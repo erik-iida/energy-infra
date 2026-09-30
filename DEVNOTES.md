@@ -30,9 +30,12 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 
 ## Decisions so far
 - Windy dropped: free key returns shuffled test data (500 calls/day), Professional is €990/yr and has no ECMWF.
-- Generic power curve P = rated × (U/U_rated)³, U_rated from rated power and D with Cp 0.45; Ct 0.8 below rated.
-  (A first version with (U − cut-in)³ overstated wake losses badly.)
-- Farms without turbine positions (37 of 128, mostly DE and NL) use free-stream power × 0.9.
+- Turbines, types and power/Ct curves from the EuroWindWakes database (2026-01-27, 6 544 turbines, 122 farms,
+  35 types). site.json has `types` (with curves) and per farm `ti` (one index, or one per turbine for the 4 mixed
+  farms). PyWake uses WindTurbines with `type=`; the browser interpolates the same tables, padded with zero
+  power/Ct outside cut-in/cut-out. Browser vs PyWake verified to 0.00 % on 30 cases incl. mixed farms.
+- Farm view shows nearest-neighbour spacing (min / mean / max, in each turbine's own rotor diameters).
+- Farms without turbine positions (5 of 127) use free-stream power × 0.9.
 - Outline capacities in the source file are unreliable (e.g. every Hornsea 2 phase lists 1 386 MW);
   installed MW uses turbine count × rated power where turbines exist.
 - Wind and output are never on a shared dual axis; separate charts.
@@ -41,8 +44,6 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 ## Known gaps / next ideas
 - Direction-uncertainty averaging (±5°) for aligned rows (Horns Rev I at 270° gives ~55–70 % loss vs ~40 % measured).
 - Farm-to-farm (cluster) wakes: run neighbouring farms together in PyWake.
-- Real power/Ct curves per turbine type.
-- Turbine positions for the missing German and Dutch farms (EMODnet / operators).
 - Inter-array cables, bathymetry layer.
 - Validation per farm: Elexon (UK, per BM unit) and ENTSO-E per unit; country-level check vs Energy-Charts is in the Market tab.
 - Product thinking: capture-price discount and wake-cost analytics per farm/zone are the most commercial part so far.

@@ -118,7 +118,11 @@ def recent(cl: Client, zones: set[str], countries: set[str], hours: list[int]) -
     lic = cache.setdefault("licence", {})
     now_h = hours[23]
     start, end = hours[0], hours[-1] + 3600
+    restricted_day = cache.setdefault("restricted_day", {})
     for z in sorted(zones):
+        # zones whose licence is private-use are never published: re-check them once a day only
+        if restricted_day.get(z) == _utc_today().isoformat():
+            continue
         have = pc.setdefault(z, {})
         missing_past = any(str(h) not in have for h in hours[:24])
         missing_future = any(str(h) not in have for h in hours[24:])
@@ -130,6 +134,8 @@ def recent(cl: Client, zones: set[str], countries: set[str], hours: list[int]) -
         if not r:
             continue
         lic[f"price:{z}"] = r.get("license") or ""
+        if not is_open(lic[f"price:{z}"]):
+            restricted_day[z] = _utc_today().isoformat()
         for h, v in hourly(r, "day_ahead_price").items():
             have[str(h)] = round(v, 2)
         cache.setdefault("t", {})[z] = time.time()

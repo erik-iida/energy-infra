@@ -89,7 +89,7 @@ for 60 days.
 
 ## Model notes
 
-- **Wake models (PyWake 2.6):** Jensen/NOJ (k = 0.04), Bastankhah & Porté-Agel 2014 (k = 0.0324),
+- **Wake models (PyWake 2.6):** Jensen/NOJ (k = 0.04), Bastankhah & Porté-Agel 2014 (k = 0.0324555, PyWake default),
   Niayifar & Porté-Agel 2016, TurbOPark (Nygaard 2022). Ambient TI 6 %.
 - **Power and thrust curves are generic:** P = rated × (U/U_rated)³ from 3 m/s, flat to 25 m/s.
   U_rated comes from rated power and rotor diameter with Cp = 0.45. Ct = 0.8 below rated.

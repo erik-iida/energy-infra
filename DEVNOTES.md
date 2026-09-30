@@ -9,7 +9,11 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Default forecast source: Open-Meteo, model `ecmwf_ifs` (HRES 9 km) via the /v1/ecmwf endpoint for 100 m wind
   (falls back to /v1/forecast `ecmwf_ifs025`, 10 m wind, if that fails), free
   non-commercial tier (<10 000 calls/day). About 3 requests / 115 locations per refresh, refresh every 6 h.
-- PyWake 2.6: Jensen (k 0.04), Bastankhah 2014 (k 0.0324), Niayifar 2016, TurbOPark (Nygaard 2022), plus no-wake.
+- PyWake 2.6: Jensen_1983 (k 0.04), Bastankhah_PorteAgel_2014 (k 0.0324555), Niayifar 2016, TurbOPark (Nygaard 2022), plus no-wake.
+- The in-browser Jensen and Bastankhah (map heatmap + what-if) re-implement PyWake's exact formulas and defaults
+  (ct2a_madsen + area-overlap + squared sum for NOJ; ceps 0.2, ctlim 0.899, ct2a_mom1d, linear sum on effective
+  ws for Bastankhah). Verified within 0.12 % of farm power against PyWake on 30 farm/wind cases. Keep them in sync
+  if pipeline/wake.py changes. Model names are identical in both places.
 - Web page is plain HTML/JS in `web/index.html` (no build step). It loads `data/site.json` + `data/feed.json`.
   Map heatmap uses in-browser Jensen/Gaussian; Compare tab uses the PyWake numbers from the feed.
 

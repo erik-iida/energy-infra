@@ -32,9 +32,9 @@ CUT_IN, CUT_OUT = 3.0, 25.0
 
 # Wake models run by PyWake (key -> label). "nowake" is always added.
 WAKE_MODELS = {
-    "jensen": "Jensen (NOJ, k=0.04)",
-    "bastankhah": "Bastankhah & Porté-Agel 2014 (k=0.0324)",
-    "niayifar": "Niayifar & Porté-Agel 2016",
+    "jensen": "Jensen (NOJ)",                        # k = 0.04, area-overlap rotor average, squared sum
+    "bastankhah": "Bastankhah & Porté-Agel 2014",   # k = 0.0324555, linear sum on effective wind speed
+    "niayifar": "Niayifar & Porté-Agel 2016",       # TI-dependent wake growth, Crespo-Hernandez turbulence
     "turbopark": "TurbOPark (Nygaard 2022)",
 }
 

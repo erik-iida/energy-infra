@@ -13,7 +13,7 @@ h1{font:600 19px/1.2 Georgia,"Times New Roman",serif;margin:0}h2{font:600 15px/1
 label{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}input[type=range]{width:100%;accent-color:var(--acc)}
 select,button{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}button{cursor:pointer;text-align:left}button:hover,button.on{border-color:var(--acc)}
 #list{display:flex;flex-direction:column;gap:4px;max-height:300px;overflow:auto}#list button{display:flex;justify-content:space-between;padding:5px 8px;font-size:13px}
-table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border-bottom:1px solid var(--line)}td+td{text-align:right;white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border-bottom:1px solid var(--line)}td+td{text-align:right;white-space:nowrap;padding-left:10px}
 #leg{position:absolute;left:10px;bottom:10px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;font-size:12px;display:flex;flex-direction:column;gap:3px}#leg i{display:inline-block;width:18px;height:0;margin-right:6px;vertical-align:middle;border-top:2px solid var(--acc)}
 #tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:3px 7px;border-radius:5px;font-size:12px;display:none}
 
@@ -62,8 +62,8 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 <div id="mapctl"><label id="live"><input type="checkbox" id="LV"> Use forecast wind for now</label>
 <div id="wif"><label>What-if wind speed <span id="uv"></span></label><input id="U" type="range" min="3" max="25" step="0.5" value="9">
 <label>What-if wind from <span id="dv"></span></label><input id="D" type="range" min="0" max="359" value="270"></div>
-<label>Wake field model (in browser)</label><select id="M"><option value="j">Jensen (top-hat)</option><option value="g">Bastankhah Gaussian</option><option value="n">No wake</option></select>
-<label style="margin-top:8px">Wake decay k <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="0.005" value="0.04"></div>
+<label>Wake field model (in browser)</label><select id="M"><option value="j">Jensen (NOJ)</option><option value="g">Bastankhah &amp; Porté-Agel 2014</option><option value="n">No wake</option></select>
+<label style="margin-top:8px">Wake decay k <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change k to explore.</div></div>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="Z" checked> Show future zones</label>
 <div id="cmp"></div>
 <div id="list"></div>
@@ -84,28 +84,44 @@ function sum(c){return F.filter(f=>f.c===c).reduce((a,f)=>a+f.inst,0)}
 const COUNTRIES=[...new Set([...F.map(f=>f.c),...Z.map(z=>z.c)])].sort((a,b)=>sum(b)-sum(a)||a.localeCompare(b));
 
 /* ---------- in-browser wake models (map heatmap + what-if) ---------- */
-function wd(m,k,j,D,ct,px,py,dx,dy){const s=(px-j[0])*dx+(py-j[1])*dy;if(s<=1||m==="n")return 0;const c=-(px-j[0])*dy+(py-j[1])*dx;
- if(m==="j"){const r=D/2+k*s;return Math.abs(c)>r?0:(1-Math.sqrt(1-ct))*(D/2/r)**2}
- const sg=k*Math.max(s,2*D)+.25*D*Math.sqrt(.5*(1+Math.sqrt(1-ct))/Math.sqrt(1-ct));let r=ct/(8*(sg/D)**2);if(r>.99)r=.99;return(1-Math.sqrt(1-r))*Math.exp(-c*c/(2*sg*sg))}
+// In-browser copies of the PyWake models (same formulas and defaults as pipeline/wake.py)
+// Jensen_1983:  NOJDeficit, k=0.04, ct2a_madsen, area-overlap rotor average, squared sum on free stream
+// Bastankhah_PorteAgel_2014: k=0.0324555, ceps=0.2, ctlim=0.899, ct2a_mom1d, centre point,
+//                            linear sum scaled by the source turbine's effective wind speed
+const K_DEF={j:.04,g:.0324555};
+const ct2aMadsen=ct=>((0.0883*ct+0.0586)*ct+0.246)*ct;
+const ct2aMom=ct=>.5*(1-Math.sqrt(1-Math.min(1,ct)));
+function ovl(R,rw,c){c=Math.abs(c);if(c>=R+rw)return 0;if(c+R<=rw)return 1;if(c+rw<=R)return rw*rw/(R*R);
+ const a=Math.acos((c*c+R*R-rw*rw)/(2*c*R)),b=Math.acos((c*c+rw*rw-R*R)/(2*c*rw));
+ return(R*R*a+rw*rw*b-.5*Math.sqrt(Math.max(0,(-c+R+rw)*(c+R-rw)*(c-R+rw)*(c+R+rw))))/(Math.PI*R*R)}
+// deficit factor at (px,py) from source j. Jensen: fraction of free stream. Gaussian: fraction of source effective ws.
+// R>0 = rotor radius of the receiving turbine (area overlap for Jensen); R=0 = single point (flow map)
+function wd(m,k,j,D,ct,px,py,dx,dy,R){const s=(px-j[0])*dx+(py-j[1])*dy;if(s<=0||m==="n")return 0;const c=-(px-j[0])*dy+(py-j[1])*dx;
+ if(m==="j"){const rw=D/2+k*s,f=R?ovl(R,rw,c):(Math.abs(c)<rw?1:0);return f*2*ct2aMadsen(ct)/((rw/(D/2))**2)}
+ const q=Math.sqrt(1-Math.min(.899,ct)),eps=.2*Math.sqrt(.5*(1+q)/q),sg=k*s+eps*D;
+ return Math.min(1,2*ct2aMom(ct*D*D/(8*sg*sg)))*Math.exp(-c*c/(2*sg*sg))}
 function run(f,m,U,dir,k){const t=dir*Math.PI/180,dx=-Math.sin(t),dy=-Math.cos(t);
  if(!f.lay){const free=PC(U,f.cap,URG);return{P:[],u:[],ct:[],pw:free*(m==="n"?1:.9),free,dx,dy}}
  const n=f.xy.length/2,P=[];for(let i=0;i<n;i++)P.push([f.xy[2*i],f.xy[2*i+1]]);
  const ord=P.map((p,i)=>i).sort((a,b)=>(P[a][0]*dx+P[a][1]*dy)-(P[b][0]*dx+P[b][1]*dy));
- const u=new Array(n),ct=new Array(n),done=[];
- for(const i of ord){let q=0;for(const j of done){const d=wd(m,k,P[j],f.D,ct[j],P[i][0],P[i][1],dx,dy);q+=d*d}
-  u[i]=U*(1-Math.sqrt(q));ct[i]=CT(u[i],f.ur);done.push(i)}
- let pw=0;for(let i=0;i<n;i++)pw+=PC(u[i],f.mw,f.ur);return{P,u,ct,pw,free:n*PC(U,f.mw,f.ur),dx,dy}}
+ const u=new Array(n),ct=new Array(n),done=[],R=f.D/2;
+ for(const i of ord){let q=0;
+  if(m==="j"){for(const j of done){const d=wd(m,k,P[j],f.D,ct[j],P[i][0],P[i][1],dx,dy,R);q+=d*d}u[i]=U*(1-Math.sqrt(q))}
+  else if(m==="g"){for(const j of done)q+=u[j]*wd(m,k,P[j],f.D,ct[j],P[i][0],P[i][1],dx,dy,0);u[i]=Math.max(0,U-q)}
+  else u[i]=U;
+  ct[i]=CT(u[i],f.ur);done.push(i)}
+ let pw=0;for(let i=0;i<n;i++)pw+=PC(u[i],f.mw,f.ur);return{P,u,ct,pw,free:n*PC(U,f.mw,f.ur),dx,dy,U}}
 
 /* ---------- time series: pipeline feed, or synthetic fallback ---------- */
 const NP=24,NF=24,NT=NP+NF,N0=NP-1; // index N0 = now
 let HRS,MODELS,SRC;
 if(FEED){HRS=[...FEED.hours,...FEED.fc_hours].map(s=>new Date(s.replace("Z",":00Z")));MODELS=FEED.models;SRC=FEED.source}
-else{const t0=new Date();t0.setMinutes(0,0,0);HRS=[...Array(NT)].map((_,h)=>new Date(t0.getTime()+(h-N0)*3600e3));MODELS={jensen:"Jensen (in browser)",bastankhah:"Bastankhah Gaussian (in browser)",nowake:"No wake"};SRC="browser"}
+else{const t0=new Date();t0.setMinutes(0,0,0);HRS=[...Array(NT)].map((_,h)=>new Date(t0.getTime()+(h-N0)*3600e3));MODELS={jensen:"Jensen (NOJ)",bastankhah:"Bastankhah & Porté-Agel 2014",nowake:"No wake"};SRC="browser"}
 F.forEach((f,i)=>{const q=FEED&&FEED.farms[String(f.id)];
  if(q){f.U48=[...q.U,...(q.fU||Array(NF).fill(null))];f.D48=[...q.dir,...(q.fdir||Array(NF).fill(null))];f.S={};for(const m in MODELS)f.S[m]=[...q.P[m],...(q.fP?q.fP[m]:Array(NF).fill(null))];return}
  let s=Math.sin((i+1)*12.9898)*43758.5453;s-=Math.floor(s);f.U48=[];f.D48=[];
  for(let h=0;h<NT;h++){f.U48.push(+Math.max(1,Math.min(24,10+5*Math.sin(2*Math.PI*(h-f.lon*1.3)/26+f.lat*.4)+1.6*Math.sin(h/3.1+f.lat*2)+(s-.5))).toFixed(1));f.D48.push(Math.round((250+60*Math.sin((h-f.lon)/9)+360)%360))}});
-function browserSeries(m){const key={jensen:"j",bastankhah:"g",nowake:"n"}[m];F.forEach(f=>{f.S=f.S||{};if(f.S[m])return;f.S[m]=f.U48.map((U,h)=>run(f,key,U,f.D48[h],key==="g"?.035:.04).pw)})}
+function browserSeries(m){const key={jensen:"j",bastankhah:"g",nowake:"n"}[m];F.forEach(f=>{f.S=f.S||{};if(f.S[m])return;f.S[m]=f.U48.map((U,h)=>run(f,key,U,f.D48[h],K_DEF[key]||0).pw)})}
 const hl=h=>HRS[h].toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),dl=h=>HRS[h].toLocaleString([],{weekday:"short",hour:"2-digit",minute:"2-digit"});
 const LIVE=()=>$("LV").checked;
 function curWind(f){return LIVE()&&f.U48[N0]!=null?[f.U48[N0],f.D48[N0]]:[+$("U").value,+$("D").value]}
@@ -134,8 +150,9 @@ function farmView(W,H){const f=F[S.farm],r=cur(f),xs=r.P.map(p=>p[0]),ys=r.P.map
  const X=x=>ox+(x-x0)*sc,Y=y=>oy+(y1-y)*sc,m=$("M").value,k=+$("K").value;
  if(f.lay&&m!=="n"){const G=[140,Math.max(20,Math.round(140*(y1-y0)/(x1-x0)))],off=document.createElement("canvas");off.width=G[0];off.height=G[1];const oc=off.getContext("2d"),im=oc.createImageData(G[0],G[1]);
   for(let gy=0;gy<G[1];gy++)for(let gx=0;gx<G[0];gx++){const px=x0+(gx+.5)/G[0]*(x1-x0),py=y1-(gy+.5)/G[1]*(y1-y0);let q=0;
-   for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],f.D,r.ct[j],px,py,r.dx,r.dy);q+=d*d}
-   const d=Math.sqrt(q),o=4*(gy*G[0]+gx),e=Math.min(1,d*3);im.data[o]=255-16*e;im.data[o+1]=209-137*e;im.data[o+2]=102+9*e;im.data[o+3]=Math.min(1,d*3.2)*215}
+   if(m==="j"){for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],f.D,r.ct[j],px,py,r.dx,r.dy,0);q+=d*d}q=Math.sqrt(q)}
+   else for(let j=0;j<r.P.length;j++)q+=r.u[j]/r.U*wd(m,k,r.P[j],f.D,r.ct[j],px,py,r.dx,r.dy,0);
+   const d=q,o=4*(gy*G[0]+gx),e=Math.min(1,d*3);im.data[o]=255-16*e;im.data[o+1]=209-137*e;im.data[o+2]=102+9*e;im.data[o+3]=Math.min(1,d*3.2)*215}
   oc.putImageData(im,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(off,ox,oy,(x1-x0)*sc,(y1-y0)*sc)}
  cx.strokeStyle=css("--acc");cx.lineWidth=1.8;for(const q of f.o){cx.beginPath();for(let i=0;i<q.length;i+=2)i?cx.lineTo(X(q[i]),Y(q[i+1])):cx.moveTo(X(q[i]),Y(q[i+1]));cx.closePath();if(!f.lay){cx.fillStyle=css("--acc");cx.globalAlpha=.12;cx.fill();cx.globalAlpha=1}cx.stroke()}
  r.P.forEach(p=>{cx.beginPath();cx.arc(X(p[0]),Y(p[1]),Math.max(2.5,f.D/2*sc),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fill();cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=1.2;cx.stroke()});
@@ -144,7 +161,7 @@ function farmView(W,H){const f=F[S.farm],r=cur(f),xs=r.P.map(p=>p[0]),ys=r.P.map
  const bar=(x1-x0)>30000?5000:1000;cx.fillText("scale bar "+bar/1000+" km",W-110,H-16);cx.fillRect(W-110,H-12,bar*sc,2)}
 function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
-function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=$("K").value;crumb();$("C").value=S.c||"";$("note").style.display="none";
+function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
  $("wif").style.display=LIVE()?"none":"block";$("mapctl").style.display=S.tab==="map"?"block":"none";$("list").style.display=S.tab==="map"?"flex":"none";
  const fs=F.filter(f=>!S.c||f.c===S.c),zs=Z.filter(z=>!S.c||z.c===S.c),cap=fs.reduce((a,f)=>a+f.inst,0);
  if(S.tab==="cmp"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=(S.c||"Europe")+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
@@ -157,9 +174,11 @@ function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$
   else $("list").innerHTML=fs.length?F.map((f,i)=>f.c!==S.c?"":"<button data-i='"+i+"' class='"+(f.lay?"":"est")+"'><span>"+f.n+"</span><span class='mut'>"+fmt(cur(f).pw)+" / "+fmt(f.inst)+"</span></button>").join(""):"<div class='mut'>No operating farms here yet. Hover the zones on the map.</div>"}
  else{const f=F[S.farm],r=cur(f),[U,D]=curWind(f);$("mw").textContent=fmt(r.pw);
   if(f.lay){$("mwsub").textContent="of "+fmt(f.inst)+" · wake loss "+(100*(1-r.pw/r.free||0)).toFixed(1)+"% · "+U.toFixed(1)+" m/s from "+D+"° at hub ("+src+")";$("sub").textContent=f.xy.length/2+" × "+f.t+" · D "+f.D+" m · hub "+f.h+" m · COD "+f.y+" · site "+f.a+" km² ("+(f.inst/f.a).toFixed(1)+" MW/km²)";
-   let rows=[["Jensen","j"],["Gaussian","g"],["No wake","n"]].map(([nm,m])=>"<tr><td>"+nm+"</td><td>"+fmt(run(f,m,U,D,m==="g"?.035:.04).pw)+"</td></tr>").join("");
-   let h="<h2>In-browser models</h2><table>"+rows+"</table>";
-   if(FEED&&LIVE()&&f.S)h+="<h2 style='margin-top:10px'>PyWake at "+hl(N0)+"</h2><table>"+Object.keys(MODELS).map(m=>"<tr><td>"+MODELS[m]+"</td><td>"+fmt(f.S[m][N0])+"</td></tr>").join("")+"</table>";
+   const kk=+$("K").value,m0=$("M").value,br={jensen:run(f,"j",U,D,m0==="j"?kk:K_DEF.j).pw,bastankhah:run(f,"g",U,D,m0==="g"?kk:K_DEF.g).pw,nowake:run(f,"n",U,D,0).pw};
+   const pyw=FEED&&LIVE()&&f.S,names={jensen:"Jensen (NOJ)",bastankhah:"Bastankhah & Porté-Agel 2014",niayifar:"Niayifar & Porté-Agel 2016",turbopark:"TurbOPark (Nygaard 2022)",nowake:"No wake"};
+   const keys=pyw?Object.keys(MODELS):["jensen","bastankhah","nowake"];
+   let h="<h2>Models at this wind</h2><table><tr><td class='mut'>Model</td><td class='mut'>Browser</td>"+(pyw?"<td class='mut'>PyWake "+hl(N0)+"</td>":"")+"</tr>"+keys.map(m=>"<tr><td>"+(names[m]||MODELS[m])+"</td><td>"+(m in br?fmt(br[m]):"–")+"</td>"+(pyw?"<td>"+fmt(f.S[m][N0])+"</td>":"")+"</tr>").join("")+"</table>";
+   h+="<div class='mut' style='font-size:12px;margin-top:6px'>Browser = PyWake's formulas re-implemented here (agree within ~0.1%). They differ only when k is changed, or because the browser uses the wind rounded to 0.1 m/s. No blockage in either. Niayifar and TurbOPark need turbulence modelling, so they run in PyWake only.</div>";
    $("cmp").innerHTML=h}
   else{$("mwsub").textContent="of "+fmt(f.inst)+" · estimated";$("sub").textContent="Site "+f.a+" km²";$("cmp").innerHTML="";const n=$("note");n.style.display="block";n.textContent="There are no turbine positions for this farm in the dataset, so there's no wake field. Output is the free-stream power curve with an assumed 10% wake loss."}
   $("list").innerHTML=F.map((g,i)=>g.c!==f.c?"":"<button data-i='"+i+"' class='"+(i===S.farm?"on ":"")+(g.lay?"":"est")+"'><span>"+g.n+"</span><span class='mut'>"+fmt(cur(g).pw)+"</span></button>").join("")}}
@@ -214,7 +233,7 @@ function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;d.s
 $("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
 $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):go(S.c,null)};
-["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=$("M").value==="g"?.035:.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;
+["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
  let zh=-1;if(b<0){const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;cx.restore()}return[b,zh,x,y]}

@@ -43,7 +43,7 @@ def models_for(f: dict) -> dict:
     wt = turbine(f)
     return {
         "jensen": Jensen_1983(SITE, wt, k=0.04),
-        "bastankhah": Bastankhah_PorteAgel_2014(SITE, wt, k=0.0324),
+        "bastankhah": Bastankhah_PorteAgel_2014(SITE, wt, k=0.0324555),
         "niayifar": Niayifar_PorteAgel_2016(SITE, wt),
         "turbopark": Nygaard_2022(SITE, wt),
     }

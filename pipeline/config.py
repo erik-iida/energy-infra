@@ -9,12 +9,12 @@ STATE_DIR = ROOT / "state"  # forecast cache, 24 h history, call budget (committ
 
 # Forecast source:
 #   "openmeteo"  Open-Meteo API: free for non-commercial use (<10 000 calls/day, credit "Weather data by
-#                Open-Meteo.com", CC BY 4.0). Wind at 120/80 m, several models incl. ECMWF IFS and ICON-EU.
+#                Open-Meteo.com", CC BY 4.0). ECMWF (100 m wind) or ICON-EU and others (120/80 m).
 #   "windy"      Windy Point Forecast API (the free testing key returns shuffled data; Professional is paid)
 #   "ecmwf"      ECMWF open data GRIB download (100 m wind)
 #   "synthetic"  made-up weather for offline testing
 SOURCE = os.environ.get("WM_SOURCE", "openmeteo")
-OPENMETEO_MODEL = os.environ.get("WM_OPENMETEO_MODEL", "ecmwf_ifs025")  # or icon_eu, icon_seamless, best_match
+OPENMETEO_MODEL = os.environ.get("WM_OPENMETEO_MODEL", "ecmwf_ifs")  # ECMWF HRES 9 km, 100 m wind. Or icon_eu, icon_seamless
 WINDY_KEY = os.environ.get("WINDY_KEY", "")
 WINDY_MODEL = os.environ.get("WM_WINDY_MODEL", "iconEu")  # run windy_test.py to see which models your key allows
 

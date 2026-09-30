@@ -135,30 +135,44 @@ def fetch_ecmwf(cells: dict[str, tuple[float, float]]) -> dict:
 
 # ---------------------------------------------------------------- Open-Meteo (free, non-commercial, CC BY 4.0)
 OPENMETEO_URL = "https://api.open-meteo.com/v1/forecast"
-OM_HEIGHTS = (120, 80, 10)  # use the highest height the model provides at each location
+OPENMETEO_ECMWF_URL = "https://api.open-meteo.com/v1/ecmwf"  # has 100 m wind for ECMWF models
+
+
+def _om_plan(model: str) -> list[tuple[str, str, tuple[int, ...]]]:
+    """(url, model, heights) to try in order. ECMWF models go to the ECMWF endpoint for 100 m wind."""
+    general = (OPENMETEO_URL, model, (120, 80, 10))
+    if model.startswith("ecmwf"):
+        return [(OPENMETEO_ECMWF_URL, model, (100, 10)), (OPENMETEO_URL, "ecmwf_ifs025", (120, 80, 10))]
+    return [general]
 
 
 def _om_request(batch: list[tuple[float, float]]) -> list[dict]:
     import requests
 
-    hourly = ",".join(f"wind_speed_{z}m,wind_direction_{z}m" for z in OM_HEIGHTS)
-    params = {
-        "latitude": ",".join(f"{lat:.3f}" for lat, _ in batch),
-        "longitude": ",".join(f"{lon:.3f}" for _, lon in batch),
-        "hourly": hourly, "models": config.OPENMETEO_MODEL, "wind_speed_unit": "ms",
-        "timeformat": "unixtime", "past_days": 1, "forecast_days": 3,
-    }
-    r = requests.get(OPENMETEO_URL, params=params, timeout=60)
-    if r.status_code != 200:
-        raise RuntimeError(f"HTTP {r.status_code}: {r.text[:300]}")
-    d = r.json()
-    return d if isinstance(d, list) else [d]
+    err = None
+    for url, model, heights in _om_plan(config.OPENMETEO_MODEL):
+        params = {
+            "latitude": ",".join(f"{lat:.3f}" for lat, _ in batch),
+            "longitude": ",".join(f"{lon:.3f}" for _, lon in batch),
+            "hourly": ",".join(f"wind_speed_{z}m,wind_direction_{z}m" for z in heights),
+            "models": model, "wind_speed_unit": "ms", "timeformat": "unixtime", "past_days": 1, "forecast_days": 3,
+        }
+        r = requests.get(url, params=params, timeout=60)
+        if r.status_code == 200:
+            d = r.json()
+            d = d if isinstance(d, list) else [d]
+            for loc in d:
+                loc["_heights"] = heights
+            return d
+        err = f"{url.rsplit('/', 1)[-1]} {model}: HTTP {r.status_code}: {r.text[:200]}"
+        print(f"openmeteo: {err}; trying next option")
+    raise RuntimeError(err)
 
 
 def _om_series(loc: dict) -> dict | None:
     h = loc.get("hourly", {})
     t = h.get("time", [])
-    for z in OM_HEIGHTS:
+    for z in loc.get("_heights", (120, 80, 10)):
         ws, wd = h.get(f"wind_speed_{z}m"), h.get(f"wind_direction_{z}m")
         if not ws or not wd:
             continue

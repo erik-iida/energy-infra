@@ -48,7 +48,7 @@ jobs:
       - name: Run pipeline
         env:
           WM_SOURCE: ${{ vars.WM_SOURCE || 'openmeteo' }}
-          WM_OPENMETEO_MODEL: ${{ vars.WM_OPENMETEO_MODEL || 'ecmwf_ifs025' }}
+          WM_OPENMETEO_MODEL: ${{ vars.WM_OPENMETEO_MODEL || 'ecmwf_ifs' }}
           WM_WINDY_MODEL: ${{ vars.WM_WINDY_MODEL || 'iconEu' }}
           WM_DAILY_CALL_CAP: ${{ vars.WM_DAILY_CALL_CAP || '2000' }}
           WINDY_KEY: ${{ secrets.WINDY_KEY }}

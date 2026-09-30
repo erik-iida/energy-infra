@@ -6,7 +6,8 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - GitHub Actions (`.github/workflows/hourly.yml`) runs `python -m pipeline.run` hourly at :07, on every
   push to `main`, and on "Run workflow". It then deploys `web/` to GitHub Pages.
 - `state/` (forecast cache, 24 h history, call counter) lives in the Actions cache, not in git.
-- Default forecast source: Open-Meteo, model `ecmwf_ifs025`, wind at 120 m (80 m fallback), free
+- Default forecast source: Open-Meteo, model `ecmwf_ifs` (HRES 9 km) via the /v1/ecmwf endpoint for 100 m wind
+  (falls back to /v1/forecast `ecmwf_ifs025`, 10 m wind, if that fails), free
   non-commercial tier (<10 000 calls/day). About 3 requests / 115 locations per refresh, refresh every 6 h.
 - PyWake 2.6: Jensen (k 0.04), Bastankhah 2014 (k 0.0324), Niayifar 2016, TurbOPark (Nygaard 2022), plus no-wake.
 - Web page is plain HTML/JS in `web/index.html` (no build step). It loads `data/site.json` + `data/feed.json`.

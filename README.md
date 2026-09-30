@@ -137,13 +137,16 @@ in it.
 |---|---|---|
 | Weather forecasts | [Open-Meteo](https://open-meteo.com/) (ECMWF IFS and other models) | CC BY 4.0, free for non-commercial use |
 | Turbine positions | "Open European offshore wind turbine database", Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
-| Farm and zone outlines | EMODnet Human Activities and research compilation (source to be confirmed) | Check before wider use |
+| Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |
 
 ## Licence
 
 - **Code:** copyright © 2026 Erik Iida, all rights reserved. Public to view, not licensed for reuse. See `LICENSE`.
-- **Data derived from the offshore turbine database** (`data/raw/*.geojson`, `web/data/site.json`):
-  ODbL 1.0, as its licence requires. Anyone may reuse those files under the ODbL.
+- **Farm and zone outlines** (`data/raw/European_offshore_wind_farm_outline.geojson`): your own compilation,
+  all rights reserved, with credit to EMODnet for the geometry it is based on.
+- **Data derived from the offshore turbine database** (`data/raw/European_offshore_wind_turbines.geojson`
+  and the turbine data in `web/data/site.json`): ODbL 1.0, as its licence requires. Anyone may reuse it
+  under the ODbL.
 - Other third-party data and software keep their own licences (table above).

@@ -1,0 +1,5 @@
+# extra packages for WM_SOURCE=ecmwf (ECMWF open data, 100 m wind)
+ecmwf-opendata
+xarray
+cfgrib
+eccodes

@@ -1,0 +1,18 @@
+Copyright (c) 2026 Erik Iida. All rights reserved.
+
+The source code in this repository is published for viewing only. No licence is granted to copy,
+modify, distribute, sublicense, or use it, in whole or in part, for any purpose, commercial or
+otherwise, without prior written permission from the copyright holder.
+
+This reservation covers the source code only. It does NOT cover data files derived from the
+"Open European offshore wind turbine database" (data/raw/*.geojson and web/data/site.json). Those are
+made available under the Open Database License (ODbL) v1.0, https://opendatacommons.org/licenses/odbl/1-0/,
+with attribution to "Contributors to the EuroWindWakes European Offshore Dataset",
+DOI 10.5281/zenodo.17311571, which in turn contains data from OpenStreetMap contributors (ODbL) and
+EMODnet. Other third-party data and software keep their own licences; see "Data sources and credits"
+in README.md.
+
+THE SOFTWARE AND ITS OUTPUTS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE, ITS OUTPUTS, OR THEIR USE.

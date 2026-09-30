@@ -1,0 +1,7 @@
+# pipeline
+py_wake>=2.6
+numpy
+requests
+h5py            # PyWake reads its Gaussian-overlap lookup table with it
+# only for scripts/build_site.py
+shapely

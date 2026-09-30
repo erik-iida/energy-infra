@@ -133,7 +133,10 @@ def main(argv=None) -> None:
     if config.MARKET and args.source != "synthetic":
         try:
             from . import market
-            feed["market"], hist = market.build(farms, feed["hours"] + feed["fc_hours"])
+            mk, hist = market.build(farms, feed["hours"] + feed["fc_hours"])
+            farms_block = feed.pop("farms")
+            feed["market"] = mk
+            feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read
             (config.FEED_JSON.parent / "market_history.json").write_text(
                 json.dumps(hist, separators=(",", ":")), encoding="utf-8")
         except Exception as e:  # market data must never stop the wind feed

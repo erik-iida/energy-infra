@@ -23,8 +23,9 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Capture price = Σ P·price / Σ P. Capture rate = capture / baseload. Wake cost = Σ (P_nowake − P_model)·price,
   farms with layouts only. The page computes these from feed.json for the selected wake model.
 - Monthly history uses ACTUAL national offshore output (not the model) × zone price; DK blends DK1/DK2 by
-  installed MW from site.json. Backfill 6 (area, month) cells per run; current and previous month refreshed daily.
-- The API returns HTTP 429 on bursts: 2 s spacing, one retry after 20 s, then skip. Market failure never blocks the feed.
+  installed MW from site.json. Backfill 3 (area, month) cells per run; current and previous month refreshed daily.
+- The API returns HTTP 429 on bursts and sometimes drops large monthly downloads: 3 s spacing, one retry after
+  30 s (429/5xx/connection errors), then skip; the cell is retried on a later run. Market failure never blocks the feed.
 - No GB price in Energy-Charts → UK farms lack market numbers (Elexon/N2EX would be the source).
 
 ## Decisions so far

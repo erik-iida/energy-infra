@@ -70,7 +70,7 @@ def main():
     assert mk["restricted_zones"] == ["SE4"], mk["restricted_zones"]
     assert "SE4" not in mk["prices"] and "DK1" in mk["prices"]
     assert "uk" not in mk["actual_offshore"]
-    assert all(len(v["months"]) >= 8 for v in hist["areas"].values()), hist["areas"].keys()
+    assert all(len(v["months"]) >= 6 for v in hist["areas"].values()), hist["areas"].keys()
     print("sample", hist["areas"]["dk"]["months"][-1])
     print("OK")
     shutil.rmtree(config.STATE_DIR, ignore_errors=True)

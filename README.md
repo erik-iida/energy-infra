@@ -56,14 +56,14 @@ The pipeline also pulls from the [Energy-Charts API](https://api.energy-charts.i
 - **Actual offshore generation** per country for the last 24 h, to check the model against reality.
 - **Monthly history** (`web/data/market_history.json`) of baseload price, offshore capture price, capture rate and
   output at negative prices for DE-LU, NL, BE, DK (DK1/DK2 blended by installed MW) and FR, built from actual
-  national offshore output. It backfills 6 area-months per hourly run, so two years take about a day.
+  national offshore output. It backfills 3 area-months per hourly run, so two years take a day or two.
 
 The page's **Market** tab shows capture price and capture rate per zone (modelled, last and next 24 h), revenue lost
 to wakes, the model check and the monthly history. The Compare table gets capture price and wake cost per farm.
 
 Licences: every Energy-Charts response states its licence. Only CC BY data is published; zones marked "private
-and internal use" are listed as restricted and left out. The API rate-limits bursts, so calls are spaced 2 s apart
-and cached (about 17 calls per hourly run). UK farms have no market numbers: this source has no GB day-ahead price.
+and internal use" are listed as restricted and left out. The API rate-limits bursts, so calls are spaced 3 s apart, retried once
+after 30 s, and cached (roughly 15 calls per hourly run). UK farms have no market numbers: this source has no GB day-ahead price.
 Switch it off with `WM_MARKET=0`. Offline test: `python -m tests.mock_market`.
 
 ## API budget

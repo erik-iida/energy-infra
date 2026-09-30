@@ -20,8 +20,8 @@ from datetime import date, datetime, timedelta, timezone
 from . import config
 
 EC_URL = "https://api.energy-charts.info/v2"
-MIN_GAP_S = 2.0  # seconds between calls
-HISTORY_UNITS_PER_RUN = 6  # (market area, month) pairs to backfill per run
+MIN_GAP_S = 3.0  # seconds between calls (the API answers bursts with HTTP 429)
+HISTORY_UNITS_PER_RUN = 3  # (market area, month) pairs to backfill per run
 HISTORY_MONTHS = 24
 
 # Bidding zone of each country's offshore farms. Denmark is split by longitude (see farm_zone).
@@ -67,18 +67,20 @@ class Client:
             self.last = time.time()
             self.calls += 1
             try:
-                r = self.s.get(f"{EC_URL}/{endpoint}", params=params, timeout=60)
-            except Exception as e:  # network error
+                r = self.s.get(f"{EC_URL}/{endpoint}", params=params, timeout=90)
+            except Exception as e:  # dropped connection etc.: wait and retry once
+                if attempt == 0:
+                    time.sleep(30)
+                    continue
                 self.errors.append(f"{endpoint} {params}: {e}")
                 return None
-            if r.status_code == 429 and attempt == 0:
-                time.sleep(20)
+            if r.status_code in (429, 502, 503, 504) and attempt == 0:
+                time.sleep(30)
                 continue
             if r.status_code != 200:
                 self.errors.append(f"{endpoint} {params}: HTTP {r.status_code} {r.text[:120]}")
                 return None
             return r.json()
-        self.errors.append(f"{endpoint} {params}: rate limited twice")
         return None
 
 

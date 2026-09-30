@@ -44,17 +44,22 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 :root{--wnd:#8a5a00}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wnd:#e0a33a}}:root[data-theme="dark"]{--wnd:#e0a33a}
 .w .ln{stroke:var(--wnd)}.w .ar{fill:var(--wnd)}.w .dot{fill:var(--wnd)}.card svg.w{height:48px}
 #ftab td:first-child{min-width:170px}#ftab svg{width:104px!important}
+#mkt{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
+.card svg.mk,.card svg.mh{height:82px}
+:root{--prc:#6b4fbb}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--prc:#a894f0}}:root[data-theme="dark"]{--prc:#a894f0}
+.ln.pr{stroke:var(--prc)}.ln.act{stroke:var(--ink);opacity:.75}
+#mtab{width:100%;font-size:13px}#mtab th{text-align:right;font-weight:600;color:var(--mut);padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}#mtab td{padding:4px 6px;text-align:right;white-space:nowrap}#mtab th:nth-child(-n+2),#mtab td:nth-child(-n+2){text-align:left}
 .arr{display:inline-block;color:var(--wnd);margin-left:4px}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
-<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button></div>
+<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="tip"></div><div id="note"></div>
 <div id="leg"><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
-<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="dtip"></div></div>
+<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="dtip"></div></div>
 <aside>
 <div><h1>European offshore wake monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" aria-label="Region"></select>
@@ -70,7 +75,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 <div class="mut" id="foot"></div>
 </aside></main>
 <script>
-function main(DATA,FEED){
+function main(DATA,FEED,MHIST){
 const $=id=>document.getElementById(id),cv=$("cv"),cx=cv.getContext("2d");
 const F=DATA.farms,Z=DATA.zones,S={c:null,farm:null,hover:-1,zh:-1,tab:"map",hh:-1,sort:["now",-1]};
 const URG=11.5,PC=(u,R,ur)=>u<3||u>25?0:R*Math.min(1,u/(ur||URG))**3;
@@ -130,7 +135,7 @@ const now=c=>F.filter(f=>!c||f.c===c).reduce((a,f)=>a+cur(f).pw,0);
 
 /* ---------- map ---------- */
 function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);return[r.width,r.height]}
-function draw(){if(S.tab==="cmp"){dash();sidebar();return}const[W,H]=size();cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];
+function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}const[W,H]=size();cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];
  S.farm===null?map(W,H):farmView(W,H);sidebar();$("leg").style.display=S.farm===null?"flex":"none"}
 function bbox(c){let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
  F.filter(f=>f.c===c).forEach(f=>f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
@@ -164,7 +169,7 @@ function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==n
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
  $("wif").style.display=LIVE()?"none":"block";$("mapctl").style.display=S.tab==="map"?"block":"none";$("list").style.display=S.tab==="map"?"flex":"none";
  const fs=F.filter(f=>!S.c||f.c===S.c),zs=Z.filter(z=>!S.c||z.c===S.c),cap=fs.reduce((a,f)=>a+f.inst,0);
- if(S.tab==="cmp"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=(S.c||"Europe")+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
+ if(S.tab!=="map"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=(S.c||"Europe")+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
   $("sub").textContent=fs.length+" operating farms · "+zs.length+" future zones";return}
  const src=LIVE()?"forecast wind":"what-if wind";
  if(S.farm===null){
@@ -219,15 +224,75 @@ function dash(){series();const fs=F.filter(f=>!S.c||f.c===S.c),A=agg(fs),lay=fs.
   sv.setAttribute("viewBox","0 0 "+W+" 78");
   sv.innerHTML=chartSVG(a.P.map(p=>p==null?null:p/a.inst),W,64,true)+"<text class='tl' x='3' y='76'>−24 h</text><text class='tl' x='"+L.x(N0)+"' y='76' text-anchor='middle'>now</text><text class='tl' x='"+(W-3)+"' y='76' text-anchor='end'>+24 h</text>"});
  $("fh").textContent=(S.c?S.c+" farms":"All farms")+" ("+fs.length+")";
- const rows=fs.map(f=>({f,i:F.indexOf(f),now:f.P[N0],cf:f.P[N0]==null?null:f.P[N0]/f.inst,wl:f.lay&&f.Fr[N0]?1-f.P[N0]/f.Fr[N0]:null,avg:mean(past(f.P)),nx:mean(fut(f.P)),u:f.U48[N0]}));
+ const rows=fs.map(f=>({f,i:F.indexOf(f),now:f.P[N0],cf:f.P[N0]==null?null:f.P[N0]/f.inst,wl:f.lay&&f.Fr[N0]?1-f.P[N0]/f.Fr[N0]:null,cp:farmCap(f).cap,wc:farmCap(f).wc,avg:mean(past(f.P)),nx:mean(fut(f.P)),u:f.U48[N0]}));
  const[k,dirn]=S.sort,val=r=>k==="n"?r.f.n:k==="c"?r.f.c:k==="inst"?r.f.inst:r[k]??-1;rows.sort((a,b)=>{const x=val(a),y=val(b);return(typeof x==="string"?x.localeCompare(y):x-y)*dirn});
- const cols=[["n","Farm"],["c","Country"],["inst","Installed"],["now","Now"],["cf","CF now"],["wl","Wake loss"],["u","Wind now"],["sp","Output ±24 h"],["sw","Wind ±24 h"],["avg","Last 24 h"],["nx","Next 24 h"]];
+ const cols=[["n","Farm"],["c","Country"],["inst","Installed"],["now","Now"],["cf","CF now"],["wl","Wake loss"],["cp","Capture 24 h"],["wc","Wake cost 24 h"],["u","Wind now"],["sp","Output ±24 h"],["sw","Wind ±24 h"],["avg","Last 24 h"],["nx","Next 24 h"]];
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
- $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
-function tab(t){S.tab=t;if(t==="cmp")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
- $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";draw()}
+ $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
+function tab(t){S.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+ $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;d.style.left=Math.min(e.clientX+12,innerWidth-260)+"px";d.style.top=e.clientY+14+"px"}
+
+/* ---------- Market tab (Energy-Charts prices + actual generation) ---------- */
+const MK=FEED&&FEED.market,ZN={"DK1":"Denmark West (DK1)","DK2":"Denmark East (DK2)","DE-LU":"Germany–Luxembourg","NL":"Netherlands","BE":"Belgium","FR":"France","SE4":"Sweden South (SE4)","IE(SEM)":"Ireland (SEM)","PT":"Portugal","ES":"Spain"};
+const CCN={de:"Germany",nl:"Netherlands",be:"Belgium",dk:"Denmark",fr:"France",se:"Sweden",ie:"Ireland",pt:"Portugal",es:"Spain",uk:"United Kingdom"};
+const HN={de:"Germany (DE-LU)",nl:"Netherlands",be:"Belgium",dk:"Denmark (DK1/DK2 blend)",fr:"France"};
+F.forEach(f=>{f.zone=MK?MK.farm_zone[String(f.id)]:null});
+let TIPS=[];
+const eur=v=>v==null||!isFinite(v)?"–":(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+" M€":Math.abs(v)>=1e4?Math.round(v/1e3)+" k€":Math.round(v).toLocaleString()+" €");
+const pm=v=>v==null||!isFinite(v)?"–":v.toFixed(1)+" €/MWh";
+function capStats(fs,price,a,b){let e=0,rev=0,sp=0,np=0,wc=0;
+ for(let h=a;h<=b;h++){const p=price[h];if(p==null)continue;np++;sp+=p;let g=0;
+  fs.forEach(f=>{const v=f.P[h];if(v!=null){g+=v;if(f.lay&&f.Fr[h]!=null)wc+=(f.Fr[h]-v)*p}});e+=g;rev+=g*p}
+ return{base:np?sp/np:null,cap:e>0?rev/e:null,e,wc,np}}
+function farmCap(f){const pr=MK&&f.zone&&MK.prices[f.zone];if(!pr)return{cap:null,wc:null};const s=capStats([f],pr,0,N0);return{cap:s.cap,wc:f.lay?s.wc:null}}
+function pathOf(v,x,y,a,b){let d="",on=false;for(let h=a;h<=b;h++){const q=v[h];if(q==null){on=false;continue}d+=(on?"L":"M")+x(h).toFixed(1)+","+y(q).toFixed(1);on=true}return d}
+function tsSVG(W,H,n,series,lo,hi,now,lbl){const x=i=>3+(W-6)*i/Math.max(1,n-1),y=v=>H-2-(H-6)*(Math.min(hi,Math.max(lo,v))-lo)/((hi-lo)||1);
+ let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+lbl+"</text>";
+ if(lo<0)s+="<line class='ax' stroke-dasharray='2 3' x1='3' x2='"+(W-3)+"' y1='"+y(0)+"' y2='"+y(0)+"'/><text class='tl' x='"+(W-3)+"' y='"+(y(0)-3)+"' text-anchor='end'>0</text>";
+ if(now!=null)s+="<line class='nowl' x1='"+x(now)+"' x2='"+x(now)+"' y1='0' y2='"+H+"'/>";
+ series.forEach(se=>{const b=now==null?n-1:now;s+="<path class='ln "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,0,b)+"'/>";if(now!=null&&now<n-1)s+="<path class='ln fc "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,now,n-1)+"'/>"});
+ return s}
+const axl=(W,H,a,m,b,mx)=>"<text class='tl' x='3' y='"+(H+11)+"'>"+a+"</text>"+(m?"<text class='tl' x='"+mx+"' y='"+(H+11)+"' text-anchor='middle'>"+m+"</text>":"")+"<text class='tl' x='"+(W-3)+"' y='"+(H+11)+"' text-anchor='end'>"+b+"</text>";
+function modSum(fs,k){let s=0,n=0;fs.forEach(f=>{if(f.P[k]!=null){s+=f.P[k];n++}});return n?s:null}
+function market(){series();const el=$("mkt");TIPS=[];
+ if(!MK){el.innerHTML="<div class='feednote'><b>No market data yet.</b> The pipeline adds it on its next run with a real forecast source.</div>";return}
+ const zinst=z=>F.filter(f=>f.zone===z).reduce((a,f)=>a+f.inst,0),zones=Object.keys(MK.prices).filter(z=>F.some(f=>f.zone===z&&(!S.c||f.c===S.c))).sort((a,b)=>zinst(b)-zinst(a));
+ let lo=0,hi=50;zones.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
+ let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because the price licence is private use only: "+MK.restricted_zones.join(", ")+". ":"")+"UK has no day-ahead price in this source yet.</div>";
+ h+="<h2>Offshore capture price by bidding zone <span class='mut' style='font:13px system-ui'>· last 24 h modelled, next 24 h once tomorrow's auction is published (dashed); same €/MWh scale</span></h2><div class='grid'>";
+ zones.forEach(z=>{const fs=F.filter(f=>f.zone===z),pr=MK.prices[z],L=capStats(fs,pr,0,N0),N=capStats(fs,pr,N0+1,NT-1),rate=L.cap!=null&&L.base>0?L.cap/L.base:null;
+  const i=TIPS.push(k=>(ZN[z]||z)+" · "+dl(k)+(k>N0?" (forecast)":"")+" · "+pm(pr[k])+" · offshore "+fmt(modSum(fs,k)))-1;
+  h+="<div class='card' data-z='"+z+"'><h3>"+(ZN[z]||z)+"<span>"+pm(pr[N0])+" now</span></h3><div class='v mut'>Last 24 h: baseload "+pm(L.base)+" · capture "+pm(L.cap)+(rate!=null?" (<b style='color:var(--ink)'>"+(100*rate).toFixed(0)+"%</b>)":"")+"<br>Revenue lost to wakes "+(fs.some(f=>f.lay)?eur(L.wc):"–")+" · "+fs.length+" farm"+(fs.length>1?"s":"")+", "+fmt(fs.reduce((a,f)=>a+f.inst,0))+"<br>Next 24 h: "+(N.np?"baseload "+pm(N.base)+" · capture "+pm(N.cap)+(N.np<24?" ("+N.np+" h priced)":""):"tomorrow's prices not published yet")+"</div><svg class='mk' data-t='"+i+"' data-n='"+NT+"' data-z='"+z+"' data-lo='"+lo+"' data-hi='"+hi+"'></svg></div>"});
+ h+="</div>";
+ const act=MK.actual_offshore||{},cs=Object.keys(act).filter(c=>HN[c]&&(!S.c||CCN[c]===S.c)).sort((a,b)=>sum(CCN[b])-sum(CCN[a]));
+ if(cs.length){h+="<h2>Model check: modelled vs actual offshore output <span class='mut' style='font:13px system-ui'>· last 24 h; actual is the whole national fleet, the model only covers farms in the dataset; countries where the dataset has most of the fleet</span></h2><div class='grid'>";
+  cs.forEach(c=>{const fs=F.filter(f=>f.c===CCN[c]),a=act[c],mod=[...Array(NP)].map((_,k)=>modSum(fs,k));let sm=0,sa=0;
+   for(let k=0;k<NP;k++)if(mod[k]!=null&&a[k]!=null){sm+=mod[k];sa+=a[k]}
+   const hv=Math.max(1,...mod.filter(v=>v!=null),...a.filter(v=>v!=null)),i=TIPS.push(k=>CCN[c]+" · "+dl(k)+" · modelled "+fmt(mod[k])+" · actual "+fmt(a[k]))-1;
+   h+="<div class='card'><h3>"+CCN[c]+"<span>"+(sa>0?(sm>=sa?"+":"")+(100*(sm/sa-1)).toFixed(0)+"% vs actual":"–")+"</span></h3><div class='v mut'><span style='color:var(--acc)'>━</span> modelled avg "+fmt(sm/NP)+" · <span style='color:var(--ink)'>━</span> actual avg "+fmt(sa/NP)+"<br>Model: "+fs.length+" farms, "+fmt(fs.reduce((q,f)=>q+f.inst,0))+" installed in the dataset</div><svg class='mk' data-t='"+i+"' data-n='"+NP+"' data-c='"+c+"' data-hi='"+hv+"'></svg></div>"});
+  h+="</div>"}
+ h+="<h2>History: offshore capture rate by month <span class='mut' style='font:13px system-ui'>· from actual national offshore output and day-ahead prices, not the model</span></h2><div id='mhist' class='grid'></div><div class='tw'><table id='mtab'></table></div>";
+ el.innerHTML=h;
+ el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
+  if(sv.dataset.z)sv.innerHTML=tsSVG(W,Hh,NT,[{v:MK.prices[sv.dataset.z],cls:"pr"}],+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1));
+  else{const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
+   sv.innerHTML=tsSVG(W,Hh,NP,[{v:act[c],cls:"act"},{v:mod,cls:""}],0,+sv.dataset.hi,null,fmt(+sv.dataset.hi))+axl(W,Hh,"−24 h","","now")}});
+ histDraw()}
+function histDraw(){const A=MHIST&&MHIST.areas,box=$("mhist");
+ if(!A||!Object.keys(A).length){box.innerHTML="<div class='mut'>Building up: the pipeline adds a few months per hourly run, so two years take about a day.</div>";$("mtab").innerHTML="";return}
+ let lo=100,hi=100;Object.values(A).forEach(a=>a.months.forEach(r=>{const q=100*r.capture/r.baseload;if(r.baseload>0&&isFinite(q)){lo=Math.min(lo,q);hi=Math.max(hi,q)}}));lo=Math.floor(Math.min(lo,80)/10)*10;hi=Math.ceil(Math.max(hi,100)/10)*10;
+ box.innerHTML=Object.entries(A).map(([c,a])=>{const ms=a.months,last=ms[ms.length-1],r=last&&last.baseload>0?100*last.capture/last.baseload:null,t=ms.slice(-12),e=t.reduce((s,m)=>s+m.gwh,0),rv=t.reduce((s,m)=>s+m.gwh*m.capture,0),b=t.reduce((s,m)=>s+m.baseload,0)/Math.max(1,t.length);
+  const i=TIPS.push(k=>{const m=ms[k];return m&&(HN[c]||c)+" · "+m.m+" · baseload "+pm(m.baseload)+" · capture "+pm(m.capture)+(m.baseload>0?" ("+(100*m.capture/m.baseload).toFixed(0)+"%)":"")+" · "+Math.round(m.gwh).toLocaleString()+" GWh"+(m.neg_share?" · "+(100*m.neg_share).toFixed(1)+"% of output at negative prices":"")})-1;
+  return"<div class='card'><h3>"+(HN[c]||c)+"<span>"+(r!=null?r.toFixed(0)+"% in "+last.m:"–")+"</span></h3><div class='v mut'>Last "+t.length+" months: capture "+pm(e>0?rv/e:null)+" vs baseload "+pm(b)+"</div><svg class='mh' data-t='"+i+"' data-n='"+ms.length+"' data-c='"+c+"'></svg></div>"}).join("");
+ box.querySelectorAll("svg.mh").forEach(sv=>{const W=sv.clientWidth||220,Hh=70,ms=A[sv.dataset.c].months,n=Math.max(2,ms.length);sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
+  const v=ms.map(m=>m.baseload>0?100*m.capture/m.baseload:null),x=i=>3+(W-6)*i/(n-1),y=q=>Hh-2-(Hh-6)*(q-lo)/(hi-lo);
+  sv.innerHTML=tsSVG(W,Hh,n,[{v,cls:""}],lo,hi,null,hi+"%")+"<line class='ax' stroke-dasharray='2 3' x1='3' x2='"+(W-3)+"' y1='"+y(100)+"' y2='"+y(100)+"'/><text class='tl' x='"+(W-3)+"' y='"+(y(100)-3)+"' text-anchor='end'>100% = baseload</text>"+v.map((q,i)=>q==null?"":"<circle class='dot' r='3' cx='"+x(i)+"' cy='"+y(q)+"'/>").join("")+axl(W,Hh,ms[0]?ms[0].m:"","",ms.length?ms[ms.length-1].m:"")});
+ const rows=[];Object.entries(A).forEach(([c,a])=>a.months.forEach(m=>rows.push([c,m])));rows.sort((p,q)=>q[1].m.localeCompare(p[1].m)||p[0].localeCompare(q[0]));
+ $("mtab").innerHTML="<thead><tr><th>Month</th><th>Area</th><th>Baseload</th><th>Capture</th><th>Capture rate</th><th>Offshore output</th><th>Output at negative prices</th></tr></thead><tbody>"+rows.slice(0,60).map(([c,m])=>"<tr><td>"+m.m+"</td><td>"+(HN[c]||c)+"</td><td>"+pm(m.baseload)+"</td><td>"+pm(m.capture)+"</td><td>"+(m.baseload>0?(100*m.capture/m.baseload).toFixed(1)+"%":"–")+"</td><td>"+Math.round(m.gwh).toLocaleString()+" GWh</td><td>"+(m.neg_share==null?"–":(100*m.neg_share).toFixed(1)+"%")+"</td></tr>").join("")+"</tbody>"}
+$("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=TIPS[+sv.dataset.t](k);if(t)dtip(e,t);else $("dtip").style.display="none"};
+$("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
 
 /* ---------- events ---------- */
 $("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
@@ -256,8 +321,9 @@ $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Generic power curve P ∝ U³ up to each turbine's rated speed. <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Wake models: PyWake (DTU).";
 addEventListener("resize",draw);draw();
 }
-(async()=>{let site=window.SITE,feed=window.FEED||null;
+(async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json")).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}
-  try{const r=await fetch("data/feed.json",{cache:"no-store"});if(r.ok)feed=await r.json()}catch(e){feed=null}}
- main(site,feed)})();
+  try{const r=await fetch("data/feed.json",{cache:"no-store"});if(r.ok)feed=await r.json()}catch(e){feed=null}
+  try{const r=await fetch("data/market_history.json",{cache:"no-store"});if(r.ok)mh=await r.json()}catch(e){mh=null}}
+ main(site,feed,mh)})();
 </script></body></html>

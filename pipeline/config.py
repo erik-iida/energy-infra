@@ -38,5 +38,8 @@ WAKE_MODELS = {
     "turbopark": "TurbOPark (Nygaard 2022)",
 }
 
+# Power-market data from Energy-Charts (prices, actual generation). Set WM_MARKET=0 to switch off.
+MARKET = os.environ.get("WM_MARKET", "1") != "0"
+
 HISTORY_HOURS = 24
 FORECAST_HOURS = 24

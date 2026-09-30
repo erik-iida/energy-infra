@@ -130,6 +130,14 @@ def main(argv=None) -> None:
         "fc_hours": [iso(d) for d in future],
         "farms": feed_farms,
     }
+    if config.MARKET and args.source != "synthetic":
+        try:
+            from . import market
+            feed["market"], hist = market.build(farms, feed["hours"] + feed["fc_hours"])
+            (config.FEED_JSON.parent / "market_history.json").write_text(
+                json.dumps(hist, separators=(",", ":")), encoding="utf-8")
+        except Exception as e:  # market data must never stop the wind feed
+            print(f"market: failed ({e!r}); feed written without market data")
     config.FEED_JSON.write_text(json.dumps(feed, separators=(",", ":")), encoding="utf-8")
     tot = sum(results[k][2]["turbopark"][np_ - 1] for k in results if np.isfinite(results[k][2]["turbopark"][np_ - 1]))
     print(f"{args.source}: {len(results)} farms, {len(times)} time steps, Europe now {tot / 1000:.2f} GW (TurbOPark), "

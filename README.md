@@ -47,6 +47,25 @@ $env:WM_OPENMETEO_MODEL = "icon_eu"   # example: switch model
 python -m pipeline.run --source openmeteo
 ```
 
+## Market data (Energy-Charts)
+
+The pipeline also pulls from the [Energy-Charts API](https://api.energy-charts.info) (Fraunhofer ISE, no key):
+
+- **Day-ahead prices** per bidding zone for the last 24 h and the next 24 h (tomorrow's auction is published
+  around midday). Farms map to zones by country; Denmark splits at the Great Belt (Anholt → DK1, Sprogø assumed DK2).
+- **Actual offshore generation** per country for the last 24 h, to check the model against reality.
+- **Monthly history** (`web/data/market_history.json`) of baseload price, offshore capture price, capture rate and
+  output at negative prices for DE-LU, NL, BE, DK (DK1/DK2 blended by installed MW) and FR, built from actual
+  national offshore output. It backfills 6 area-months per hourly run, so two years take about a day.
+
+The page's **Market** tab shows capture price and capture rate per zone (modelled, last and next 24 h), revenue lost
+to wakes, the model check and the monthly history. The Compare table gets capture price and wake cost per farm.
+
+Licences: every Energy-Charts response states its licence. Only CC BY data is published; zones marked "private
+and internal use" are listed as restricted and left out. The API rate-limits bursts, so calls are spaced 2 s apart
+and cached (about 17 calls per hourly run). UK farms have no market numbers: this source has no GB day-ahead price.
+Switch it off with `WM_MARKET=0`. Offline test: `python -m tests.mock_market`.
+
 ## API budget
 
 - Farms in the same 0.1° cell share one forecast: 128 farms → about 115 locations.
@@ -138,6 +157,7 @@ in it.
 | Weather forecasts | [Open-Meteo](https://open-meteo.com/) (ECMWF IFS and other models) | CC BY 4.0, free for non-commercial use |
 | Turbine positions | "Open European offshore wind turbine database", Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
+| Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |
 

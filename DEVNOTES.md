@@ -17,6 +17,16 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Web page is plain HTML/JS in `web/index.html` (no build step). It loads `data/site.json` + `data/feed.json`.
   Map heatmap uses in-browser Jensen/Gaussian; Compare tab uses the PyWake numbers from the feed.
 
+## Market module (pipeline/market.py)
+- Energy-Charts v2 API. Prices are 15-min (PT15M) since the 15-min day-ahead market; averaged to UTC hours.
+- Licence gating on every response ("CC BY" in `license`); restricted zones go to `restricted_zones`, not published.
+- Capture price = Σ P·price / Σ P. Capture rate = capture / baseload. Wake cost = Σ (P_nowake − P_model)·price,
+  farms with layouts only. The page computes these from feed.json for the selected wake model.
+- Monthly history uses ACTUAL national offshore output (not the model) × zone price; DK blends DK1/DK2 by
+  installed MW from site.json. Backfill 6 (area, month) cells per run; current and previous month refreshed daily.
+- The API returns HTTP 429 on bursts: 2 s spacing, one retry after 20 s, then skip. Market failure never blocks the feed.
+- No GB price in Energy-Charts → UK farms lack market numbers (Elexon/N2EX would be the source).
+
 ## Decisions so far
 - Windy dropped: free key returns shuffled test data (500 calls/day), Professional is €990/yr and has no ECMWF.
 - Generic power curve P = rated × (U/U_rated)³, U_rated from rated power and D with Cp 0.45; Ct 0.8 below rated.
@@ -33,7 +43,8 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Real power/Ct curves per turbine type.
 - Turbine positions for the missing German and Dutch farms (EMODnet / operators).
 - Inter-array cables, bathymetry layer.
-- Validation against actual output: ENTSO-E per country, Elexon per UK farm.
+- Validation per farm: Elexon (UK, per BM unit) and ENTSO-E per unit; country-level check vs Energy-Charts is in the Market tab.
+- Product thinking: capture-price discount and wake-cost analytics per farm/zone are the most commercial part so far.
 - Price data and cross-border flows (later phase).
 - Onshore Denmark with satellite roughness (v2); DK onshore turbine file exists but is not in this repo.
 

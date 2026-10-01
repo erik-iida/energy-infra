@@ -20,12 +20,13 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install requests pyshp
-      - run: python scripts/fetch_global_turbines.py
+      - run: python scripts/fetch_global_turbines.py || true
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/raw/global_turbines.csv data/raw/global_turbines_log.txt
+          git add data/raw/global_turbines_log.txt
+          git add data/raw/global_turbines.csv 2>/dev/null || true
           git commit -m "Global offshore wind turbine dataset (Zhang et al., CC0) as CSV" || echo "no changes"
           git pull --rebase
           git push

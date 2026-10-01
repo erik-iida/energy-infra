@@ -22,14 +22,33 @@ import shapefile  # pyshp
 
 ROOT = Path(__file__).resolve().parents[1]
 URL = "https://ndownloader.figshare.com/files/32822453"
+API = "https://api.figshare.com/v2/file/download/32822453"
 OUT = ROOT / "data" / "raw" / "global_turbines.csv"
 LOG = ROOT / "data" / "raw" / "global_turbines_log.txt"
 
 
 def main() -> None:
     log = []
-    r = requests.get(URL, timeout=300, headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
-    r.raise_for_status()
+    r = None
+    for url in (URL, API):
+        for ua in ("offshore-wake-monitor/1.0 (+https://github.com/erik-iida/energy-infra)",
+                   "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36"):
+            try:
+                q = requests.get(url, timeout=300, headers={"User-Agent": ua, "Accept": "*/*"}, allow_redirects=True)
+                log.append(f"{url} [{ua[:20]}] -> HTTP {q.status_code} {q.headers.get('content-type')} "
+                           f"{len(q.content)} bytes, final {q.url[:120]}")
+                if q.status_code == 200 and q.content[:2] == b"PK":
+                    r = q
+                    break
+                log.append(f"    {q.text[:200]!r}")
+            except Exception as ex:
+                log.append(f"{url}: {ex!r}")
+        if r is not None:
+            break
+    if r is None:
+        LOG.write_text("\n".join(log) + "\n", encoding="utf-8")
+        print("\n".join(log))
+        return
     z = zipfile.ZipFile(io.BytesIO(r.content))
     log.append(f"zip {len(r.content)} bytes")
     names = z.namelist()

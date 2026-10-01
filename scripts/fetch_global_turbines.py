@@ -25,6 +25,7 @@ URL = "https://ndownloader.figshare.com/files/32822453"
 API = "https://api.figshare.com/v2/file/download/32822453"
 OUT = ROOT / "data" / "raw" / "global_turbines.csv"
 LOG = ROOT / "data" / "raw" / "global_turbines_log.txt"
+ZIP = ROOT / "data" / "raw" / "global_offshore_wind_turbines_2021.zip"
 
 
 def main() -> None:
@@ -49,8 +50,19 @@ def main() -> None:
         LOG.write_text("\n".join(log) + "\n", encoding="utf-8")
         print("\n".join(log))
         return
-    z = zipfile.ZipFile(io.BytesIO(r.content))
-    log.append(f"zip {len(r.content)} bytes")
+    ZIP.write_bytes(r.content)  # keep the original; conversion below can also be re-run locally
+    try:
+        convert(r.content, log)
+    except Exception:
+        import traceback
+        log.append(traceback.format_exc())
+    LOG.write_text("\n".join(log) + "\n", encoding="utf-8")
+    print("\n".join(log))
+
+
+def convert(content: bytes, log: list[str]) -> None:
+    z = zipfile.ZipFile(io.BytesIO(content))
+    log.append(f"zip {len(content)} bytes")
     names = z.namelist()
     log += [f"  {n} {z.getinfo(n).file_size}" for n in names]
     shps = [n for n in names if n.lower().endswith(".shp") and not n.startswith("__MACOSX")]
@@ -78,8 +90,6 @@ def main() -> None:
         w.writeheader()
         w.writerows(rows)
     log.append(f"wrote {len(rows)} rows -> {OUT.relative_to(ROOT)}")
-    LOG.write_text("\n".join(log) + "\n", encoding="utf-8")
-    print("\n".join(log))
 
 
 if __name__ == "__main__":

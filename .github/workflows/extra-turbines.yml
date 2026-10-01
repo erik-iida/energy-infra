@@ -1,0 +1,32 @@
+name: extra-turbines
+
+# Manual: fetch farms missing from the turbine database from OpenStreetMap, rebuild site.json, commit.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/fetch_osm_turbines.py]   # runs when the presets change
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install requests shapely
+      - run: python scripts/fetch_osm_turbines.py
+      - run: python scripts/build_site.py
+      - name: Commit
+        run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/extra_turbines.csv web/data/site.json
+          git commit -m "Add extra turbines from OpenStreetMap" || echo "no changes"
+          git push

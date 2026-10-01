@@ -4,3 +4,6 @@ __pycache__/
 .env
 state/
 data/raw/ne_10m_land.geojson
+
+# HV grid raw CSVs (downloaded by scripts/fetch_grid.py)
+data/raw/grid/*.csv

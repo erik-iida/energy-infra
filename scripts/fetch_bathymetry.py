@@ -32,7 +32,7 @@ LOG = ROOT / "data" / "raw" / "bathy_log.txt"
 WCS = "https://ows.emodnet-bathymetry.eu/wcs"
 BBOX = (-12.0, 34.0, 32.0, 66.0)  # west, south, east, north: all European offshore wind seas
 RES = 48                           # pixels per degree (1.25 arc-minutes, ~2.3 km N-S)
-TILE = 4                           # degrees per request
+TILE = 2                           # degrees per request; split further if the server says too much data
 UA = {"User-Agent": "offshore-wake-monitor (personal, non-commercial)"}
 log_lines: list[str] = []
 
@@ -72,7 +72,9 @@ def tile(w: float, s: float, e: float, n: float, px: int, py: int) -> np.ndarray
                 r = requests.get(WCS, params={**base, "format": fmt}, headers=UA, timeout=120)
                 ct = r.headers.get("content-type", "")
                 if r.status_code != 200 or "xml" in ct:
-                    log(f"  {w},{s} {fmt}: HTTP {r.status_code} {ct} {r.text[:200]!r}")
+                    if "too much data" in r.text and px >= 2 and py >= 2:
+                        return split(w, s, e, n, px, py)
+                    log(f"  {w},{s} {fmt}: HTTP {r.status_code} {ct} {r.text[:300]!r}")
                     break  # try the next format
                 a = read_arcgrid(r.text) if fmt == "ArcGrid" else read_tiff(r.content)
                 if a.shape != (py, px):
@@ -87,28 +89,49 @@ def tile(w: float, s: float, e: float, n: float, px: int, py: int) -> np.ndarray
     return None
 
 
+def split(w: float, s: float, e: float, n: float, px: int, py: int) -> np.ndarray | None:
+    """Fetch a tile as four quadrants (the server limits how much source data one request may read)."""
+    mx, my = (w + e) / 2, (s + n) / 2
+    hx, hy = px // 2, py // 2
+    out = np.full((py, px), np.nan)
+    parts = [((w, my, mx, n), (0, 0, hx, hy)), ((mx, my, e, n), (0, hx, px - hx, hy)),
+             ((w, s, mx, my), (hy, 0, hx, py - hy)), ((mx, s, e, my), (hy, hx, px - hx, py - hy))]
+    got = 0
+    for (a, b, c, d), (r0, c0, qx, qy) in parts:
+        q = tile(a, b, c, d, qx, qy)
+        if q is not None:
+            out[r0:r0 + qy, c0:c0 + qx] = q
+            got += 1
+    return out if got else None
+
+
 def main() -> int:
     w0, s0, e0, n0 = BBOX
     W, H = int((e0 - w0) * RES), int((n0 - s0) * RES)
     grid = np.full((H, W), np.nan)
-    ok = bad = 0
+    from concurrent.futures import ThreadPoolExecutor
+
+    jobs = []
     lat = n0
     while lat > s0:  # rows from north to south
         lon = w0
         while lon < e0:
             e, s = min(e0, lon + TILE), max(s0, lat - TILE)
-            px, py = int(round((e - lon) * RES)), int(round((lat - s) * RES))
-            a = tile(lon, s, e, lat, px, py)
-            r0, c0 = int(round((n0 - lat) * RES)), int(round((lon - w0) * RES))
+            jobs.append((lon, s, e, lat, int(round((e - lon) * RES)), int(round((lat - s) * RES))))
+            lon = e
+        lat = s
+    ok = bad = 0
+    with ThreadPoolExecutor(4) as ex:  # a few at a time, to be polite to the server
+        for j, a in zip(jobs, ex.map(lambda t: tile(*t), jobs)):
+            w, s, e, n, px, py = j
+            r0, c0 = int(round((n0 - n) * RES)), int(round((w - w0) * RES))
             if a is None:
                 bad += 1
             else:
                 grid[r0:r0 + py, c0:c0 + px] = a
                 ok += 1
-            lon = e
-            time.sleep(0.5)
-        lat = s
-        log(f"row down to {lat:.0f}N: {ok} tiles ok, {bad} failed")
+            if (ok + bad) % 22 == 0:
+                log(f"{ok + bad}/{len(jobs)} tiles: {ok} ok, {bad} failed")
     valid = np.isfinite(grid) & (grid > -12000) & (grid < 9000)
     log(f"valid cells {valid.mean():.1%}; elevation range {np.nanmin(np.where(valid, grid, np.nan)):.0f}"
         f" to {np.nanmax(np.where(valid, grid, np.nan)):.0f} m")

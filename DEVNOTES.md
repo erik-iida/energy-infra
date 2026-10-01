@@ -30,7 +30,7 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 
 ## Web page
 - Wake fields are drawn on a wind-aligned grid (D/10 across, D/3 along), transparent below 0.8 % deficit,
-  one sequential ramp 0-30 % with a legend.
+  viridis 0-30 % with a legend.
 - Map is one pan/zoom canvas (drag, wheel, pinch, double-click, +/− buttons). Projection: equirectangular around
   the view centre. Level of detail by the turbine layout's on-screen radius: < 30 px ring glyph (outer ring =
   capacity, filled radius = capacity factor), ≥ 30 px turbines, ≥ 90 px wake heatmap (max 4 farms, cached per
@@ -42,9 +42,13 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   or of load). With 10-15 series a colour per line can't be told apart, so lines are neutral grey, identified by
   a round flag + label at the line end (labels nudged apart), and the line under the cursor is highlighted;
   the tooltip ranks all series at that hour. Shared code: FLAGS / flagSVG / cmpRender in index.html.
-- Bathymetry underlay: EMODnet Bathymetry WMS (ows.emodnet-bathymetry.eu, layer emodnet:mean, plus
-  emodnet:contours when zoomed in), requested by the browser for the visible bbox (EPSG:4326, debounced 350 ms)
-  and drawn under the land. Plate carrée maps linearly to the map projection. Toggle in the sidebar. CC BY 4.0.
+- Bathymetry underlay: a coarse EMODnet depth grid (1.25', 12W-32E, 34-66N) fetched by
+  scripts/fetch_bathymetry.py (bathymetry workflow, runs when the script changes) into web/data/bathy.png
+  (8-bit: metres up to 200, then 100 m steps, 255 = land) + bathy.json. The browser colours it with a sequential
+  blue ramp over 0..slider depth (default 60 m, deeper = darkest), so the scale suits fixed-bottom depths. When
+  zoomed in, EMODnet WMS emodnet:contours is drawn on top. If the grid is missing the page falls back to the
+  WMS emodnet:mean image. Plate carrée maps linearly to the map projection. CC BY 4.0.
+- Wake heat uses viridis (user's choice), alpha still rising from 0.8 % deficit.
 - Farms in site.json but not yet in feed.json (between a site update and the next hourly run) are hidden
   instead of breaking the page.
 

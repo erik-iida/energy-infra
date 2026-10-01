@@ -75,7 +75,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to Europe" aria-label="Back to Europe">⌂</button></div><div id="tip"></div><div id="note"></div>
-<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span><span id="bleg">Depth: <img alt="EMODnet depth legend" style="max-width:150px;max-height:90px;vertical-align:top" src="https://ows.emodnet-bathymetry.eu/wms?service=WMS&request=GetLegendGraphic&version=1.1.1&format=image/png&layer=emodnet:mean"></span></div></div>
+<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span><span id="bleg" style="display:block">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
@@ -92,6 +92,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 <label style="margin-top:8px">Wake decay k <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change k to explore.</div></div>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="Z" checked> Show future zones</label>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="BY" checked> Bathymetry (EMODnet), contours when zoomed in</label>
+<div id="bys"><label for="BD">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"><div class="mut" style="font-size:12px">Deeper water shows in the darkest colour.</div></div>
 <div id="cmp"></div>
 <div id="list"></div>
 <div class="mut" id="foot"></div>
@@ -187,7 +188,7 @@ function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;p
 function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}paint();sidebar()}
 // Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
 // streaks stay crisp. Colour = one sequential ramp; tiny deficits fully transparent (no box edge).
-const RAMP=[[253,204,150],[244,140,84],[222,88,40],[176,52,18]];
+const RAMP=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]]; // viridis
 function rampC(t){t=Math.max(0,Math.min(1,t))*(RAMP.length-1);const i=Math.min(RAMP.length-2,Math.floor(t)),f=t-i,a=RAMP[i],b=RAMP[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]}
 const DEF_MAX=.3; // colour scale top: 30 % wind speed deficit
 function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;
@@ -220,13 +221,30 @@ function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v
 // Bathymetry underlay: EMODnet Bathymetry WMS (EPSG:4326 maps linearly onto this projection), requested for the
 // visible area after panning/zooming settles; depth contours added when zoomed in.
 const BATHY_URL="https://ows.emodnet-bathymetry.eu/wms";let bathyT=0;S.bathy=null;S.bathyKey="";
-function bathyWant(W,H){if(!$("BY").checked)return;const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W,H),ct=V.s>150;
- const key=[l0,a0,l1,a1].map(v=>v.toFixed(3)).join(",")+ct;if(S.bathyKey===key)return;S.bathyKey=key;clearTimeout(bathyT);
+// Depth grid pre-fetched from EMODnet (scripts/fetch_bathymetry.py) and coloured here, so the scale can change.
+const BRAMP=[[232,243,249],[190,222,238],[134,189,220],[78,146,196],[39,99,160],[24,61,112]];
+const BG={meta:null,v:null,cv:null,max:60,fail:false};
+function bdec(v){return v<=200?v:200+(v-200)*100}
+function bcol(t){t=Math.max(0,Math.min(1,t))*(BRAMP.length-1);const i=Math.min(BRAMP.length-2,Math.floor(t)),f=t-i,a=BRAMP[i],b=BRAMP[i+1];return[0,1,2].map(k=>Math.round(a[k]+(b[k]-a[k])*f))}
+async function bathyLoad(){if(BG.meta||BG.fail)return;BG.fail=true;
+ try{const m=await(await fetch("data/bathy.json",{cache:"no-cache"})).json(),bl=await(await fetch("data/bathy.png")).blob();
+  const bm=await createImageBitmap(bl,{colorSpaceConversion:"none",premultiplyAlpha:"none"}),c=document.createElement("canvas");c.width=m.w;c.height=m.h;
+  const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(bm,0,0);const d=g.getImageData(0,0,m.w,m.h).data,v=new Uint8Array(m.w*m.h);for(let i=0;i<v.length;i++)v[i]=d[4*i];
+  BG.meta=m;BG.v=v;BG.cv=c;BG.fail=false;bathyColour();S.bathyKey="";repaint()}catch(e){console.info("no depth grid yet, using EMODnet WMS colours",e);S.bathyKey="";repaint()}}
+function bathyColour(){BG.max=+$("BD").value;$("BDv").textContent="0–"+BG.max+" m";
+ const lut=new Uint8ClampedArray(256*4);for(let v=0;v<255;v++){const c=bcol(bdec(v)/BG.max);lut.set([c[0],c[1],c[2],255],4*v)}
+ $("blegc").style.background="linear-gradient(90deg,"+BRAMP.map(c=>"rgb("+c.join(",")+")").join(",")+")";$("blegt").textContent="0 – ≥"+BG.max+" m";
+ if(!BG.v)return;const m=BG.meta,g=BG.cv.getContext("2d"),im=g.createImageData(m.w,m.h),o=im.data,v=BG.v;
+ for(let i=0;i<v.length;i++){const k=4*v[i];o[4*i]=lut[k];o[4*i+1]=lut[k+1];o[4*i+2]=lut[k+2];o[4*i+3]=lut[k+3]}g.putImageData(im,0,0)}
+function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W,H),ct=V.s>150,grid=!!BG.meta;
+ if(grid&&!ct){S.bathy=null;S.bathyKey="";return}  // grid alone; WMS only for contours when zoomed in
+ const key=[l0,a0,l1,a1].map(v=>v.toFixed(3)).join(",")+ct+grid;if(S.bathyKey===key)return;S.bathyKey=key;clearTimeout(bathyT);
  bathyT=setTimeout(()=>{const mx=(l1-l0)*.15,my=(a1-a0)*.15,b=[l0-mx,Math.max(-85,a0-my),l1+mx,Math.min(85,a1+my)],sc=Math.min(1,2048/(1.3*Math.max(W,H)));
-  const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b};repaint()};
-  img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
-function bathyDraw(){const B=S.bathy;if(!B||!$("BY").checked)return;const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);
- cx.globalAlpha=+css("--bathy-a")||.75;cx.imageSmoothingEnabled=true;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0);cx.globalAlpha=1}
+  const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b,lines:grid};repaint()};
+  img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(grid?"emodnet:contours":ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
+function bathyDraw(){if(!$("BY").checked)return;const al=+css("--bathy-a")||.75;cx.imageSmoothingEnabled=true;
+ if(BG.meta){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
+ const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
 function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];bathyWant(W,H);bathyDraw();
  const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
  cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
@@ -501,7 +519,7 @@ $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 $("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
 $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):go(S.c,null)};
-["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;$("BY").onchange=()=>{S.bathyKey="";$("bleg").style.display=$("BY").checked?"block":"none";draw()};
+["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;$("BY").onchange=()=>{S.bathyKey="";$("bleg").style.display=$("bys").style.display=$("BY").checked?"block":"none";draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
  const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);

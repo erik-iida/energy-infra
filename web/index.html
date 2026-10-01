@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>European Offshore Wake Monitor</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Offshore Wind Wake Monitor</title>
 <style>
 :root{--bg:#eef3f4;--panel:#fff;--ink:#10252d;--mut:#5b7078;--sea:#cfe3ea;--land:#e6e2d5;--line:#b8c9cf;--acc:#0b6e8a;--uc:#b4531c;--cs:#7a5bb0;--pl:#6d7f86;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1a20;--panel:#12262e;--ink:#e3eef1;--mut:#8aa3ac;--sea:#0f2b36;--land:#23353a;--line:#2b4650;--acc:#5fc4e0;--uc:#f0935c;--cs:#b39cf0;--pl:#8fa4ab}}
@@ -597,7 +597,7 @@ $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wi
 addEventListener("resize",draw);size();Object.assign(V,fit(WORLD()));draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
- if(!site){try{site=await(await fetch("data/site.json")).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}
+ if(!site){try{site=await(await fetch("data/site.json",{cache:"no-cache"})).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}
   try{const r=await fetch("data/feed.json",{cache:"no-store"});if(r.ok)feed=await r.json()}catch(e){feed=null}
   try{const r=await fetch("data/market_history.json",{cache:"no-store"});if(r.ok)mh=await r.json()}catch(e){mh=null}}
  main(site,feed,mh)})();

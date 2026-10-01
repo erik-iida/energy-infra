@@ -3,6 +3,7 @@ name: hourly-feed
 on:
   schedule:
     - cron: "7 * * * *"   # every hour at :07 (off the hour, when Actions is less busy)
+    - cron: "37 * * * *"  # second slot: GitHub often drops scheduled runs; forecasts are cached, so no extra API calls
   workflow_dispatch:       # "Run workflow" button for manual runs
   push:
     branches: [main]       # redeploy straight away when code changes
@@ -50,7 +51,7 @@ jobs:
           WM_SOURCE: ${{ vars.WM_SOURCE || 'openmeteo' }}
           WM_OPENMETEO_MODEL: ${{ vars.WM_OPENMETEO_MODEL || 'ecmwf_ifs' }}
           WM_WINDY_MODEL: ${{ vars.WM_WINDY_MODEL || 'iconEu' }}
-          WM_DAILY_CALL_CAP: ${{ vars.WM_DAILY_CALL_CAP || '2000' }}
+          WM_DAILY_CALL_CAP: ${{ vars.WM_DAILY_CALL_CAP || '3000' }}
           WINDY_KEY: ${{ secrets.WINDY_KEY }}
         run: python -m pipeline.run
 

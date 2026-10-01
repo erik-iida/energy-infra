@@ -23,7 +23,15 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "raw" / "extra_turbines.csv"
-OVERPASS = "https://overpass-api.de/api/interpreter"
+OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter"]
+LOG = ROOT / "data" / "raw" / "extra_turbines_log.txt"
+log_lines: list[str] = []
+
+
+def log(msg: str) -> None:
+    print(msg)
+    log_lines.append(msg)
 COLS = ["wind_farm", "oem_manufacturer", "latitude", "longitude", "country", "rated_power", "rotor_diameter",
         "hub_height", "turbine_type", "commissioning_date"]
 
@@ -53,11 +61,23 @@ def num(v: str | None) -> float | None:
 def fetch(name: str, p: dict) -> list[dict]:
     s, w, n, e = p["bbox"]
     q = f'[out:json][timeout:60];node["generator:source"="wind"]({s},{w},{n},{e});out;'
-    r = requests.post(OVERPASS, data={"data": q}, timeout=90,
-                      headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
-    r.raise_for_status()
+    els = None
+    for url in OVERPASS:
+        try:
+            r = requests.post(url, data={"data": q}, timeout=90,
+                              headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
+            if r.status_code != 200:
+                log(f"{name}: {url} -> HTTP {r.status_code}: {r.text[:200]!r}")
+                continue
+            els = r.json().get("elements", [])
+            log(f"{name}: {url} -> {len(els)} elements")
+            break
+        except Exception as e:
+            log(f"{name}: {url} -> {e!r}")
+    if els is None:
+        return []
     rows = []
-    for el in r.json().get("elements", []):
+    for el in els:
         t = el.get("tags", {})
         fb = p["fallback"]
         rows.append({
@@ -70,9 +90,9 @@ def fetch(name: str, p: dict) -> list[dict]:
             "hub_height": num(t.get("height:hub")) or fb["hub_height"],
             "commissioning_date": (t.get("start_date") or fb["commissioning_date"])[:7],
         })
-    print(f"{name}: {len(rows)} turbines from OpenStreetMap")
+    log(f"{name}: {len(rows)} turbines from OpenStreetMap")
     for x in rows:
-        print("   ", x["latitude"], x["longitude"], x["turbine_type"], x["rated_power"], "MW", x["commissioning_date"])
+        log(f"    {x['latitude']} {x['longitude']} {x['turbine_type']} {x['rated_power']} MW {x['commissioning_date']}")
     return rows
 
 
@@ -82,11 +102,16 @@ def main(names: list[str]) -> None:
     farms = {PRESETS[n]["wind_farm"] for n in names}
     keep = [r for r in existing if r["wind_farm"] not in farms]
     new = [row for n in names for row in fetch(n, PRESETS[n])]
+    LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+    if not new:
+        print("nothing fetched; extra_turbines.csv left unchanged")
+        return
     with open(OUT, "w", newline="", encoding="utf-8") as fh:
         wr = csv.DictWriter(fh, fieldnames=COLS)
         wr.writeheader()
         wr.writerows(keep + new)
-    print(f"wrote {len(keep) + len(new)} rows -> {OUT.relative_to(ROOT)}")
+    log(f"wrote {len(keep) + len(new)} rows -> {OUT.relative_to(ROOT)}")
+    LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

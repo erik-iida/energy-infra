@@ -1,0 +1,31 @@
+name: global-turbines
+
+# Download the global offshore wind turbine dataset (figshare, CC0) as CSV and commit it. Runs when the script changes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/fetch_global_turbines.py]
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests pyshp
+      - run: python scripts/fetch_global_turbines.py
+      - name: Commit
+        run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/global_turbines.csv data/raw/global_turbines_log.txt
+          git commit -m "Global offshore wind turbine dataset (Zhang et al., CC0) as CSV" || echo "no changes"
+          git pull --rebase
+          git push

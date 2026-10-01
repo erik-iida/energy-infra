@@ -128,6 +128,14 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - OSM's tile servers are for light use only (usage policy). For a commercial / high-traffic product switch to a
   hosted provider (e.g. OpenFreeMap, MapTiler, Stadia) or self-hosted PMTiles.
 
+## Price comparison (Oct 2026)
+- market.ALL_PRICE_ZONES: every current physical bidding zone with an Energy-Charts day-ahead price (43; historic
+  DE-AT-LU and virtual zones left out). Fetched with the per-zone cache (refetch only when hours are missing or
+  tomorrow's auction is due); licence-restricted zones are dropped and re-checked once a day.
+- Market tab: the line chart keeps `core_zones` (zones with farms + System tab); a heatmap card shows every open
+  zone x hour, rows sorted by mean, one warm sequential ramp for >= 0 (capped at the 97th percentile) and a cool
+  ramp for negative prices, hover = value and rank in that hour. Shares the Last 24 h / Tomorrow switch.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

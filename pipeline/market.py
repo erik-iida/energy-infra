@@ -44,6 +44,14 @@ SYSTEM_COUNTRIES = {
 HISTORY_AREAS = {"de": ["DE-LU"], "nl": ["NL"], "be": ["BE"], "dk": ["DK1", "DK2"], "fr": ["FR"]}
 
 
+# every current physical bidding zone with a day-ahead price in Energy-Charts (price comparison heatmap);
+# historic (DE-AT-LU) and virtual zones (NO2NSL, Italian poles like IT-Brindisi, IT-SACOAC) are left out
+ALL_PRICE_ZONES = ["AT", "BE", "BG", "CH", "CZ", "DE-LU", "DK1", "DK2", "EE", "ES", "FI", "FR", "GR", "HR", "HU",
+                   "IE(SEM)", "IT-North", "IT-Centre-North", "IT-Centre-South", "IT-South", "IT-Calabria", "IT-Sicily",
+                   "IT-Sardinia", "LT", "LV", "ME", "NL", "NO1", "NO2", "NO3", "NO4", "NO5", "PL", "PT", "RO", "RS",
+                   "SE1", "SE2", "SE3", "SE4", "SI", "SK", "UA-IPS"]
+
+
 def farm_zone(f: dict) -> str | None:
     if f["c"] == "Denmark":
         # East of the Great Belt is DK2; Anholt lands in Jutland (DK1). Sprogø is assumed DK2.
@@ -302,7 +310,8 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
     """Returns (market block for feed.json, market_history.json content)."""
     cl = Client()
     hours = [int(datetime.fromisoformat(h.replace("Z", ":00+00:00")).timestamp()) for h in hours_iso]
-    zones = {z for f in farms if (z := farm_zone(f))} | {z for zs in SYSTEM_COUNTRIES.values() for z in zs}
+    core = {z for f in farms if (z := farm_zone(f))} | {z for zs in SYSTEM_COUNTRIES.values() for z in zs}
+    zones = core | set(ALL_PRICE_ZONES)
     countries = {COUNTRY_CODE[f["c"]] for f in farms if f["c"] in COUNTRY_CODE}
     rec = recent(cl, zones, countries, hours)
     hist = history(cl, zone_weights(farms))
@@ -313,6 +322,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
         "farm_zone": {str(f["id"]): farm_zone(f) for f in farms},
         "prices": {z: v for z, v in rec["prices"].items() if z in open_zones},
         "restricted_zones": sorted(zones - open_zones),
+        "core_zones": sorted(core & open_zones),  # zones with farms or in the System tab (line chart)
         "actual_offshore": {c: v for c, v in rec["actual"].items() if is_open(lic.get(f"power:{c}"))},
         "system": {c: {**({k: v for k, v in d.items() if k in ("series", "names")} if is_open(lic.get(f"power:{c}")) else {}),
                        **({k: v for k, v in d.items() if k in ("flows", "flow_names")} if is_open(lic.get(f"flows:{c}")) else {}),

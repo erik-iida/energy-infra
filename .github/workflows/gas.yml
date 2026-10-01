@@ -1,0 +1,33 @@
+name: gas
+
+# Daily gas flows from the ENTSOG Transparency Platform (public API) -> data/raw/gas, web/data/gas.json
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 * * *"
+  push:
+    branches: [main]
+    paths: [scripts/fetch_gas.py]
+
+permissions:
+  contents: write
+
+jobs:
+  gas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python scripts/fetch_gas.py || true
+      - name: Commit
+        run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/gas web/data/gas.json 2>/dev/null || true
+          git commit -m "Gas flows from ENTSOG" || echo "no changes"
+          git pull --rebase
+          git push

@@ -1,0 +1,17 @@
+estonia (onshore demo)
+  turbines: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  turbines: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  turbines: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  plants: overpass-api.de -> 30 elements
+cn-bohai: 38.0,117.5,41.5,122.5
+  positions: overpass-api.de -> 2754 elements
+  2754 wind generators, 501 at sea or on the coast
+  tags 0: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 0: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=200)"))
+  tags 0: overpass.private.coffee -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.private.coffee', port=443): Read timed out. (read timeout=200)"))
+  plants: overpass-api.de -> 6 elements
+cn-shandong-n: 36.0,119.0,38.0,123.0
+  positions: overpass-api.de -> 3613 elements
+  3613 wind generators, 606 at sea or on the coast
+  tags 0: overpass-api.de -> 606 elements
+  plants: overpass-api.de -> 7 elements

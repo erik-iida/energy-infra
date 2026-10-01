@@ -117,6 +117,15 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   Hidden keys live in HID and localStorage "wm-hide" (per browser). A selected farm stays visible. Zone entries
   re-enable the "Show future zones" checkbox; depth mirrors the bathymetry checkbox.
 
+## Basemaps (Oct 2026)
+- Sidebar "Basemap": Simple (own land/sea) or OpenStreetMap standard tiles; "Terrain shading" = Mapterhorn
+  terrarium tiles (512 px, z<=12) turned into a hillshade per tile in the browser (needs CORS; sea/<=0 m
+  transparent). Mercator tiles are reprojected into the equirectangular view by drawing each tile in horizontal
+  strips (16 at z<=5, 6 at z<=8, else 2); ancestors fill in while tiles load; LRU caches. OSM tiles are
+  inverted in dark mode. Attribution box bottom-right. Choices remembered in localStorage.
+- OSM's tile servers are for light use only (usage policy). For a commercial / high-traffic product switch to a
+  hosted provider (e.g. OpenFreeMap, MapTiler, Stadia) or self-hosted PMTiles.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

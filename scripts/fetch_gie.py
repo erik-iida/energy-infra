@@ -78,8 +78,47 @@ def download(key: str) -> None:
         (RAW / f"{name}_countries.json").write_text(json.dumps(cc), encoding="utf-8")
 
 
+def num(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 def build() -> None:
-    pass
+    """web/data/gie.json: per area (EU + countries), daily series oldest -> newest:
+    storage: day, full %, gas in storage TWh, injection / withdrawal GWh/d, working gas volume TWh
+    lng: day, send-out GWh/d, inventory GWh"""
+    out = {"src": "GIE AGSI+ / ALSI", "storage": {}, "lng": {}}
+    for name in ("agsi", "alsi"):
+        eu = RAW / f"{name}_eu.json"
+        cc = RAW / f"{name}_countries.json"
+        if not eu.exists() or not cc.exists():
+            continue
+        areas = {"EU": json.loads(eu.read_text(encoding="utf-8")), **json.loads(cc.read_text(encoding="utf-8"))}
+        for a, rows in areas.items():
+            rows = sorted(rows, key=lambda r: r.get("gasDayStart", ""))
+            if name == "agsi":
+                ser = [[r["gasDayStart"], num(r.get("full")), num(r.get("gasInStorage")), num(r.get("injection")),
+                        num(r.get("withdrawal")), num(r.get("workingGasVolume"))] for r in rows if num(r.get("full")) is not None]
+                if ser and max(x[5] or 0 for x in ser) > 0:
+                    out["storage"][a] = {"n": rows[0].get("name", a), "d": ser}
+            else:
+                ser = []
+                for r in rows:
+                    so = num(r.get("sendOut"))
+                    inv = r.get("inventory")
+                    inv = num(inv.get("gwh")) if isinstance(inv, dict) else None
+                    if so is not None:
+                        ser.append([r["gasDayStart"], so, inv])
+                if ser and any(x[1] for x in ser):
+                    out["lng"][a] = {"d": ser}
+    if not out["storage"] and not out["lng"]:
+        log("no GIE data to build")
+        return
+    OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    log(f"wrote {OUT.relative_to(ROOT)}: storage {len(out['storage'])} areas, LNG {len(out['lng'])} areas, "
+        f"{OUT.stat().st_size / 1e3:.0f} kB")
 
 
 if __name__ == "__main__":

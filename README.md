@@ -176,6 +176,7 @@ in it.
 | Satellite basemap (optional) | [Sentinel-2 cloudless 2024](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024) | CC BY-NC-SA 4.0 (non-commercial) |
 | Terrain shading (optional) | [Mapterhorn](https://mapterhorn.com/) terrain tiles (terrarium), hillshade computed in the browser; [attribution](https://mapterhorn.com/attribution) | see Mapterhorn attribution |
 | Gas flows (interconnection points, LNG terminals, production entries; daily) | [ENTSOG Transparency Platform](https://transparency.entsog.eu) public API; point positions georeferenced from ENTSOG's schematic map (~20 km typical error) | ENTSOG terms |
+| Gas storage fill and LNG send-out (daily) | [GIE AGSI+](https://agsi.gie.eu) and [ALSI](https://alsi.gie.eu), Gas Infrastructure Europe; API key as GitHub secret `GIE_KEY` | GIE terms |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |

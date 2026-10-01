@@ -160,6 +160,13 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Map: circles / diamonds (LNG) / squares (production), gas orange, sqrt-scaled; legend toggles gip/glng/gprod.
   System tab: "Gas supply into the system" card for the selected country.
 
+## GIE storage and LNG (Oct 2026)
+- scripts/fetch_gie.py runs in the gas workflow with secret GIE_KEY (x-key header). AGSI+ (storage: full %,
+  gasInStorage TWh, injection/withdrawal GWh/d, workingGasVolume TWh) and ALSI (sendOut GWh/d, inventory GWh)
+  for EU + each country, 400 days -> web/data/gie.json. Raw per-country files are not committed.
+- System tab: "EU gas storage" overview (fill line this year vs year before, largest countries) at the top,
+  and "Gas storage and LNG" card for the selected country.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

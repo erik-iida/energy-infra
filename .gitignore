@@ -9,3 +9,5 @@ data/raw/ne_10m_land.geojson
 data/raw/grid/*.csv
 data/raw/gas/flows.json
 data/raw/gas/interconnections.json
+data/raw/gie/*_eu.json
+data/raw/gie/*_countries.json

@@ -1,21 +1,6 @@
-tahkoluoto: https://overpass-api.de/api/interpreter -> 18 elements
-tahkoluoto: 18 turbines from OpenStreetMap
-    61.60425 21.45331 SWT-4.0-130 4.0 MW 2017-08
-    61.63018 21.37455 SWT-4.0-130 4.0 MW 2017-08
-    61.63722 21.39482 SWT-4.0-130 4.0 MW 2017-08
-    61.63356 21.38004 SWT-4.0-130 4.0 MW 2017-08
-    61.6312 21.38077 SWT-4.0-130 4.0 MW 2017-08
-    61.63589 21.38048 SWT-4.0-130 4.0 MW 2017-08
-    61.63671 21.40313 SWT-4.0-130 4.0 MW 2017-08
-    61.6194 21.37913 SWT-4.0-130 4.0 MW 2017-08
-    61.62432 21.3696 SWT-4.0-130 4.0 MW 2017-08
-    61.62864 21.36314 SWT-4.0-130 4.0 MW 2017-08
-    61.62064 21.36171 SWT-4.0-130 4.0 MW 2017-08
-    61.64339 21.35358 SWT-4.0-130 4.0 MW 2017-08
-    61.62422 21.35269 SWT-4.0-130 4.0 MW 2017-08
-    61.61747 21.35142 SWT-4.0-130 4.0 MW 2017-08
-    61.63941 21.34563 SWT-4.0-130 4.0 MW 2017-08
-    61.62841 21.3447 SWT-4.0-130 4.0 MW 2017-08
-    61.62064 21.3412 SWT-4.0-130 4.0 MW 2017-08
-    61.6354 21.33708 SWT-4.0-130 4.0 MW 2017-08
-wrote 18 rows -> data/raw/extra_turbines.csv
+tahkoluoto: https://overpass-api.de/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+tahkoluoto: https://overpass.kumi.systems/api/interpreter -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=180)"))
+tahkoluoto: https://overpass.private.coffee/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+tahkoluoto: https://overpass-api.de/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+tahkoluoto: https://overpass.kumi.systems/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+tahkoluoto: https://overpass.private.coffee/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'

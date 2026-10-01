@@ -100,6 +100,18 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Estonia onshore demo: farms with `on: 1`, region Europe, green on the map, PyWake with TI 10 %
   (config.TI_ONSHORE), still flat terrain / no forest or stability. Not in Market/System.
 
+## High-voltage grid layer (Oct 2026)
+- scripts/fetch_grid.py (grid workflow: on script change, monthly, manual) downloads lines.csv/links.csv of the
+  latest PyPSA-Eur OSM prebuilt network (Zenodo, ODbL; v0.7 at first fetch: 9 162 lines, 39 DC links) and writes
+  web/data/grid.json ([kV or 0 for DC, flags (1 under construction, 2 cable, circuits << 2), coords]),
+  ~300 m simplification, 1.15 MB, loaded lazily by the page. The CSV 'tags' column has unquoted commas, so the
+  WKT is cut out of the raw line. Raw CSVs are not committed.
+- Page: toggle "High-voltage grid", ENTSO-E colour convention (750 blue, 500 crimson, 380-400 red, 300-330
+  orange, 220 green, DC pink, dashed = under construction); 220 kV hidden at world zoom.
+- The ENTSO-E grid map PDF is a GeoPDF (ETRS89 LCC, corner GPTS) and would extract cleanly, but ENTSO-E's
+  terms forbid redistribution / derivative works without written permission, and the map is schematic
+  ("not located at their real geographic location"). Not used.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

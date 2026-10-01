@@ -1,17 +1,65 @@
+resuming: 606 turbines, 43 plants, done ['cn-shandong-n']
 estonia (onshore demo)
   turbines: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  turbines: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  turbines: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  plants: overpass-api.de -> 30 elements
+  turbines: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=120)"))
+  turbines: overpass.private.coffee -> 246 elements
+  plants: overpass-api.de -> 32 elements
+  223 turbines in Estonia
 cn-bohai: 38.0,117.5,41.5,122.5
   positions: overpass-api.de -> 2754 elements
   2754 wind generators, 501 at sea or on the coast
   tags 0: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  tags 0: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=200)"))
-  tags 0: overpass.private.coffee -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.private.coffee', port=443): Read timed out. (read timeout=200)"))
+  tags 0: overpass.kumi.systems -> 476 elements
+  tags 500: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 500: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 500: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
   plants: overpass-api.de -> 6 elements
-cn-shandong-n: 36.0,119.0,38.0,123.0
-  positions: overpass-api.de -> 3613 elements
-  3613 wind generators, 606 at sea or on the coast
-  tags 0: overpass-api.de -> 606 elements
-  plants: overpass-api.de -> 7 elements
+cn-shandong-s: 34.0,119.0,36.0,122.0
+  positions: overpass-api.de -> 1812 elements
+  1812 wind generators, 453 at sea or on the coast
+  tags 0: overpass-api.de -> 453 elements
+  plants: overpass-api.de -> 8 elements
+cn-jiangsu-n: 32.5,119.5,34.0,122.5
+  positions: overpass-api.de -> 4100 elements
+  4100 wind generators, 2873 at sea or on the coast
+  tags 0: overpass-api.de -> 500 elements
+  tags 500: overpass-api.de -> HTTP 429 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 500: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 500: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 1000: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 1000: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 1000: overpass.private.coffee -> 500 elements
+  tags 1500: overpass-api.de -> 500 elements
+  tags 2000: overpass-api.de -> 500 elements
+  tags 2500: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 2500: overpass.kumi.systems -> 373 elements
+  plants: overpass-api.de -> 35 elements
+cn-jiangsu-s: 30.5,120.5,32.5,123.0
+  positions: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  positions: overpass.kumi.systems -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  positions: overpass.private.coffee -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.private.coffee', port=443): Read timed out. (read timeout=120)"))
+cn-zhejiang-n: 28.0,120.5,30.5,123.5
+  positions: overpass-api.de -> 1024 elements
+  1024 wind generators, 632 at sea or on the coast
+  tags 0: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 0: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=120)"))
+  tags 0: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  tags 500: overpass-api.de -> 132 elements
+  plants: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  plants: overpass.kumi.systems -> 18 elements
+cn-zhejiang-s: 26.0,119.0,28.0,122.0
+  positions: overpass-api.de -> 478 elements
+  478 wind generators, 220 at sea or on the coast
+  tags 0: overpass-api.de -> 220 elements
+  plants: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  plants: overpass.kumi.systems -> 1 elements
+cn-fujian: 23.5,117.0,26.0,120.3
+  positions: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+  positions: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=120)"))
+  positions: overpass.private.coffee -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.private.coffee', port=443): Read timed out. (read timeout=120)"))
+cn-guangdong-e: 21.5,113.0,23.5,117.5
+  positions: overpass-api.de -> 1606 elements
+  1606 wind generators, 842 at sea or on the coast
+  tags 0: overpass-api.de -> 500 elements
+  tags 500: overpass-api.de -> 342 elements
+  plants: overpass-api.de -> 14 elements

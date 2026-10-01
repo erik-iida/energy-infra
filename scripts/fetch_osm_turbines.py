@@ -17,6 +17,7 @@ from __future__ import annotations
 import csv
 import re
 import sys
+import time
 from pathlib import Path
 
 import requests
@@ -62,18 +63,21 @@ def fetch(name: str, p: dict) -> list[dict]:
     s, w, n, e = p["bbox"]
     q = f'[out:json][timeout:60];node["generator:source"="wind"]({s},{w},{n},{e});out;'
     els = None
-    for url in OVERPASS:
+    for url in OVERPASS * 2:  # public Overpass servers are often busy: two rounds, pause between tries
+        if els is not None:
+            break
         try:
-            r = requests.post(url, data={"data": q}, timeout=90,
+            r = requests.post(url, data={"data": q}, timeout=180,
                               headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
             if r.status_code != 200:
-                log(f"{name}: {url} -> HTTP {r.status_code}: {r.text[:200]!r}")
+                log(f"{name}: {url} -> HTTP {r.status_code}: {r.text[:120]!r}")
+                time.sleep(20)
                 continue
             els = r.json().get("elements", [])
             log(f"{name}: {url} -> {len(els)} elements")
-            break
         except Exception as e:
             log(f"{name}: {url} -> {e!r}")
+            time.sleep(20)
     if els is None:
         return []
     rows = []

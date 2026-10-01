@@ -43,7 +43,17 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 #leg .lk:hover{background:var(--line)}#leg .lk:focus-visible{outline:2px solid var(--acc)}
 #leg .lk.off{opacity:.38;text-decoration:line-through}
 #leg #gleg .lk{display:inline-block;margin:0 0 0 2px}#leg .lh{font-size:11px;color:var(--mut)}
-#attr{position:absolute;right:8px;bottom:4px;background:var(--panel);opacity:.9;font-size:11px;padding:1px 6px;border-radius:3px;color:var(--mut)}#attr a{color:inherit}
+#attr{position:absolute;right:8px;bottom:4px;max-width:38%;text-align:right;line-height:1.3;background:var(--panel);opacity:.9;font-size:11px;padding:1px 6px;border-radius:3px;color:var(--mut)}#attr a{color:inherit}
+#bmw{position:absolute;right:10px;bottom:46px;display:flex;flex-direction:column;align-items:flex-end;gap:6px;z-index:3}
+#bmbtn{width:max-content;align-self:flex-end;display:flex;flex-direction:column;align-items:center;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px;cursor:pointer;color:var(--ink);font-size:11px;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+#bmbtn:hover,.bmo:hover{border-color:var(--acc)}#bmbtn:focus-visible,.bmo:focus-visible{outline:2px solid var(--acc)}
+#bmlist{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;box-shadow:0 2px 10px rgba(0,0,0,.2);font-size:12px}
+#bmlist .bmh{font-weight:600;margin-bottom:6px}.bmrow{display:flex;gap:6px}
+.bmo{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:2px solid transparent;border-radius:7px;padding:3px;cursor:pointer;color:var(--ink);font-size:11px}
+.bmo.on{border-color:var(--acc)}
+.bmt{display:block;width:54px;height:54px;border-radius:5px;background-size:cover;background-position:center;border:1px solid var(--line)}
+.bm-simple{background:linear-gradient(135deg,var(--land) 0 48%,var(--sea) 48% 100%)}
+.bmhs{display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--ink)}
 #dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
@@ -81,7 +91,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
-<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
+<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
 <div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Operating farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button><button class="lk" data-k="gbuild"><i class="gk" style="border-top:2px dashed var(--mut)"></i>building</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
@@ -99,8 +109,6 @@ svg.cmp{display:block;width:100%;overflow:visible}
 <label style="margin-top:8px">Wake decay k <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change k to explore.</div></div>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="Z" checked> Show future zones</label>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="BY" checked> Bathymetry (EMODnet), contours when zoomed in</label>
-<label for="BMAP">Basemap</label><select id="BMAP"><option value="simple">Simple (land and sea)</option><option value="osm">OpenStreetMap</option></select>
-<label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="HS"> Terrain shading (Mapterhorn)</label>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="GR" checked> High-voltage grid (OpenStreetMap)</label>
 <div id="bys"><label for="BD">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"><div class="mut" style="font-size:12px">Deeper water shows in the darkest colour.</div></div>
 <div id="cmp"></div>
@@ -214,7 +222,8 @@ function seamCover(){const v=viewBox(),p=new Path2D();for(let i=0;i<SEAML.length
  const lw=cx.lineWidth,ss=cx.strokeStyle;cx.strokeStyle=css("--land");cx.lineWidth=1.5;cx.stroke(p);cx.lineWidth=lw;cx.strokeStyle=ss}
 // ---- web-mercator tile layers, reprojected into this map's equirectangular view ----
 // OpenStreetMap standard tiles (basemap) and Mapterhorn terrain (terrarium elevation -> hillshade computed here).
-const TL={osm:{url:(z,x,y)=>"https://tile.openstreetmap.org/"+z+"/"+x+"/"+y+".png",T:256,zmax:19,cache:new Map(),max:400},
+const TL={sat:{url:(z,x,y)=>"https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/"+z+"/"+y+"/"+x+".jpg",T:256,zmax:15,cache:new Map(),max:400,nocors:true},
+ osm:{url:(z,x,y)=>"https://tile.openstreetmap.org/"+z+"/"+x+"/"+y+".png",T:256,zmax:19,cache:new Map(),max:400},
  hs:{url:(z,x,y)=>"https://tiles.mapterhorn.com/"+z+"/"+x+"/"+y+".webp",T:512,zmax:12,cache:new Map(),max:160}};
 const tlon=(x,z)=>x/2**z*360-180,tlat=(y,z)=>{const n=Math.PI-2*Math.PI*y/2**z;return 180/Math.PI*Math.atan(Math.sinh(n))};
 const tx=(lon,z)=>(lon+180)/360*2**z,ty=(lat,z)=>{const r=Math.max(-85.05,Math.min(85.05,lat))*Math.PI/180;return(1-Math.log(Math.tan(r)+1/Math.cos(r))/Math.PI)/2*2**z};
@@ -231,7 +240,7 @@ function hillshade(img,z,y){const T=img.width,c=document.createElement("canvas")
  g.putImageData(o,0,0);return c}
 function tileGet(L,key,z,x,y){const C=TL[L].cache;let e=C.get(key);if(e){C.delete(key);C.set(key,e);return e.ok?e.v:null}
  e={ok:false,v:null};C.set(key,e);if(C.size>TL[L].max)C.delete(C.keys().next().value);
- const img=new Image();img.crossOrigin="anonymous";img.decoding="async";
+ const img=new Image();if(!TL[L].nocors)img.crossOrigin="anonymous";img.decoding="async";
  img.onload=()=>{try{e.v=L==="hs"?hillshade(img,z,y):img;e.ok=true}catch(err){e.fail=true}repaint()};img.onerror=()=>{e.fail=true};
  img.src=TL[L].url(z,x,y);return null}
 function tilesDraw(L,alpha){const t=TL[L],W=W0,H=H0,dpr=devicePixelRatio||1,ppl=V.s*cosR()*dpr; // device px per degree of longitude
@@ -247,8 +256,11 @@ function tilesDraw(L,alpha){const t=TL[L],W=W0,H=H0,dpr=devicePixelRatio||1,ppl=
   for(let s=0;s<strips;s++){const a=s/strips,b=(s+1)/strips,la=tlat(ty_+a,z),lb=tlat(ty_+b,z),[px0,py0]=P(tlon(tx_,z),la),[px1,py1]=P(tlon(tx_+1,z),lb);
    cx.drawImage(img,sx,sy+a*sz,sz,sz/strips,px0,py0,px1-px0+.6,py1-py0+.6)}}
  cx.restore()}
-const BM=()=>$("BMAP").value;
-function attrib(){const a=[];if(BM()==="osm")a.push("© <a href='https://www.openstreetmap.org/copyright' target='_blank' rel='noopener'>OpenStreetMap</a> contributors");
+let BMV="simple";const BM=()=>BMV;
+function bmSet(v){BMV=TL[v]||v==="simple"?v:"simple";try{localStorage.setItem("wm-basemap",BMV)}catch(e){}
+ const opt=document.querySelector('.bmo[data-bm="'+BMV+'"]');$("bmcur").style.cssText=opt.querySelector(".bmt").style.cssText;$("bmcur").className="bmt"+(BMV==="simple"?" bm-simple":"");
+ $("bmlab").textContent=opt.textContent;document.querySelectorAll(".bmo").forEach(b=>b.classList.toggle("on",b.dataset.bm===BMV));attrib();repaint()}
+function attrib(){const a=[];if(BM()==="sat")a.push("<a href='https://s2maps.eu' target='_blank' rel='noopener'>Sentinel-2 cloudless 2024</a> by EOX IT Services GmbH (modified Copernicus Sentinel data)");if(BM()==="osm")a.push("© <a href='https://www.openstreetmap.org/copyright' target='_blank' rel='noopener'>OpenStreetMap</a> contributors");
  if($("HS").checked)a.push("<a href='https://mapterhorn.com/attribution' target='_blank' rel='noopener'>© Mapterhorn</a>");$("attr").innerHTML=a.join(" · ");$("attr").style.display=a.length?"block":"none"}
 // ---- high-voltage grid (web/data/grid.json: [kV (0 = DC), flags, coords]) ----
 const GRID={d:null,b:null,loading:false};
@@ -312,7 +324,7 @@ function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.m
  if(cf>0.002){cx.beginPath();cx.arc(x,y,Math.max(1,Ro*cf),0,7);cx.fillStyle=fcol(f);cx.fill()}
  S.pts.push([x,y,Ro,i])}
 function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
- cx.fillStyle=css("--ink");cx.font="12px sans-serif";const up=$("attr").style.display==="block"?18:0;cx.fillText(km+" km",W-16-w,H-16-up);cx.fillRect(W-16-w,H-12-up,w,2)}
+ cx.fillStyle=css("--ink");cx.font="12px sans-serif";const up=$("attr").style.display==="block"?$("attr").offsetHeight+4:0;cx.fillText(km+" km",W-16-w,H-16-up);cx.fillRect(W-16-w,H-12-up,w,2)}
 // Bathymetry underlay: EMODnet Bathymetry WMS (EPSG:4326 maps linearly onto this projection), requested for the
 // visible area after panning/zooming settles; depth contours added when zoomed in.
 const BATHY_URL="https://ows.emodnet-bathymetry.eu/wms";let bathyT=0;S.bathy=null;S.bathyKey="";
@@ -340,14 +352,14 @@ function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();if(BG.meta&&!bath
  bathyT=setTimeout(()=>{const mx=(l1-l0)*.15,my=(a1-a0)*.15,b=[l0-mx,Math.max(-85,a0-my),l1+mx,Math.min(85,a1+my)],sc=Math.min(1,2048/(1.3*Math.max(W,H)));
   const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b,lines:grid};repaint()};
   img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(grid?"emodnet:contours":ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
-function bathyDraw(){if(!$("BY").checked)return;const al=+css("--bathy-a")||.75;cx.imageSmoothingEnabled=true;
+function bathyDraw(){if(!$("BY").checked)return;const al=(+css("--bathy-a")||.75)*(BM()==="simple"?1:BM()==="sat"?.45:.55);cx.imageSmoothingEnabled=true;
  if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
  const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
-function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()==="osm")tilesDraw("osm",1);bathyWant(W,H);bathyDraw();
+function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
  // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
 const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
 const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2||onTile(r[i])||onTile(r[i+1])){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}return p};
- if(BM()!=="osm"){cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath())}if($("HS").checked)tilesDraw("hs",isDark()?.55:.8);gridDraw();
+ if(BM()==="simple"){cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath())}if($("HS").checked)tilesDraw("hs",isDark()?.55:.8);gridDraw();
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
  if($("Z").checked)Z.forEach((z,i)=>{if(HID.has(z.s))return;const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
  const vis=[];F.forEach((f,i)=>{if(i!==S.farm&&HID.has(f.on?"on":"off"))return;const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
@@ -628,8 +640,10 @@ $("leg").onclick=e=>{const b=e.target.closest(".lk");if(!b)return;const k=b.data
   try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}}
  legSync();S.hover=-1;repaint()};
 if(HID.has("depth")){$("BY").checked=false;$("bys").style.display="none"}
-try{const b=localStorage.getItem("wm-basemap");if(b)$("BMAP").value=b;$("HS").checked=localStorage.getItem("wm-hs")==="1"}catch(e){}
-$("BMAP").onchange=()=>{try{localStorage.setItem("wm-basemap",BM())}catch(e){}attrib();repaint()};
+$("bmbtn").onclick=()=>{const l=$("bmlist"),o=l.hidden;l.hidden=!o;$("bmbtn").setAttribute("aria-expanded",String(o))};
+document.querySelectorAll(".bmo").forEach(b=>b.onclick=()=>{bmSet(b.dataset.bm);$("bmlist").hidden=true;$("bmbtn").setAttribute("aria-expanded","false")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("bmlist").hidden){$("bmlist").hidden=true;$("bmbtn").setAttribute("aria-expanded","false")}});
+try{$("HS").checked=localStorage.getItem("wm-hs")==="1";bmSet(localStorage.getItem("wm-basemap")||"simple")}catch(e){bmSet("simple")}
 $("HS").onchange=()=>{try{localStorage.setItem("wm-hs",$("HS").checked?"1":"0")}catch(e){}attrib();repaint()};attrib();
 legSync();
 $("GR").onchange=()=>{$("gleg").style.display=$("GR").checked&&GRID.d?"block":"none";repaint()};

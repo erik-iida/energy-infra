@@ -118,7 +118,9 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   re-enable the "Show future zones" checkbox; depth mirrors the bathymetry checkbox.
 
 ## Basemaps (Oct 2026)
-- Sidebar "Basemap": Simple (own land/sea) or OpenStreetMap standard tiles; "Terrain shading" = Mapterhorn
+- On-map basemap switcher (bottom right, #bmw): Simple (own land/sea), Map (OpenStreetMap standard tiles) or
+  Satellite (EOX Sentinel-2 cloudless 2024, CC BY-NC-SA 4.0: non-commercial only; loaded without CORS, nothing reads
+  the main canvas back); depth layer drawn translucent over a basemap; "Terrain shading" = Mapterhorn
   terrarium tiles (512 px, z<=12) turned into a hillshade per tile in the browser (needs CORS; sea/<=0 m
   transparent). Mercator tiles are reprojected into the equirectangular view by drawing each tile in horizontal
   strips (16 at z<=5, 6 at z<=8, else 2); ancestors fill in while tiles load; LRU caches. OSM tiles are

@@ -173,6 +173,7 @@ in it.
 | Newer offshore turbines outside Europe; Estonian onshore turbines (demo) | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, via Overpass API | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | High-voltage grid (220-750 kV AC lines, HVDC links) | Xiong, Fioriti, Neumann, Riepin & Brown, *Prebuilt Electricity Network for PyPSA-Eur based on OpenStreetMap Data* ([Zenodo 14144752](https://zenodo.org/records/14144752), latest version), from © OpenStreetMap contributors | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Basemap (optional) | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, standard tile layer (tile.openstreetmap.org, subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/)) | ODbL data, CC BY-SA tiles |
+| Satellite basemap (optional) | [Sentinel-2 cloudless 2024](https://s2maps.eu) by EOX IT Services GmbH (contains modified Copernicus Sentinel data 2024) | CC BY-NC-SA 4.0 (non-commercial) |
 | Terrain shading (optional) | [Mapterhorn](https://mapterhorn.com/) terrain tiles (terrarium), hillshade computed in the browser; [attribution](https://mapterhorn.com/attribution) | see Mapterhorn attribution |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |

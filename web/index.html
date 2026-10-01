@@ -180,14 +180,30 @@ function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat
 function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(6,V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat+=lat-a2;repaint()}
 function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
 function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}paint();sidebar()}
+// Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
+// streaks stay crisp. Colour = one sequential ramp; tiny deficits fully transparent (no box edge).
+const RAMP=[[253,204,150],[244,140,84],[222,88,40],[176,52,18]];
+function rampC(t){t=Math.max(0,Math.min(1,t))*(RAMP.length-1);const i=Math.min(RAMP.length-2,Math.floor(t)),f=t-i,a=RAMP[i],b=RAMP[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]}
+const DEF_MAX=.3; // colour scale top: 30 % wind speed deficit
 function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;
- if(!f._hm||f._hm.key!==key){const e=f.tex+Math.max(1500,(f.D||150)*12),G=170,off=document.createElement("canvas");off.width=G;off.height=G;const oc=off.getContext("2d"),im=oc.createImageData(G,G);
-  for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){const px=-e+(gx+.5)/G*2*e,py=e-(gy+.5)/G*2*e;let q=0;
-   if(m==="j"){for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);q+=d*d}q=Math.sqrt(q)}
-   else for(let j=0;j<r.P.length;j++)q+=r.u[j]/r.U*wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);
-   const o=4*(gy*G+gx),c=Math.min(1,q*3);im.data[o]=255-16*c;im.data[o+1]=209-137*c;im.data[o+2]=102+9*c;im.data[o+3]=Math.min(1,q*3.2)*215}
-  oc.putImageData(im,0,0);f._hm={key,c:off,e}}
- const e=f._hm.e,[ax,ay]=M(f,-e,e),[bx,by]=M(f,e,-e);cx.imageSmoothingEnabled=true;cx.drawImage(f._hm.c,ax,ay,bx-ax,by-ay)}
+ if(!f._hm||f._hm.key!==key){const D=f.D||150,dx=r.dx,dy=r.dy,P=r.P;
+  let s0=1e9,s1=-1e9,c0=1e9,c1=-1e9;P.forEach(p=>{const s=p[0]*dx+p[1]*dy,c=-p[0]*dy+p[1]*dx;s0=Math.min(s0,s);s1=Math.max(s1,s);c0=Math.min(c0,c);c1=Math.max(c1,c)});
+  s0-=1.5*D;s1+=Math.max(4000,30*D);c0-=3*D;c1+=3*D;
+  const ds=D/3,dc=D/10,Ns=Math.min(600,Math.ceil((s1-s0)/ds)),Nc=Math.min(1000,Math.ceil((c1-c0)/dc)),DS=(s1-s0)/Ns,DC=(c1-c0)/Nc;
+  const off=document.createElement("canvas");off.width=Ns;off.height=Nc;const oc=off.getContext("2d"),im=oc.createImageData(Ns,Nc);
+  for(let v=0;v<Nc;v++){const c=c0+(v+.5)*DC;for(let u=0;u<Ns;u++){const s=s0+(u+.5)*DS,px=s*dx-c*dy,py=s*dy+c*dx;let q=0;
+   if(m==="j"){for(let j=0;j<P.length;j++){const d=wd(m,k,P[j],r.Dt[j],r.ct[j],px,py,dx,dy,0);if(d)q+=d*d}q=Math.sqrt(q)}
+   else for(let j=0;j<P.length;j++){const d=wd(m,k,P[j],r.Dt[j],r.ct[j],px,py,dx,dy,0);if(d)q+=r.u[j]/r.U*d}
+   const o=4*(v*Ns+u);if(q<.008){im.data[o+3]=0;continue}
+   const fade=Math.min(1,(s1-s)/(.15*(s1-s0))),al=Math.pow(Math.min(1,(q-.008)/.08),.9)*.72*fade,col=rampC(q/DEF_MAX);
+   im.data[o]=col[0];im.data[o+1]=col[1];im.data[o+2]=col[2];im.data[o+3]=al*255}}
+  oc.putImageData(im,0,0);f._hm={key,c:off,s0,c0,DS,DC,dx,dy}}
+ const h=f._hm,dpr=devicePixelRatio||1,ax=cosR()*V.s/f.kx,ay=V.s/110574,[Xo,Yo]=M(f,0,0);
+ cx.save();cx.setTransform(dpr*ax*h.DS*h.dx,-dpr*ay*h.DS*h.dy,-dpr*ax*h.DC*h.dy,-dpr*ay*h.DC*h.dx,dpr*(Xo+ax*(h.s0*h.dx-h.c0*h.dy)),dpr*(Yo-ay*(h.s0*h.dy+h.c0*h.dx)));
+ cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality="high";cx.drawImage(h.c,0,0);cx.restore();S.heatShown=true}
+function heatLegend(W,H){const w=150,x=W-16-w,y=H-58;cx.font="11px sans-serif";cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fillRect(x-8,y-16,w+16,34);cx.globalAlpha=1;
+ const g=cx.createLinearGradient(x,0,x+w,0);for(let i=0;i<=4;i++){const c=rampC(i/4),a=i?.72:.2;g.addColorStop(i/4,"rgba("+c.map(Math.round).join(",")+","+a+")")}
+ cx.fillStyle=css("--mut");cx.fillText("Wind speed deficit",x,y-4);cx.fillStyle=g;cx.fillRect(x,y,w,8);cx.fillStyle=css("--mut");cx.fillText("0",x,y+18);cx.textAlign="right";cx.fillText(Math.round(DEF_MAX*100)+"%+",x+w,y+18);cx.textAlign="left"}
 function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,V.s/40))}
 function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.max(1,f.inst))),hot=i===S.hover||i===S.farm;
  cx.beginPath();cx.arc(x,y,Ro,0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.8;cx.fill();cx.globalAlpha=1;
@@ -196,7 +212,7 @@ function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.m
  S.pts.push([x,y,Ro,i])}
 function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
  cx.fillStyle=css("--ink");cx.font="12px sans-serif";cx.fillText(km+" km",W-16-w,H-16);cx.fillRect(W-16-w,H-12,w,2)}
-function paint(){if(S.tab!=="map")return;const[W,H]=size();cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];
+function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];
  const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
  cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
@@ -215,7 +231,7 @@ function paint(){if(S.tab!=="map")return;const[W,H]=size();cx.fillStyle=css("--s
  if(fs&&fs.lay&&fs.tex*pxm()>=LOD_TURB){const sp=spacingOf(fs);if(sp){const l1="Spacing to nearest turbine",l2="min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D";
   cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+20)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,104,w,42);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,104.5,w,42);
   cx.fillStyle=css("--mut");cx.fillText(l1,20,121);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,139)}}
- scaleBar(W,H)}
+ scaleBar(W,H);if(S.heatShown)heatLegend(W,H)}
 function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";

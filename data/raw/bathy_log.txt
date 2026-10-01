@@ -1,18 +1,20 @@
-22/352 tiles: 22 ok, 0 failed
-44/352 tiles: 44 ok, 0 failed
-66/352 tiles: 66 ok, 0 failed
-88/352 tiles: 88 ok, 0 failed
-110/352 tiles: 110 ok, 0 failed
-132/352 tiles: 132 ok, 0 failed
-154/352 tiles: 154 ok, 0 failed
-176/352 tiles: 176 ok, 0 failed
-198/352 tiles: 198 ok, 0 failed
-220/352 tiles: 220 ok, 0 failed
-242/352 tiles: 242 ok, 0 failed
-264/352 tiles: 264 ok, 0 failed
-286/352 tiles: 286 ok, 0 failed
-308/352 tiles: 308 ok, 0 failed
-330/352 tiles: 330 ok, 0 failed
-352/352 tiles: 352 ok, 0 failed
-valid cells 100.0%; elevation range -5255 to 4310 m
-wrote web/data/bathy.png 2112x1536, 0.54 MB
+22/416 tiles: 22 ok, 0 failed
+44/416 tiles: 44 ok, 0 failed
+66/416 tiles: 66 ok, 0 failed
+88/416 tiles: 88 ok, 0 failed
+110/416 tiles: 110 ok, 0 failed
+132/416 tiles: 132 ok, 0 failed
+154/416 tiles: 154 ok, 0 failed
+176/416 tiles: 176 ok, 0 failed
+198/416 tiles: 198 ok, 0 failed
+220/416 tiles: 220 ok, 0 failed
+242/416 tiles: 242 ok, 0 failed
+264/416 tiles: 264 ok, 0 failed
+286/416 tiles: 286 ok, 0 failed
+308/416 tiles: 308 ok, 0 failed
+330/416 tiles: 330 ok, 0 failed
+352/416 tiles: 352 ok, 0 failed
+374/416 tiles: 374 ok, 0 failed
+396/416 tiles: 396 ok, 0 failed
+valid cells 100.0%; elevation range -5979 to 4310 m
+wrote web/data/bathy.png 2496x1536, 0.64 MB

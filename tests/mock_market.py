@@ -48,11 +48,20 @@ def fake_get(self, url, params, timeout):
         lic = ("restricted to private and internal use" if params["bzn"] == "SE4"
                else "CC BY 4.0 (creativecommons.org/licenses/by/4.0) from Bundesnetzagentur | SMARD.de")
         return _R(200, {"license": lic, "series": [{"id": "day_ahead_price", "name": "p"}], "data": rows})
+    if ep == "cbpf":
+        nb = ["germany", "sweden", "sum"]
+        rows = [{"timestamp": r["timestamp"], "values": {"germany": 0.8, "sweden": -0.3, "sum": 0.5}} for r in rows]
+        return _R(200, {"license": "CC BY 4.0, attribution: energy-charts.info", "unit": "GW",
+                        "series": [{"id": i, "name": i.title()} for i in nb], "data": rows})
     has_off = params["country"] != "uk"
-    series = [{"id": "solar", "name": "s"}] + ([{"id": "wind_offshore", "name": "w"}] if has_off else [])
-    if not has_off:
-        rows = [{"timestamp": r["timestamp"], "values": {"solar": 0}} for r in rows]
-    return _R(200, {"license": "CC BY 4.0, attribution: energy-charts.info", "series": series, "data": rows})
+    series = [{"id": "solar", "name": "Solar"}, {"id": "fossil_gas", "name": "Fossil gas"},
+              {"id": "load", "name": "Load"}, {"id": "renewable_share_of_load", "name": "Ren. share", "unit": "%"}]
+    series += [{"id": "wind_offshore", "name": "Wind offshore"}] if has_off else []
+    for r in rows:
+        r["values"].update({"solar": 1000.0, "fossil_gas": 2000.0, "load": 9000.0, "renewable_share_of_load": 55.0})
+        if not has_off:
+            r["values"].pop("wind_offshore", None)
+    return _R(200, {"license": "CC BY 4.0, attribution: energy-charts.info", "unit": "MW", "series": series, "data": rows})
 
 
 def main():
@@ -70,6 +79,10 @@ def main():
     assert mk["restricted_zones"] == ["SE4"], mk["restricted_zones"]
     assert "SE4" not in mk["prices"] and "DK1" in mk["prices"]
     assert "uk" not in mk["actual_offshore"]
+    sy = mk["system"]["dk"]
+    assert set(sy["series"]) == {"solar", "fossil_gas", "load", "wind_offshore"}, sy["series"].keys()  # % series dropped
+    assert sy["flows"]["germany"][0] == 800.0 and sy["zones"] == ["DK1", "DK2"]
+    print("system countries", sorted(mk["system"]), "prices", sorted(mk["prices"]))
     assert all(len(v["months"]) >= 6 for v in hist["areas"].values()), hist["areas"].keys()
     print("sample", hist["areas"]["dk"]["months"][-1])
     print("OK")

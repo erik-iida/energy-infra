@@ -50,16 +50,34 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 .ln.pr{stroke:var(--prc)}.ln.act{stroke:var(--ink);opacity:.75}
 #mtab{width:100%;font-size:13px}#mtab th{text-align:right;font-weight:600;color:var(--mut);padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}#mtab td{padding:4px 6px;text-align:right;white-space:nowrap}#mtab th:nth-child(-n+2),#mtab td:nth-child(-n+2){text-align:left}
 .arr{display:inline-block;color:var(--wnd);margin-left:4px}
+#zc{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}#zc button{width:34px;height:34px;padding:0;text-align:center;font-size:18px;line-height:1;background:var(--panel)}
+#cv{cursor:grab}.rg{display:inline-flex;width:14px;height:14px;border:1.5px solid var(--acc);border-radius:50%;margin-right:6px;vertical-align:middle;align-items:center;justify-content:center;background:var(--panel)}.rg b{width:8px;height:8px;border-radius:50%;background:var(--acc)}
+main{align-items:start}
+#stage{height:calc(100vh - 76px);min-height:420px;flex:none}
+@media(min-width:801px){aside{position:sticky;top:14px;max-height:calc(100vh - 28px);overflow:auto}}
+aside>*{flex-shrink:0}
+@media(max-width:800px){#stage{height:70vh}}
+#sys{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
+:root{--m-nuc:#e87ba4;--m-coal:#4a3aa7;--m-gas:#eb6834;--m-hyd:#1baf7a;--m-oth:#e34948;--m-woff:#2a78d6;--m-won:#008300;--m-sol:#eda100;--imp:#2a78d6;--exp:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#d55181;--m-coal:#9085e9;--m-gas:#d95926;--m-hyd:#199e70;--m-oth:#e66767;--m-woff:#3987e5;--m-won:#008300;--m-sol:#c98500;--imp:#3987e5;--exp:#e66767}}
+:root[data-theme="dark"]{--m-nuc:#d55181;--m-coal:#9085e9;--m-gas:#d95926;--m-hyd:#199e70;--m-oth:#e66767;--m-woff:#3987e5;--m-won:#008300;--m-sol:#c98500;--imp:#3987e5;--exp:#e66767}
+.mixbar{position:relative;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bg)}.mixbar span{position:absolute;top:0;bottom:0}
+.mixleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}.mixleg i,.mixtab i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.syswrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.card.wide{grid-column:1/-1;cursor:default}.syswrap .card{cursor:default}
+.mixtab{width:100%;font-size:13px;margin-top:8px}.mixtab th{text-align:right;color:var(--mut);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}.mixtab td{text-align:right;padding:3px 6px}.mixtab th:first-child,.mixtab td:first-child{text-align:left}
+.flows{display:flex;flex-direction:column;gap:3px;margin-top:6px}.fr{display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;font-size:12px}.fl{color:var(--ink)}.fv{text-align:right;color:var(--mut)}
+.fb{position:relative;height:12px;background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}.fb b{position:absolute;top:1px;bottom:1px;border-radius:2px}
+svg.sx{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
-<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button></div>
-<div id="stage"><canvas id="cv"></canvas><div id="tip"></div><div id="note"></div>
-<div id="leg"><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span></div></div>
+<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
+<div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to Europe" aria-label="Back to Europe">⌂</button></div><div id="tip"></div><div id="note"></div>
+<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
-<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="dtip"></div></div>
+<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="dtip"></div></div>
 <aside>
 <div><h1>European offshore wake monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" aria-label="Region"></select>
@@ -140,40 +158,64 @@ function curWind(f){return LIVE()&&f.U48[N0]!=null?[f.U48[N0],f.D48[N0]]:[+$("U"
 function cur(f){const m=$("M").value,[U,D]=curWind(f),k=+$("K").value,key=m+U+"|"+D+"|"+k;if(f._k!==key){f._k=key;f._r=run(f,m,U,D,k)}return f._r}
 const now=c=>F.filter(f=>!c||f.c===c).reduce((a,f)=>a+cur(f).pw,0);
 
-/* ---------- map ---------- */
-function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);return[r.width,r.height]}
-function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}const[W,H]=size();cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];
- S.farm===null?map(W,H):farmView(W,H);sidebar();$("leg").style.display=S.farm===null?"flex":"none"}
+/* ---------- map: pan / zoom with level of detail ---------- */
+const EU=[-11,40.5,27,62.5],V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
+F.forEach(f=>{let e=0;const add=(x,y)=>{e=Math.max(e,Math.abs(x),Math.abs(y))};if(f.xy)for(let i=0;i<f.xy.length;i+=2)add(f.xy[i],f.xy[i+1]);(f.o||[]).forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])});let t=0;if(f.xy)for(let i=0;i<f.xy.length;i+=2)t=Math.max(t,Math.abs(f.xy[i]),Math.abs(f.xy[i+1]));f.tex=f.xy?Math.max(t,300):Math.max(e,400);f.ext=Math.max(e,400);f.kx=111320*Math.cos(f.lat*Math.PI/180)});
+const cosR=()=>Math.cos(V.lat*Math.PI/180),pxm=()=>V.s/110574;
+const P=(lon,lat)=>[W0/2+(lon-V.lon)*cosR()*V.s,H0/2-(lat-V.lat)*V.s];
+const Pinv=(x,y)=>[V.lon+(x-W0/2)/(cosR()*V.s),V.lat-(y-H0/2)/V.s];
+const M=(f,x,y)=>[W0/2+(f.lon+x/f.kx-V.lon)*cosR()*V.s,H0/2-(f.lat+y/110574-V.lat)*V.s];
+const LOD_TURB=30,LOD_WAKE=90; // farm radius on screen (px) where turbines / wake fields appear
+function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);W0=r.width;H0=r.height;return[r.width,r.height]}
+function fit(b,pad=.08){const lat=(b[1]+b[3])/2,c=Math.cos(lat*Math.PI/180),w=Math.max(.02,(b[2]-b[0])*c),h=Math.max(.02,b[3]-b[1]);
+ return{lon:(b[0]+b[2])/2,lat,s:Math.min(4e5,Math.min(W0*(1-2*pad)/w,H0*(1-2*pad)/h))}}
+function farmBox(f){if(f.lay){const e=(f.tex+800)/110574,c=Math.cos(f.lat*Math.PI/180);return[f.lon-e/c,f.lat-e,f.lon+e/c,f.lat+e]}const b=[180,90,-180,-90];f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2){b[0]=Math.min(b[0],r[i]);b[1]=Math.min(b[1],r[i+1]);b[2]=Math.max(b[2],r[i]);b[3]=Math.max(b[3],r[i+1])}});
+ const e=f.ext/110574;return[Math.min(b[0],f.lon-e/Math.cos(f.lat*Math.PI/180)),Math.min(b[1],f.lat-e),Math.max(b[2],f.lon+e/Math.cos(f.lat*Math.PI/180)),Math.max(b[3],f.lat+e)]}
 function bbox(c){let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
  F.filter(f=>f.c===c).forEach(f=>f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
  if($("Z").checked||!F.some(f=>f.c===c))Z.filter(z=>z.c===c).forEach(z=>z.r.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
- const px=Math.max(.5,(a[2]-a[0])*.12),py=Math.max(.3,(a[3]-a[1])*.12);return[a[0]-px,a[1]-py,a[2]+px,a[3]+py]}
-function map(W,H){const eu=S.c===null,[lo0,la0,lo1,la1]=eu?[-11,40.5,27,62.5]:bbox(S.c),c=Math.cos((la0+la1)/2*Math.PI/180),sc=Math.min(W/((lo1-lo0)*c),H/(la1-la0));
- const ox=(W-(lo1-lo0)*c*sc)/2,oy=(H-(la1-la0)*sc)/2,prj=(lo,la)=>[ox+(lo-lo0)*c*sc,oy+(la1-la)*sc];
- const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=prj(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
- cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
- const SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
- if($("Z").checked)Z.forEach((z,i)=>{if(!eu&&z.c!==S.c)return;const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:eu?.07:.1;cx.fill(p);cx.globalAlpha=eu?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:eu?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
- F.forEach(f=>{if(!eu&&f.c!==S.c)return;const p=pth(f.ol);cx.fillStyle=css("--acc");cx.globalAlpha=.2;cx.fill(p);cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=eu?1:1.5;cx.stroke(p)});
- F.forEach((f,i)=>{if(!eu&&f.c!==S.c)return;const r=cur(f),[x,y]=prj(f.lon,f.lat),rad=eu?2.5+Math.sqrt(f.inst)*.22:5+Math.sqrt(f.inst)*.35;
-  cx.beginPath();cx.arc(x,y,rad,0,7);cx.fillStyle=css("--acc");cx.globalAlpha=.2+.6*(r.pw/Math.max(1,f.inst));cx.fill();cx.globalAlpha=1;cx.lineWidth=i===S.hover?3:1.3;cx.strokeStyle=css("--acc");if(!f.lay)cx.setLineDash([3,2]);cx.stroke();cx.setLineDash([]);S.pts.push([x,y,rad,i])})}
-function farmView(W,H){const f=F[S.farm],r=cur(f),xs=r.P.map(p=>p[0]),ys=r.P.map(p=>p[1]);f.o.forEach(q=>{for(let i=0;i<q.length;i+=2){xs.push(q[i]);ys.push(q[i+1])}});const pad=f.lay?Math.max(500,f.D*4):800;
- const x0=Math.min(...xs)-pad,x1=Math.max(...xs)+pad,y0=Math.min(...ys)-pad,y1=Math.max(...ys)+pad,sc=Math.min(W/(x1-x0),H/(y1-y0)),ox=(W-(x1-x0)*sc)/2,oy=(H-(y1-y0)*sc)/2;
- const X=x=>ox+(x-x0)*sc,Y=y=>oy+(y1-y)*sc,m=$("M").value,k=+$("K").value;
- if(f.lay&&m!=="n"){const G=[140,Math.max(20,Math.round(140*(y1-y0)/(x1-x0)))],off=document.createElement("canvas");off.width=G[0];off.height=G[1];const oc=off.getContext("2d"),im=oc.createImageData(G[0],G[1]);
-  for(let gy=0;gy<G[1];gy++)for(let gx=0;gx<G[0];gx++){const px=x0+(gx+.5)/G[0]*(x1-x0),py=y1-(gy+.5)/G[1]*(y1-y0);let q=0;
+ return a[0]>a[2]?EU:a}
+function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat,s:V.s},t0=performance.now();
+ const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
+function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(6,V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat+=lat-a2;repaint()}
+function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
+function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}paint();sidebar()}
+function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;
+ if(!f._hm||f._hm.key!==key){const e=f.tex+Math.max(1500,(f.D||150)*12),G=170,off=document.createElement("canvas");off.width=G;off.height=G;const oc=off.getContext("2d"),im=oc.createImageData(G,G);
+  for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){const px=-e+(gx+.5)/G*2*e,py=e-(gy+.5)/G*2*e;let q=0;
    if(m==="j"){for(let j=0;j<r.P.length;j++){const d=wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);q+=d*d}q=Math.sqrt(q)}
    else for(let j=0;j<r.P.length;j++)q+=r.u[j]/r.U*wd(m,k,r.P[j],r.Dt[j],r.ct[j],px,py,r.dx,r.dy,0);
-   const d=q,o=4*(gy*G[0]+gx),e=Math.min(1,d*3);im.data[o]=255-16*e;im.data[o+1]=209-137*e;im.data[o+2]=102+9*e;im.data[o+3]=Math.min(1,d*3.2)*215}
-  oc.putImageData(im,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(off,ox,oy,(x1-x0)*sc,(y1-y0)*sc)}
- cx.strokeStyle=css("--acc");cx.lineWidth=1.8;for(const q of f.o){cx.beginPath();for(let i=0;i<q.length;i+=2)i?cx.lineTo(X(q[i]),Y(q[i+1])):cx.moveTo(X(q[i]),Y(q[i+1]));cx.closePath();if(!f.lay){cx.fillStyle=css("--acc");cx.globalAlpha=.12;cx.fill();cx.globalAlpha=1}cx.stroke()}
- r.P.forEach((p,i)=>{cx.beginPath();cx.arc(X(p[0]),Y(p[1]),Math.max(2.5,r.Dt[i]/2*sc),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fill();cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=1.2;cx.stroke()});
- const[U,D]=curWind(f),t=D*Math.PI/180,ax=46,ay=46;cx.strokeStyle=css("--ink");cx.fillStyle=css("--ink");cx.lineWidth=2;cx.beginPath();cx.moveTo(ax+Math.sin(t)*26,ay-Math.cos(t)*26);cx.lineTo(ax-Math.sin(t)*26,ay+Math.cos(t)*26);cx.stroke();
- cx.beginPath();cx.arc(ax-Math.sin(t)*26,ay+Math.cos(t)*26,5,0,7);cx.fill();cx.font="12px sans-serif";cx.fillText(U.toFixed(1)+" m/s",ax-22,ay+44);
- const bar=(x1-x0)>30000?5000:1000;cx.fillText("scale bar "+bar/1000+" km",W-110,H-16);cx.fillRect(W-110,H-12,bar*sc,2);
- const sp=f.lay&&spacingOf(f);if(sp){const l1="Spacing to nearest turbine (rotor diameters)",l2="min "+sp.min.toFixed(1)+" D  ·  mean "+sp.mean.toFixed(1)+" D  ·  max "+sp.max.toFixed(1)+" D";
-  cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+30)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,H-54,w,44);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,H-53.5,w,44);
-  cx.fillStyle=css("--mut");cx.fillText(l1,20,H-36);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,H-18);cx.font="12px sans-serif"}}
+   const o=4*(gy*G+gx),c=Math.min(1,q*3);im.data[o]=255-16*c;im.data[o+1]=209-137*c;im.data[o+2]=102+9*c;im.data[o+3]=Math.min(1,q*3.2)*215}
+  oc.putImageData(im,0,0);f._hm={key,c:off,e}}
+ const e=f._hm.e,[ax,ay]=M(f,-e,e),[bx,by]=M(f,e,-e);cx.imageSmoothingEnabled=true;cx.drawImage(f._hm.c,ax,ay,bx-ax,by-ay)}
+function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,V.s/40))}
+function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.max(1,f.inst))),hot=i===S.hover||i===S.farm;
+ cx.beginPath();cx.arc(x,y,Ro,0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.8;cx.fill();cx.globalAlpha=1;
+ cx.lineWidth=hot?2.6:1.4;cx.strokeStyle=css("--acc");if(!f.lay)cx.setLineDash([3,2]);cx.stroke();cx.setLineDash([]);
+ if(cf>0.002){cx.beginPath();cx.arc(x,y,Math.max(1,Ro*cf),0,7);cx.fillStyle=css("--acc");cx.fill()}
+ S.pts.push([x,y,Ro,i])}
+function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
+ cx.fillStyle=css("--ink");cx.font="12px sans-serif";cx.fillText(km+" km",W-16-w,H-16);cx.fillRect(W-16-w,H-12,w,2)}
+function paint(){if(S.tab!=="map")return;const[W,H]=size();cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];
+ const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
+ cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
+ const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
+ if($("Z").checked)Z.forEach((z,i)=>{const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
+ const vis=[];F.forEach((f,i)=>{const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
+ vis.forEach(([i])=>{const f=F[i],p=pth(f.ol);S.fp.push([p,i]);cx.fillStyle=css("--acc");cx.globalAlpha=.16;cx.fill(p);cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=i===S.farm||i===S.hover?2.4:1.1;cx.stroke(p)});
+ const m=$("M").value,k=+$("K").value;
+ if(m!=="n")vis.filter(v=>F[v[0]].lay&&(v[3]>=LOD_WAKE||(v[0]===S.farm&&v[3]>=LOD_TURB))).sort((a,b)=>b[3]-a[3]).slice(0,4).forEach(([i])=>heat(F[i],m,k));
+ vis.forEach(([i,x,y,R])=>{const f=F[i],r=cur(f);
+  if(f.lay&&R>=LOD_TURB){r.P.forEach((p,j)=>{const[a,b]=M(f,p[0],p[1]);cx.beginPath();cx.arc(a,b,Math.max(1.6,r.Dt[j]/2*pxm()),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fill();cx.globalAlpha=1;cx.strokeStyle=css("--acc");cx.lineWidth=1;cx.stroke()});
+   if(R>=LOD_TURB*2){cx.font="600 12px sans-serif";cx.fillStyle=css("--ink");const t=f.n+" · "+fmt(r.pw),w=cx.measureText(t).width,[lx,ly]=M(f,0,f.tex);cx.fillText(t,Math.max(4,Math.min(W-w-4,lx-w/2)),Math.max(14,ly-8))}}
+  else glyph(f,r,x,y,i)});
+ const fs=S.farm!==null?F[S.farm]:null,near=fs||(V.s>800?vis.map(v=>F[v[0]]).sort((a,b)=>{const[ax,ay]=P(a.lon,a.lat),[bx,by]=P(b.lon,b.lat);return Math.hypot(ax-W/2,ay-H/2)-Math.hypot(bx-W/2,by-H/2)})[0]:null);
+ if(near){const[U,D]=curWind(near),t=D*Math.PI/180,ax=40,ay=40;cx.strokeStyle=css("--ink");cx.fillStyle=css("--ink");cx.lineWidth=2;cx.beginPath();cx.moveTo(ax+Math.sin(t)*22,ay-Math.cos(t)*22);cx.lineTo(ax-Math.sin(t)*22,ay+Math.cos(t)*22);cx.stroke();
+  cx.beginPath();cx.arc(ax-Math.sin(t)*22,ay+Math.cos(t)*22,4.5,0,7);cx.fill();cx.font="12px sans-serif";cx.fillText(U.toFixed(1)+" m/s from "+D+"°",14,ay+40);cx.fillStyle=css("--mut");cx.fillText(near.n.length>28?near.n.slice(0,27)+"…":near.n,14,ay+55)}
+ if(fs&&fs.lay&&fs.tex*pxm()>=LOD_TURB){const sp=spacingOf(fs);if(sp){const l1="Spacing to nearest turbine",l2="min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D";
+  cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+20)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,104,w,42);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,104.5,w,42);
+  cx.fillStyle=css("--mut");cx.fillText(l1,20,121);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,139)}}
+ scaleBar(W,H)}
 function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
@@ -197,7 +239,7 @@ function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$
    $("cmp").innerHTML=h}
   else{$("mwsub").textContent="of "+fmt(f.inst)+" · estimated";$("sub").textContent="Site "+f.a+" km²";$("cmp").innerHTML="";const n=$("note");n.style.display="block";n.textContent="There are no turbine positions for this farm in the dataset, so there's no wake field. Output is the free-stream power curve with an assumed 10% wake loss."}
   $("list").innerHTML=F.map((g,i)=>g.c!==f.c?"":"<button data-i='"+i+"' class='"+(i===S.farm?"on ":"")+(g.lay?"":"est")+"'><span>"+g.n+"</span><span class='mut'>"+fmt(cur(g).pw)+"</span></button>").join("")}}
-function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";draw()}
+function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):EU));sidebar()}else draw()}
 
 /* ---------- Compare tab ---------- */
 S.fm=MODELS.turbopark?"turbopark":"jensen";
@@ -240,7 +282,7 @@ function dash(){series();const fs=F.filter(f=>!S.c||f.c===S.c),A=agg(fs),lay=fs.
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
 function tab(t){S.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
- $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";draw()}
+ $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;d.style.left=Math.min(e.clientX+12,innerWidth-260)+"px";d.style.top=e.clientY+14+"px"}
 
@@ -304,6 +346,67 @@ function histDraw(){const A=MHIST&&MHIST.areas,box=$("mhist");
 $("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=TIPS[+sv.dataset.t](k);if(t)dtip(e,t);else $("dtip").style.display="none"};
 $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
 
+/* ---------- System tab: generation mix, load, prices, cross-border flows (Energy-Charts) ---------- */
+const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland"};
+const MIXC=[["nuc","Nuclear",["nuclear"]],["coal","Coal",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["gas","Gas",["fossil_gas"]],
+ ["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],["oth","Biomass & other",["biomass","geothermal","waste","others","fossil_oil"]],
+ ["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]]];
+const NOTGEN=new Set(["load","residual_load","cross_border_electricity_trading","hydro_pumped_storage_consumption"]);
+const RENEW=["hydro_run_of_river","hydro_water_reservoir","biomass","geothermal","wind_offshore","wind_onshore","solar"];
+let STIPS=[];S.sys=null;
+function sysData(c){const d=SYS[c];if(!d||!d.series)return null;const se=d.series,known=new Set(MIXC.flatMap(m=>m[2]));
+ const mix={};MIXC.forEach(([k,,ids])=>{mix[k]=[...Array(NP)].map((_,h)=>{let s=0,any=false;ids.forEach(i=>{const v=se[i]&&se[i][h];if(v!=null){s+=Math.max(0,v);any=true}});return any?s:0})});
+ Object.keys(se).forEach(id=>{if(!known.has(id)&&!NOTGEN.has(id))se[id].forEach((v,h)=>{if(v!=null&&v>0)mix.oth[h]+=v})});
+ const gen=[...Array(NP)].map((_,h)=>MIXC.reduce((a,[k])=>a+mix[k][h],0)),load=se.load||null;
+ const ren=[...Array(NP)].map((_,h)=>RENEW.reduce((a,i)=>a+Math.max(0,(se[i]&&se[i][h])||0),0));
+ let last=NP-1;while(last>0&&gen[last]===0)last--;
+ const fl=d.flows||{},net=fl.sum||null,nb=Object.keys(fl).filter(k=>k!=="sum");
+ return{c,mix,gen,load,ren,last,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[]}}
+const v1=v=>v==null||!isFinite(v)?"–":fmt(v);
+function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<n;h++)mx=Math.max(mx,D.gen[h],D.load?D.load[h]||0:0);mx=Math.ceil(mx/1000)*1000;
+ const y=v=>H-2-(H-6)*v/mx;let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+fmt(mx)+"</text>";
+ const base=Array(n).fill(0);
+ MIXC.forEach(([k])=>{const top=base.map((b,h)=>b+D.mix[k][h]);if(top.every((t,h)=>t===base[h]))return;
+  let d="M"+x(0)+","+y(top[0]);for(let h=1;h<=D.last;h++)d+="L"+x(h).toFixed(1)+","+y(top[h]).toFixed(1);for(let h=D.last;h>=0;h--)d+="L"+x(h).toFixed(1)+","+y(base[h]).toFixed(1);
+  s+="<path d='"+d+"Z' style='fill:var(--m-"+k+");stroke:var(--panel);stroke-width:1'/>";top.forEach((t,h)=>base[h]=t)});
+ if(D.load)s+="<path class='ln' style='stroke:var(--ink);stroke-width:2' d='"+pathOf(D.load,x,y,0,n-1)+"'/>";
+ return s}
+function sysCard(D){const h=D.last,g=D.gen[h]||1,pz=D.zones.map(z=>MK.prices[z]&&MK.prices[z][N0]).filter(v=>v!=null);
+ let bar="",xo=0;MIXC.forEach(([k])=>{const w=100*D.mix[k][h]/g;if(w>0.3){bar+="<span style='left:"+xo+"%;width:calc("+w+"% - 2px);background:var(--m-"+k+")'></span>";xo+=w}});
+ const ni=D.net&&D.net[h];
+ return"<div class='card"+(D.c===S.sys?" on":"")+"' data-s='"+D.c+"'><h3>"+(SYSN[D.c]||D.c)+"<span>"+(pz.length?pz.map(v=>v.toFixed(0)).join(" / ")+" €/MWh":"price n/a")+"</span></h3><div class='v mut'>Load "+v1(D.load&&D.load[h])+" · renewables "+(100*D.ren[h]/g).toFixed(0)+"% of generation<br>"+(ni==null?"flows n/a":ni>=0?"Importing "+fmt(ni):"Exporting "+fmt(-ni))+" · at "+hl(h)+"</div><div class='mixbar'>"+bar+"</div></div>"}
+function system(){const el=$("sys");STIPS=[];
+ if(!MK||!Object.keys(SYS).length){el.innerHTML="<div class='feednote'><b>No system data yet.</b> It arrives with the next pipeline run.</div>";return}
+ const all=Object.keys(SYS).map(sysData).filter(Boolean).sort((a,b)=>(b.load?b.load[b.last]:b.gen[b.last])-(a.load?a.load[a.last]:a.gen[a.last]));
+ if(!S.sys||!all.some(d=>d.c===S.sys))S.sys=all[0]&&all[0].c;
+ const D=all.find(d=>d.c===S.sys);
+ let h="<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. Public net generation, last 24 h, hourly averages. Flows: positive = import.</div>";
+ h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
+ h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
+ if(D){const lh=D.last,g=D.gen[lh]||1;
+  h+="<h2>"+(SYSN[D.c]||D.c)+" <span class='mut' style='font:13px system-ui'>· last 24 h</span></h2>";
+  const i1=STIPS.push(k=>(SYSN[D.c]||D.c)+" · "+dl(k)+" · generation "+fmt(D.gen[k])+(D.load?" · load "+v1(D.load[k]):"")+" · "+MIXC.filter(([c])=>D.mix[c][k]>0).map(([c,n])=>n+" "+fmt(D.mix[c][k])).join(", "))-1;
+  h+="<div class='syswrap'><div class='card wide'><h3>Generation mix and load<span>"+fmt(D.gen[lh])+" generation"+(D.load?" · "+v1(D.load[lh])+" load":"")+"</span></h3><svg class='sx' data-t='"+i1+"' data-n='"+NP+"' data-k='mix'></svg>"+"<div class='mut' style='font-size:12px;display:flex;justify-content:space-between'><span>−24 h</span><span>now</span></div>";
+  h+="<table class='mixtab'><thead><tr><th>Source</th><th>Now</th><th>Share now</th><th>24 h avg</th><th>24 h energy</th></tr></thead><tbody>"+MIXC.filter(([k])=>D.mix[k].some(v=>v>0)).map(([k,n])=>{const a=D.mix[k].slice(0,lh+1),av=a.reduce((p,q)=>p+q,0)/a.length;return"<tr><td><i style='background:var(--m-"+k+")'></i>"+n+"</td><td>"+fmt(D.mix[k][lh])+"</td><td>"+(100*D.mix[k][lh]/g).toFixed(1)+"%</td><td>"+fmt(av)+"</td><td>"+(a.reduce((p,q)=>p+q,0)/1000).toFixed(1)+" GWh</td></tr>"}).join("")+"</tbody></table></div>";
+  // prices
+  const zs=D.zones.filter(z=>MK.prices[z]);let lo=0,hi=50;zs.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
+  const i2=STIPS.push(k=>dl(k)+(k>N0?" (forecast)":"")+" · "+zs.map(z=>z+" "+pm(MK.prices[z][k])).join(" · "))-1;
+  h+="<div class='card'><h3>Day-ahead price<span>"+(zs.map(z=>z+" "+pm(MK.prices[z][N0])).join(" · ")||"n/a")+"</span></h3>"+(zs.length?"<svg class='sx' data-t='"+i2+"' data-n='"+NT+"' data-k='price' data-lo='"+lo+"' data-hi='"+hi+"'></svg><div class='mut' style='font-size:12px'>"+zs.map((z,j)=>"<span style='color:var("+(j?"--ink":"--prc")+")'>━</span> "+z).join(" &nbsp; ")+" · dashed = tomorrow once published</div>":"<div class='mut'>No openly licensed price for this country's zones.</div>")+"</div>";
+  // flows
+  if(D.net){const now=D.nb.map(k=>[k,D.fl[k][lh]]).filter(q=>q[1]!=null).sort((a,b)=>b[1]-a[1]),mxf=Math.max(1,...now.map(q=>Math.abs(q[1])));
+   const i3=STIPS.push(k=>dl(k)+" · net "+(D.net[k]==null?"–":(D.net[k]>=0?"import ":"export ")+fmt(Math.abs(D.net[k])))+" · "+D.nb.map(nb=>(D.fn[nb]||nb)+" "+(D.fl[nb][k]==null?"–":(D.fl[nb][k]>0?"+":"")+Math.round(D.fl[nb][k]))).join(", "))-1;
+   h+="<div class='card'><h3>Cross-border physical flows<span>"+(D.net[lh]>=0?"net import ":"net export ")+fmt(Math.abs(D.net[lh]))+"</span></h3><div class='flows'>"+now.map(([k,v])=>"<div class='fr'><span class='fl'>"+(D.fn[k]||k)+"</span><span class='fb'><b style='"+(v>=0?"left:50%;width:"+(50*v/mxf)+"%;background:var(--imp)":"right:50%;width:"+(50*-v/mxf)+"%;background:var(--exp)")+"'></b></span><span class='fv'>"+(v>0?"+":"")+fmt(v).replace(" MW","")+" MW</span></div>").join("")+"</div><div class='mut' style='font-size:12px;margin:6px 0 2px'><span style='color:var(--imp)'>■</span> import · <span style='color:var(--exp)'>■</span> export · at "+hl(lh)+". Net import, last 24 h:</div><svg class='sx' data-t='"+i3+"' data-n='"+NP+"' data-k='net'></svg></div>"}
+  h+="</div>"}
+ el.innerHTML=h;
+ el.querySelectorAll("svg.sx").forEach(sv=>{const W=sv.clientWidth||400,k=sv.dataset.k,Hh=k==="mix"?180:70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+(k==="mix"?0:12)));sv.style.height=(Hh+(k==="mix"?0:12))+"px";
+  if(k==="mix")sv.innerHTML=stackSVG(D,W,Hh);
+  else if(k==="price"){const zs=D.zones.filter(z=>MK.prices[z]);sv.innerHTML=tsSVG(W,Hh,NT,zs.map((z,j)=>({v:MK.prices[z],cls:j?"act":"pr"})),+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1))}
+  else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
+}
+$("sys").onclick=e=>{const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;system()}};
+$("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);if(t)dtip(e,t)};
+$("sys").onmouseleave=()=>{$("dtip").style.display="none"};
+
 /* ---------- events ---------- */
 $("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
@@ -311,12 +414,30 @@ $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==
 ["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
- let zh=-1;if(b<0){const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;cx.restore()}return[b,zh,x,y]}
-cv.onclick=e=>{if(S.farm!==null)return;const[b]=hit(e);if(b>=0)go(F[b].c,b)};
-cv.onmousemove=e=>{if(S.farm!==null)return;const[b,zh,x,y]=hit(e);if(b!==S.hover||zh!==S.zh){S.hover=b;S.zh=zh;draw()}const t=$("tip");
+ const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);
+ if(b<0)for(const[p,i]of S.fp)if(cx.isPointInPath(p,x*d,y*d)){b=i;break}
+ let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;cx.restore();return[b,zh,x,y]}
+function selectFarm(i){S.farm=i;S.c=F[i].c;S.hover=-1;$("tip").style.display="none";flyTo(fit(farmBox(F[i]),.12));sidebar()}
+const ptr=new Map();let drag=null;cv.style.touchAction="none";
+cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);cancelAnimationFrame(anim);
+ if(ptr.size===1)drag={x:e.clientX,y:e.clientY,lon:V.lon,lat:V.lat,moved:0};
+ else if(ptr.size===2){const[a,b]=[...ptr.values()];drag={pinch:Math.hypot(a[0]-b[0],a[1]-b[1]),moved:99}}};
+cv.onpointermove=e=>{if(ptr.has(e.pointerId))ptr.set(e.pointerId,[e.clientX,e.clientY]);
+ if(drag){$("tip").style.display="none";
+  if(ptr.size===2&&drag.pinch){const[a,b]=[...ptr.values()],dd=Math.hypot(a[0]-b[0],a[1]-b[1]),r=cv.getBoundingClientRect();zoomAt((a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top,dd/drag.pinch);drag.pinch=dd;return}
+  if(drag.lon!=null){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.abs(dx)+Math.abs(dy));V.lon=drag.lon-dx/(cosR()*V.s);V.lat=drag.lat+dy/V.s;cv.style.cursor="grabbing";repaint()}return}
+ const[b,zh,x,y]=hit(e);if(b!==S.hover||zh!==S.zh){S.hover=b;S.zh=zh;repaint()}const t=$("tip");cv.style.cursor=b>=0?"pointer":"grab";
  if(b>=0||zh>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";
-  if(b>=0){const f=F[b],[U,D]=curWind(f);t.textContent=f.n+" ("+f.c+") · "+fmt(cur(f).pw)+(f.lay?"":" (est.)")+" · "+U.toFixed(1)+" m/s from "+D+"°"}else{const z=Z[zh];t.textContent=z.n+" ("+z.c+") · "+z.st+(z.mw>=5?" · "+fmt(z.mw):"")+" · "+z.a+" km²"}}else t.style.display="none"};
-cv.onmouseleave=()=>{$("tip").style.display="none"};
+  if(b>=0){const f=F[b],[U,D]=curWind(f),r=cur(f);t.textContent=f.n+" ("+f.c+") · "+fmt(r.pw)+" of "+fmt(f.inst)+" · CF "+(100*r.pw/Math.max(1,f.inst)).toFixed(0)+"%"+(f.lay?"":" (est.)")+" · "+U.toFixed(1)+" m/s from "+D+"°"}
+  else{const z=Z[zh];t.textContent=z.n+" ("+z.c+") · "+z.st+(z.mw>=5?" · "+fmt(z.mw):"")+" · "+z.a+" km²"}}else t.style.display="none"};
+cv.onpointerup=cv.onpointercancel=e=>{ptr.delete(e.pointerId);cv.style.cursor="grab";
+ if(drag&&drag.moved<5&&ptr.size===0&&e.type==="pointerup"){const[b]=hit(e);if(b>=0)selectFarm(b)}
+ if(ptr.size===0)drag=null;else if(ptr.size===1){const[p]=[...ptr.values()];drag={x:p[0],y:p[1],lon:V.lon,lat:V.lat,moved:99}}};
+cv.onwheel=e=>{e.preventDefault();cancelAnimationFrame(anim);zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0016))};
+cv.ondblclick=e=>{zoomAt(e.offsetX,e.offsetY,2)};
+cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0){S.hover=-1;S.zh=-1;repaint()}};
+$("zin").onclick=()=>zoomAt(W0/2,H0/2,1.6);$("zout").onclick=()=>zoomAt(W0/2,H0/2,1/1.6);$("zhome").onclick=()=>go(null,null);
+
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(b)tab(b.dataset.t)};
 $("cards").onclick=e=>{const c=e.target.closest(".card");if(c)go(c.dataset.c===S.c?null:c.dataset.c,null)};
 $("ftab").onclick=e=>{const th=e.target.closest("th");if(th){if(th.dataset.k==="sp"||th.dataset.k==="sw")return;S.sort=[th.dataset.k,S.sort[0]===th.dataset.k?-S.sort[1]:(["n","c"].includes(th.dataset.k)?1:-1)];draw();return}
@@ -329,7 +450,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Wake models: PyWake (DTU).";
-addEventListener("resize",draw);draw();
+addEventListener("resize",draw);size();Object.assign(V,fit(EU));draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json")).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}

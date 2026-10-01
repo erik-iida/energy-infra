@@ -33,6 +33,11 @@ COUNTRY_CODE = {
     "Germany": "de", "Netherlands": "nl", "Belgium": "be", "Denmark": "dk", "France": "fr",
     "Sweden": "se", "Ireland": "ie", "Portugal": "pt", "Spain": "es", "United Kingdom": "uk",
 }
+# Countries on the System tab (country code -> bidding zones shown for it)
+SYSTEM_COUNTRIES = {
+    "de": ["DE-LU"], "fr": ["FR"], "nl": ["NL"], "be": ["BE"], "dk": ["DK1", "DK2"], "no": ["NO2"],
+    "se": ["SE3", "SE4"], "pl": ["PL"], "at": ["AT"], "ch": ["CH"],
+}
 # Market areas for the monthly history (country code -> zones it trades in)
 HISTORY_AREAS = {"de": ["DE-LU"], "nl": ["NL"], "be": ["BE"], "dk": ["DK1", "DK2"], "fr": ["FR"]}
 
@@ -112,7 +117,8 @@ def _save(name: str, d: dict) -> None:
 
 # ---------------------------------------------------------------- recent window (feed)
 def recent(cl: Client, zones: set[str], countries: set[str], hours: list[int]) -> dict:
-    """Prices for `hours` (past + future) per zone, and actual offshore MW per country for past hours."""
+    """Prices for `hours` (past + future) per zone; actual offshore MW, generation mix and load per country,
+    and cross-border physical flows for SYSTEM_COUNTRIES (past 24 h)."""
     cache = _load("market_recent.json")
     pc = cache.setdefault("prices", {})
     lic = cache.setdefault("licence", {})
@@ -139,28 +145,53 @@ def recent(cl: Client, zones: set[str], countries: set[str], hours: list[int]) -
         for h, v in hourly(r, "day_ahead_price").items():
             have[str(h)] = round(v, 2)
         cache.setdefault("t", {})[z] = time.time()
-    actual = {}
+    actual, system = {}, {}
     no_off = cache.setdefault("no_offshore", {})
-    for c in sorted(countries):
-        if no_off.get(c) == _utc_today().isoformat():
+    past = hours[:24]
+    for c in sorted(set(countries) | set(SYSTEM_COUNTRIES)):
+        if c not in SYSTEM_COUNTRIES and no_off.get(c) == _utc_today().isoformat():
             continue
         r = cl.get("public_power", country=c, start=_iso(hours[0]), end=_iso(now_h + 3600))
         if not r:
             continue
         lic[f"power:{c}"] = r.get("license") or ""
-        ids = {s["id"] for s in r.get("series", [])}
-        if "wind_offshore" not in ids:
+        series = r.get("series", [])
+        ids = {sd["id"] for sd in series}
+        if "wind_offshore" in ids:
+            hv = hourly(r, "wind_offshore")
+            actual[c] = [None if h not in hv else round(hv[h], 1) for h in past]
+        elif c not in SYSTEM_COUNTRIES:
             no_off[c] = _utc_today().isoformat()
+        if c in SYSTEM_COUNTRIES:
+            mw = [sd for sd in series if (sd.get("unit") or r.get("unit") or "MW") == "MW"]
+            out = {}
+            for sd in mw:
+                hv = hourly(r, sd["id"])
+                vals = [None if h not in hv else round(hv[h], 1) for h in past]
+                if any(v is not None for v in vals):
+                    out[sd["id"]] = vals
+            system[c] = {"series": out, "names": {sd["id"]: sd["name"] for sd in mw if sd["id"] in out}}
+    for c in sorted(SYSTEM_COUNTRIES):
+        r = cl.get("cbpf", country=c, start=_iso(hours[0]), end=_iso(now_h + 3600))
+        if not r or c not in system:
             continue
-        hv = hourly(r, "wind_offshore")
-        actual[c] = [None if h not in hv else round(hv[h], 1) for h in hours[:24]]
+        lic[f"flows:{c}"] = r.get("license") or ""
+        scale = 1000.0 if (r.get("unit") or "").upper() == "GW" else 1.0
+        fl = {}
+        for sd in r.get("series", []):
+            hv = hourly(r, sd["id"])
+            vals = [None if h not in hv else round(hv[h] * scale, 1) for h in past]
+            if any(v is not None for v in vals):
+                fl[sd["id"]] = vals
+        system[c]["flows"] = fl  # MW, positive = import
+        system[c]["flow_names"] = {sd["id"]: sd["name"] for sd in r.get("series", []) if sd["id"] in fl}
     # keep three days of prices
     cut = hours[0] - 24 * 3600
     for z in pc:
         pc[z] = {k: v for k, v in pc[z].items() if int(k) >= cut}
     _save("market_recent.json", cache)
     prices = {z: [pc.get(z, {}).get(str(h)) for h in hours] for z in zones}
-    return {"prices": prices, "actual": actual, "licence": lic}
+    return {"prices": prices, "actual": actual, "system": system, "licence": lic}
 
 
 # ---------------------------------------------------------------- monthly history (actual data)
@@ -269,7 +300,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
     """Returns (market block for feed.json, market_history.json content)."""
     cl = Client()
     hours = [int(datetime.fromisoformat(h.replace("Z", ":00+00:00")).timestamp()) for h in hours_iso]
-    zones = {z for f in farms if (z := farm_zone(f))}
+    zones = {z for f in farms if (z := farm_zone(f))} | {z for zs in SYSTEM_COUNTRIES.values() for z in zs}
     countries = {COUNTRY_CODE[f["c"]] for f in farms if f["c"] in COUNTRY_CODE}
     rec = recent(cl, zones, countries, hours)
     hist = history(cl, zone_weights(farms))
@@ -281,6 +312,10 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
         "prices": {z: v for z, v in rec["prices"].items() if z in open_zones},
         "restricted_zones": sorted(zones - open_zones),
         "actual_offshore": {c: v for c, v in rec["actual"].items() if is_open(lic.get(f"power:{c}"))},
+        "system": {c: {**({k: v for k, v in d.items() if k in ("series", "names")} if is_open(lic.get(f"power:{c}")) else {}),
+                       **({k: v for k, v in d.items() if k in ("flows", "flow_names")} if is_open(lic.get(f"flows:{c}")) else {}),
+                       "zones": SYSTEM_COUNTRIES[c]}
+                   for c, d in rec["system"].items()},
         "licences": {k: v for k, v in sorted(lic.items())},
         "diag": {"calls": cl.calls, "errors": cl.errors[-10:]},
     }

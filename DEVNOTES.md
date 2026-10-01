@@ -28,6 +28,15 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   30 s (429/5xx/connection errors), then skip; the cell is retried on a later run. Market failure never blocks the feed.
 - No GB price in Energy-Charts → UK farms lack market numbers (Elexon/N2EX would be the source).
 
+## Web page
+- Map is one pan/zoom canvas (drag, wheel, pinch, double-click, +/− buttons). Projection: equirectangular around
+  the view centre. Level of detail by the turbine layout's on-screen radius: < 30 px ring glyph (outer ring =
+  capacity, filled radius = capacity factor), ≥ 30 px turbines, ≥ 90 px wake heatmap (max 4 farms, cached per
+  farm/model/wind so panning is cheap). Selecting a farm or country flies to it.
+- System tab (SYSTEM_COUNTRIES in market.py): mix in 8 groups with validated colour order (nuclear magenta, coal
+  violet, gas orange, hydro aqua, biomass & other red, wind offshore blue, wind onshore green, solar yellow),
+  load line, prices, flows (import blue / export red).
+
 ## Decisions so far
 - Windy dropped: free key returns shuffled test data (500 calls/day), Professional is €990/yr and has no ECMWF.
 - Turbines, types and power/Ct curves from the EuroWindWakes database (2026-01-27, 6 544 turbines, 122 farms,

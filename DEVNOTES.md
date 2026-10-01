@@ -112,6 +112,11 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   terms forbid redistribution / derivative works without written permission, and the map is schematic
   ("not located at their real geographic location"). Not used.
 
+## Legend toggles (Oct 2026)
+- Legend entries are buttons (data-k): off/on farms, uc/cs/pl zones, g750..g220/gdc/gbuild grid classes, depth.
+  Hidden keys live in HID and localStorage "wm-hide" (per browser). A selected farm stays visible. Zone entries
+  re-enable the "Show future zones" checkbox; depth mirrors the bathymetry checkbox.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

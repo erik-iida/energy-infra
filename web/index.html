@@ -39,6 +39,10 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 .feednote{font-size:12px;color:var(--mut);border-left:3px solid var(--acc);padding-left:8px}
 .note-est{font-size:12px;border-left:3px solid var(--uc);padding:4px 8px;margin:4px 0 8px;background:var(--panel)}
 #leg .gk{width:12px;margin:0 2px 0 6px}
+#leg .lk{all:unset;cursor:pointer;display:block;border-radius:3px;padding:0 3px;margin:0 -3px}
+#leg .lk:hover{background:var(--line)}#leg .lk:focus-visible{outline:2px solid var(--acc)}
+#leg .lk.off{opacity:.38;text-decoration:line-through}
+#leg #gleg .lk{display:inline-block;margin:0 0 0 2px}#leg .lh{font-size:11px;color:var(--mut)}
 #dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
@@ -77,7 +81,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
-<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore farm (demo)</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span><span id="gleg" style="display:none">Grid <i class="gk" style="border-top-color:#004da8"></i>750 <i class="gk" style="border-top-color:#b81245"></i>500 <i class="gk" style="border-top-color:#e3262d"></i>380–400 <i class="gk" style="border-top-color:#f29d00"></i>300–330 <i class="gk" style="border-top-color:#38a800"></i>220 kV <i class="gk" style="border-top-color:#d660d6"></i>DC <i class="gk" style="border-top:2px dashed var(--mut)"></i>building</span><span id="bleg" style="display:block">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span></div></div>
+<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Operating farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button><button class="lk" data-k="gbuild"><i class="gk" style="border-top:2px dashed var(--mut)"></i>building</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
@@ -208,13 +212,14 @@ function seamCover(){const v=viewBox(),p=new Path2D();for(let i=0;i<SEAML.length
 // ---- high-voltage grid (web/data/grid.json: [kV (0 = DC), flags, coords]) ----
 const GRID={d:null,b:null,loading:false};
 const GCLS=[[700,"#004da8",1.7],[450,"#b81245",1.6],[350,"#e3262d",1.3],[270,"#f29d00",1.1],[200,"#38a800",.9],[0,"#777",.7]];
+const GKEY=["g750","g500","g400","g300","g220","g220","gdc"];
 const gcls=kv=>kv===0?6:GCLS.findIndex(c=>kv>=c[0]);
 function gridLoad(){if(GRID.d||GRID.loading)return;GRID.loading=true;
  fetch("data/grid.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;GRID.d=j.lines;GRID.b=j.lines.map(l=>{const c=l[2];let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<c.length;i+=2){a[0]=Math.min(a[0],c[i]);a[1]=Math.min(a[1],c[i+1]);a[2]=Math.max(a[2],c[i]);a[3]=Math.max(a[3],c[i+1])}return a});
   $("gleg").style.display=$("GR").checked?"block":"none";repaint()}).catch(()=>{})}
 function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;const v=viewBox(),far=V.s<12;
  const P2=[...Array(14)].map(()=>new Path2D());
- GRID.d.forEach((l,i)=>{const b=GRID.b[i];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])return;const k=gcls(l[0]);if(far&&k>=4)return;
+ GRID.d.forEach((l,i)=>{const b=GRID.b[i];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])return;const k=gcls(l[0]);if(far&&k>=4)return;if(HID.has(GKEY[k])||((l[1]&1)&&HID.has("gbuild")))return;
   const p=P2[k*2+(l[1]&1)],c=l[2];let lx=1e9,ly=1e9;
   for(let j=0;j<c.length;j+=2){const[x,y]=P(c[j],c[j+1]);if(!j){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1||j>=c.length-2){p.lineTo(x,y);lx=x;ly=y}}});
  cx.save();cx.lineCap="round";cx.lineJoin="round";cx.globalAlpha=far?.55:.8;const zw=Math.min(1.6,Math.max(.6,V.s/60));
@@ -256,6 +261,9 @@ function heatLegend(W,H){const w=150,x=W-16-w,y=H-58;cx.font="11px sans-serif";c
  const g=cx.createLinearGradient(x,0,x+w,0);for(let i=0;i<=4;i++){const c=rampC(i/4),a=i?.72:.2;g.addColorStop(i/4,"rgba("+c.map(Math.round).join(",")+","+a+")")}
  cx.fillStyle=css("--mut");cx.fillText("Wind speed deficit",x,y-4);cx.fillStyle=g;cx.fillRect(x,y,w,8);cx.fillStyle=css("--mut");cx.fillText("0",x,y+18);cx.textAlign="right";cx.fillText(Math.round(DEF_MAX*100)+"%+",x+w,y+18);cx.textAlign="left"}
 function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,V.s/40))}
+// legend toggles: keys of map objects the viewer has hidden (remembered in this browser)
+const HID=new Set((()=>{try{return JSON.parse(localStorage.getItem("wm-hide")||"[]")}catch(e){return[]}})());
+function legSync(){document.querySelectorAll("#leg .lk").forEach(b=>{const k=b.dataset.k,off=k==="depth"?!$("BY").checked:HID.has(k)||(["uc","cs","pl"].includes(k)&&!$("Z").checked);b.classList.toggle("off",off);b.setAttribute("aria-pressed",String(!off))})}
 const fcol=f=>css(f.on?"--m-won":"--acc");
 function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.max(1,f.inst))),hot=i===S.hover||i===S.farm;
  cx.beginPath();cx.arc(x,y,Ro,0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.8;cx.fill();cx.globalAlpha=1;
@@ -300,8 +308,8 @@ const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e
 const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2||onTile(r[i])||onTile(r[i+1])){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}return p};
  cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath());gridDraw();
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
- if($("Z").checked)Z.forEach((z,i)=>{const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
- const vis=[];F.forEach((f,i)=>{const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
+ if($("Z").checked)Z.forEach((z,i)=>{if(HID.has(z.s))return;const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
+ const vis=[];F.forEach((f,i)=>{if(i!==S.farm&&HID.has(f.on?"on":"off"))return;const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
  vis.forEach(([i])=>{const f=F[i],p=pth(f.ol);S.fp.push([p,i]);cx.fillStyle=fcol(f);cx.globalAlpha=.16;cx.fill(p);cx.globalAlpha=1;cx.strokeStyle=fcol(f);cx.lineWidth=i===S.farm||i===S.hover?2.4:1.1;cx.stroke(p)});
  const m=$("M").value,k=+$("K").value;
  if(m!=="n")vis.filter(v=>F[v[0]].lay&&(v[3]>=LOD_WAKE||(v[0]===S.farm&&v[3]>=LOD_TURB))).sort((a,b)=>b[3]-a[3]).slice(0,4).forEach(([i])=>heat(F[i],m,k));
@@ -572,9 +580,16 @@ $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 $("C").innerHTML="<option value=''>World</option>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
 $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):a.dataset.go==="r"?go(RGOF[S.c],null):go(S.c,null)};
-["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;if(F.some(f=>f.on))$("lon").style.display="";
+["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=()=>{legSync();draw()};$("LV").onchange=draw;if(F.some(f=>f.on))$("lon").style.display="";
+$("leg").onclick=e=>{const b=e.target.closest(".lk");if(!b)return;const k=b.dataset.k;
+ if(k==="depth"){$("BY").checked=!$("BY").checked;$("BY").checked?HID.delete(k):HID.add(k);try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}$("BY").onchange()}
+ else{if(["uc","cs","pl"].includes(k)&&!$("Z").checked){$("Z").checked=true;HID.delete(k)}else HID.has(k)?HID.delete(k):HID.add(k);
+  try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}}
+ legSync();S.hover=-1;repaint()};
+if(HID.has("depth")){$("BY").checked=false;$("bys").style.display="none"}
+legSync();
 $("GR").onchange=()=>{$("gleg").style.display=$("GR").checked&&GRID.d?"block":"none";repaint()};
-$("BY").onchange=()=>{S.bathyKey="";$("bleg").style.display=$("bys").style.display=$("BY").checked?"block":"none";draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
+$("BY").onchange=()=>{S.bathyKey="";$("bys").style.display=$("BY").checked?"block":"none";legSync();draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
  const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);

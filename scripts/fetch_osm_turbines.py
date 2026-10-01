@@ -41,6 +41,11 @@ PRESETS = {
     "tahkoluoto": {
         "bbox": (61.55, 21.20, 61.72, 21.50),
         "wind_farm": "Tahkoluoto", "country": "Finland",
+        # The bbox also holds the harbour/breakwater turbines (mapped 2011, near land) and one at Reposaari.
+        # Keep only the offshore park: 11 turbines 4-7 km out, mapped in 2020 (10 x SWT-4.0-130 from 2017,
+        # probably plus the 2010 pilot, which can't be told apart from the tags).
+        "keep_ids": [7525510795, 7525511513, 7525511961, 7525512003, 7525513293, 7525513556, 7525513617,
+                     7525514032, 7525514067, 7525514156, 7525514242],
         "fallback": {"oem_manufacturer": "Siemens", "turbine_type": "SWT-4.0-130", "rated_power": 4.0,
                      "rotor_diameter": 130.0, "hub_height": 90.0, "commissioning_date": "2017-08"},
     },
@@ -103,6 +108,8 @@ def fetch(name: str, p: dict) -> list[dict]:
         els = osm_api(name, s, w, n, e)
     if els is None:
         return []
+    if p.get("keep_ids"):
+        els = [el for el in els if el["id"] in set(p["keep_ids"])]
     rows = []
     for el in els:
         t = el.get("tags", {})

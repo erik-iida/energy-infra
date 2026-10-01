@@ -1,0 +1,9 @@
+zenodo record 18619025 version 0.7, license {'id': 'odc-odbl'}
+  lines.csv: 19.8 MB
+  links.csv: 0.3 MB
+  lines.csv: 9162 rows, columns ['line_id', 'bus0', 'bus1', 'voltage', 'i_nom', 'circuits', 's_nom', 'r', 'x', 'b', 'length', 'underground', 'under_construction', 'type', 'tags', 'geometry', None]
+  lines.csv: kept 0 segments, skipped 9162
+  links.csv: 39 rows, columns ['link_id', 'bus0', 'bus1', 'voltage', 'p_nom', 'length', 'underground', 'under_construction', 'tags', 'geometry', None]
+  links.csv: kept 0 segments, skipped 39
+  segments by kV: {}
+wrote web/data/grid.json: 0.00 MB

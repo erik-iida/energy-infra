@@ -1,9 +1,11 @@
 zenodo record 18619025 version 0.7, license {'id': 'odc-odbl'}
   lines.csv: 19.8 MB
   links.csv: 0.3 MB
-  lines.csv: 9162 rows, columns ['line_id', 'bus0', 'bus1', 'voltage', 'i_nom', 'circuits', 's_nom', 'r', 'x', 'b', 'length', 'underground', 'under_construction', 'type', 'tags', 'geometry', None]
-  lines.csv: kept 0 segments, skipped 9162
-  links.csv: 39 rows, columns ['link_id', 'bus0', 'bus1', 'voltage', 'p_nom', 'length', 'underground', 'under_construction', 'tags', 'geometry', None]
-  links.csv: kept 0 segments, skipped 39
-  segments by kV: {}
-wrote web/data/grid.json: 0.00 MB
+  lines.csv sample: "merged_relation/10264161-225+1,way/150329778-225,way/239609000-225,225,1.29,1,502.728,0.35581,1.784981,2.329e-05,5930.17,f,f,Al/St 240/40 2-bundle 220.0,relation/10264161;way/393286545,'LINESTRING (5.97247291 43.15800139, 5.979089062337767 43.15992339832803, 5.9814071 43.1603645, 5.9861104 43.160035"
+  lines.csv: 9162 rows, columns ['line_id', 'bus0', 'bus1', 'voltage', 'i_nom', 'circuits', 's_nom', 'r', 'x', 'b', 'length', 'underground', 'under_construction', 'type', 'tags', 'geometry']
+  lines.csv: kept 9162 segments, skipped 0
+  links.csv sample: "relation/10377412-320-DC,way/753113423,way/636630368,320,1000,230134.96,t,f,relation/10377412,'LINESTRING (-1.1944667534205329 50.818128178480265, -1.1951334 50.8186524, -1.1961687 50.8191167, -1.1962974 50.8193607, -1.1966086 50.8195878, -1.1979121 50.8199064, -1.1993122 50.8201707, -1.200546 50.82"
+  links.csv: 39 rows, columns ['link_id', 'bus0', 'bus1', 'voltage', 'p_nom', 'length', 'underground', 'under_construction', 'tags', 'geometry']
+  links.csv: kept 39 segments, skipped 0
+  segments by kV: {0: 39, 220: 3169, 225: 1473, 236: 1, 254: 1, 275: 275, 300: 191, 330: 347, 380: 1225, 400: 2236, 420: 222, 500: 4, 750: 18}
+wrote web/data/grid.json: 1.15 MB

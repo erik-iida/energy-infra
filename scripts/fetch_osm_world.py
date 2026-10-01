@@ -1,0 +1,174 @@
+"""Fetch wind turbines from OpenStreetMap: offshore outside Europe, and (demo) all onshore turbines in Estonia.
+
+    python scripts/fetch_osm_world.py
+
+Writes data/raw/osm/osm_wind.json and data/raw/osm/osm_wind_log.txt. Runs on GitHub Actions (osm-world
+workflow); the cloud build environment can't reach Overpass.
+
+How:
+  1. Positions only ("out skel") for every wind generator in a few coastal bounding boxes.
+  2. Keep the ones at sea: outside Natural Earth 10m land, or less than ~500 m inside it (intertidal farms and
+     coastline inaccuracy). scripts/build_site.py later drops those already in the satellite dataset.
+  3. Full tags for the kept turbines, by id.
+  4. Wind power plants (power=plant, plant:source=wind) in the same boxes, centre + tags, for farm names.
+  5. Estonia: every wind generator and plant inside the country (Overpass area), onshore demo.
+Every turbine and plant gets a country from Natural Earth admin-0 (nearest country within ~250 km at sea).
+
+Data (c) OpenStreetMap contributors, ODbL 1.0.
+"""
+from __future__ import annotations
+
+import json
+import time
+import urllib.request
+from pathlib import Path
+
+import requests
+from shapely.geometry import Point, box, shape
+from shapely.ops import unary_union
+from shapely.prepared import prep
+from shapely.strtree import STRtree
+
+ROOT = Path(__file__).resolve().parents[1]
+RAW = ROOT / "data" / "raw"
+OUT_DIR = RAW / "osm"
+OUT = OUT_DIR / "osm_wind.json"
+LOG = OUT_DIR / "osm_wind_log.txt"
+LAND = RAW / "ne_10m_land.geojson"
+ADMIN = RAW / "ne_50m_admin_0_countries.geojson"
+NE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/"
+OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter",
+            "https://overpass.private.coffee/api/interpreter"]
+UA = {"User-Agent": "offshore-wake-monitor/1.0 (+https://github.com/erik-iida/energy-infra)"}
+
+# (name, south, west, north, east): coasts with offshore wind outside Europe
+BOXES = [
+    ("china-north", 34.0, 117.0, 41.5, 125.5),
+    ("china-east", 26.0, 118.0, 34.0, 124.5),
+    ("china-south-taiwan", 18.0, 106.5, 26.0, 122.5),
+    ("korea-japan", 30.0, 124.5, 46.0, 146.5),
+    ("vietnam", 8.0, 104.0, 18.0, 110.0),
+    ("us-east", 35.0, -77.5, 42.5, -68.5),
+]
+INLAND_KEEP_DEG = 0.005  # keep turbines up to ~500 m inside the Natural Earth coastline
+log_lines: list[str] = []
+
+
+def log(msg: str) -> None:
+    print(msg, flush=True)
+    log_lines.append(msg)
+
+
+def overpass(q: str, what: str) -> list[dict] | None:
+    for attempt in range(2):
+        for url in OVERPASS:
+            try:
+                r = requests.post(url, data={"data": q}, timeout=300, headers=UA)
+                if r.status_code == 200:
+                    els = r.json().get("elements", [])
+                    log(f"  {what}: {url.split('/')[2]} -> {len(els)} elements")
+                    return els
+                log(f"  {what}: {url.split('/')[2]} -> HTTP {r.status_code} {r.text[:120]!r}")
+            except Exception as ex:
+                log(f"  {what}: {url.split('/')[2]} -> {ex!r}")
+            time.sleep(15)
+        time.sleep(60)
+    return None
+
+
+def ne(path: Path, name: str) -> dict:
+    if not path.exists():
+        urllib.request.urlretrieve(NE + name, path)
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def main() -> None:
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    land_all = [shape(f["geometry"]) for f in ne(LAND, "ne_10m_land.geojson")["features"]]
+    adm = ne(ADMIN, "ne_50m_admin_0_countries.geojson")["features"]
+    cgeo = [shape(f["geometry"]) for f in adm]
+    cname = [f["properties"].get("NAME") or f["properties"].get("NAME_EN") for f in adm]
+    ctree = STRtree(cgeo)
+
+    def country(lon: float, lat: float) -> str:
+        p = Point(lon, lat)
+        inside = [int(i) for i in ctree.query(p) if cgeo[int(i)].contains(p)]
+        if inside:
+            return cname[inside[0]]
+        i = int(ctree.nearest(p))
+        return cname[i] if cgeo[i].distance(p) < 2.5 else ""
+
+    turbines: dict[int, dict] = {}
+    plants: dict[str, dict] = {}
+    for name, s, w, n, e in BOXES:
+        log(f"{name}: {s},{w},{n},{e}")
+        skel = overpass(f'[out:json][timeout:240];node["power"="generator"]["generator:source"="wind"]'
+                        f'({s},{w},{n},{e});out skel qt;', "positions")
+        if skel is None:
+            continue
+        bb = box(w - 1, s - 1, e + 1, n + 1)
+        land = unary_union([g.intersection(bb) for g in land_all if g.intersects(bb)])
+        core = prep(land.buffer(-INLAND_KEEP_DEG))
+        sea = [el for el in skel if el["id"] not in turbines and not core.contains(Point(el["lon"], el["lat"]))]
+        log(f"  {len(skel)} wind generators, {len(sea)} at sea or on the coast")
+        ids = [el["id"] for el in sea]
+        for i in range(0, len(ids), 1500):
+            chunk = ids[i:i + 1500]
+            full = overpass(f'[out:json][timeout:240];node(id:{",".join(map(str, chunk))});out;', f"tags {i}")
+            for el in full or []:
+                turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "offshore",
+                                      "tags": el.get("tags", {})}
+        pl = overpass(f'[out:json][timeout:240];nwr["power"="plant"]["plant:source"="wind"]'
+                      f'({s},{w},{n},{e});out center tags;', "plants")
+        for el in pl or []:
+            c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
+            if c.get("lat") is None:
+                continue
+            plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
+                                                 "set": "offshore", "tags": el.get("tags", {})}
+
+    log("estonia (onshore demo)")
+    area = 'area["ISO3166-1"="EE"]["admin_level"="2"]->.ee;'
+    ee = overpass(f'[out:json][timeout:240];{area}node["power"="generator"]["generator:source"="wind"](area.ee);out;',
+                  "turbines")
+    for el in ee or []:
+        turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "estonia",
+                              "tags": el.get("tags", {})}
+    pl = overpass(f'[out:json][timeout:240];{area}nwr["power"="plant"]["plant:source"="wind"](area.ee);out center tags;',
+                  "plants")
+    for el in pl or []:
+        c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
+        if c.get("lat") is not None:
+            plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
+                                                 "set": "estonia", "tags": el.get("tags", {})}
+
+    # plants only matter near the turbines we keep (they name the farms)
+    tt = STRtree([Point(t["lon"], t["lat"]) for t in turbines.values()]) if turbines else None
+    keep_pl = {}
+    for k, p in plants.items():
+        if tt is not None:
+            pt = Point(p["lon"], p["lat"])
+            j = int(tt.nearest(pt))
+            if tt.geometries[j].distance(pt) < 0.1:  # ~10 km
+                keep_pl[k] = p
+    for x in list(turbines.values()) + list(keep_pl.values()):
+        x["country"] = country(x["lon"], x["lat"])
+    by = {}
+    for t in turbines.values():
+        by[(t["set"], t["country"])] = by.get((t["set"], t["country"]), 0) + 1
+    for k, v in sorted(by.items()):
+        log(f"  {k[0]:8} {k[1] or '?':20} {v}")
+    OUT.write_text(json.dumps({"fetched": time.strftime("%Y-%m-%d"), "boxes": BOXES,
+                               "turbines": sorted(turbines.values(), key=lambda t: t["id"]),
+                               "plants": sorted(keep_pl.values(), key=lambda p: p["id"]),
+                               "attribution": "(c) OpenStreetMap contributors, ODbL 1.0"},
+                              ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    log(f"wrote {len(turbines)} turbines, {len(keep_pl)} plants -> {OUT.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    finally:
+        OUT_DIR.mkdir(parents=True, exist_ok=True)
+        LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")

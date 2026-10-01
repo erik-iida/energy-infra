@@ -1,0 +1,33 @@
+name: osm-world
+
+# Fetch offshore wind turbines outside Europe and (demo) Estonian onshore turbines from OpenStreetMap; commit
+# the raw JSON. Runs when the script changes, or manually. build_site.py turns it into farms (run locally).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/fetch_osm_world.py]
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests shapely
+      - run: python scripts/fetch_osm_world.py || true
+      - name: Commit
+        run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/osm/osm_wind_log.txt 2>/dev/null || true
+          git add data/raw/osm/osm_wind.json 2>/dev/null || true
+          git commit -m "OpenStreetMap wind turbines (offshore outside Europe, Estonia onshore)" || echo "no changes"
+          git pull --rebase
+          git push

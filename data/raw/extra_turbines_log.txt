@@ -1,6 +1,39 @@
-tahkoluoto: https://overpass-api.de/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-tahkoluoto: https://overpass.kumi.systems/api/interpreter -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=180)"))
-tahkoluoto: https://overpass.private.coffee/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-tahkoluoto: https://overpass-api.de/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-tahkoluoto: https://overpass.kumi.systems/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-tahkoluoto: https://overpass.private.coffee/api/interpreter -> HTTP 504: '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
+tahkoluoto: https://overpass-api.de/api/interpreter -> 18 elements
+    osm node 1133164175 61.60425 21.45331 tags: generator:method=wind_turbine
+    osm node 1133164204 61.63018 21.37455 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 1133164365 61.63722 21.39482 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 1133164432 61.63356 21.38004 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 1133164617 61.63120 21.38077 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 1133267446 61.63589 21.38048 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 1133267686 61.63671 21.40313 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:light:category=air_obstruction; seamark:light:colour=red; seamark:type=landmark
+    osm node 7525510795 61.61940 21.37913 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525511513 61.62432 21.36960 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525511961 61.62864 21.36314 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525512003 61.62064 21.36171 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525513293 61.64339 21.35358 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525513556 61.62422 21.35269 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525513617 61.61747 21.35142 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525514032 61.63941 21.34563 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525514067 61.62841 21.34470 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525514156 61.62064 21.34120 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+    osm node 7525514242 61.63540 21.33708 tags: generator:method=wind_turbine; seamark:landmark:category=windmotor; seamark:type=landmark
+tahkoluoto: 18 turbines from OpenStreetMap
+    61.60425 21.45331 SWT-4.0-130 4.0 MW 2017-08
+    61.63018 21.37455 SWT-4.0-130 4.0 MW 2017-08
+    61.63722 21.39482 SWT-4.0-130 4.0 MW 2017-08
+    61.63356 21.38004 SWT-4.0-130 4.0 MW 2017-08
+    61.6312 21.38077 SWT-4.0-130 4.0 MW 2017-08
+    61.63589 21.38048 SWT-4.0-130 4.0 MW 2017-08
+    61.63671 21.40313 SWT-4.0-130 4.0 MW 2017-08
+    61.6194 21.37913 SWT-4.0-130 4.0 MW 2017-08
+    61.62432 21.3696 SWT-4.0-130 4.0 MW 2017-08
+    61.62864 21.36314 SWT-4.0-130 4.0 MW 2017-08
+    61.62064 21.36171 SWT-4.0-130 4.0 MW 2017-08
+    61.64339 21.35358 SWT-4.0-130 4.0 MW 2017-08
+    61.62422 21.35269 SWT-4.0-130 4.0 MW 2017-08
+    61.61747 21.35142 SWT-4.0-130 4.0 MW 2017-08
+    61.63941 21.34563 SWT-4.0-130 4.0 MW 2017-08
+    61.62841 21.3447 SWT-4.0-130 4.0 MW 2017-08
+    61.62064 21.3412 SWT-4.0-130 4.0 MW 2017-08
+    61.6354 21.33708 SWT-4.0-130 4.0 MW 2017-08
+wrote 18 rows -> data/raw/extra_turbines.csv

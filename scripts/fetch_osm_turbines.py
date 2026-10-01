@@ -1,7 +1,7 @@
 """Add offshore farms that the EuroWindWakes database lacks, from OpenStreetMap.
 
     python scripts/fetch_osm_turbines.py                 # all presets below
-    python scripts/fetch_osm_turbines.py tahkoluoto      # one preset
+    python scripts/fetch_osm_turbines.py tahkoluoto      # one preset (also runs on GitHub: extra-turbines workflow)
 
 Writes/updates data/raw/extra_turbines.csv (same columns as the database CSV), which
 scripts/build_site.py reads in addition to the database. Then run:

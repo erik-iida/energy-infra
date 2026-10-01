@@ -52,6 +52,34 @@ def download() -> dict:
     return {"record": meta.get("id"), "version": ver}
 
 
+def read_rows(p: Path) -> list[dict]:
+    """CSV rows; the geometry is taken as everything from the WKT keyword on, because unquoted commas in the
+    free-text 'tags' column shift the later columns."""
+    import re
+    lines = open(p, encoding="utf-8").read().splitlines()
+    head = next(csv.reader([lines[0]]))
+    gi = head.index("geometry") if "geometry" in head else len(head)
+    log(f"  {p.name} sample: {lines[1][:300]!r}" if len(lines) > 1 else f"  {p.name} empty")
+    out = []
+    for ln in lines[1:]:
+        m = re.search(r"(MULTI)?LINESTRING\s*\(", ln)
+        geom = ln[m.start():].strip().strip('"') if m else ""
+        if m:
+            depth, end = 0, None  # cut at the matching closing bracket
+            for k, ch in enumerate(geom):
+                depth += ch == "("
+                depth -= ch == ")"
+                if ch == ")" and depth == 0:
+                    end = k + 1
+                    break
+            geom = geom[:end] if end else geom
+        vals = next(csv.reader([ln[:m.start()] if m else ln]))
+        d = dict(zip(head[:gi], vals[:gi]))
+        d["geometry"] = geom
+        out.append(d)
+    return out
+
+
 def truthy(v: str | None) -> bool:
     return str(v).strip().lower() in ("true", "1", "t", "yes")
 
@@ -63,7 +91,7 @@ def build(info: dict) -> None:
         if not p.exists():
             log(f"  {name} missing")
             continue
-        rows = list(csv.DictReader(open(p, encoding="utf-8")))
+        rows = read_rows(p)
         if rows:
             log(f"  {name}: {len(rows)} rows, columns {list(rows[0])}")
         skipped = 0

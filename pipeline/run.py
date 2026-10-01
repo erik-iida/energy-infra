@@ -143,7 +143,7 @@ def main(argv=None) -> None:
             print(f"market: failed ({e!r}); feed written without market data")
     config.FEED_JSON.write_text(json.dumps(feed, separators=(",", ":")), encoding="utf-8")
     tot = sum(results[k][2]["turbopark"][np_ - 1] for k in results if np.isfinite(results[k][2]["turbopark"][np_ - 1]))
-    print(f"{args.source}: {len(results)} farms, {len(times)} time steps, Europe now {tot / 1000:.2f} GW (TurbOPark), "
+    print(f"{args.source}: {len(results)} farms, {len(times)} time steps, all farms now {tot / 1000:.2f} GW (TurbOPark), "
           f"{time.time() - t0:.0f} s -> {config.FEED_JSON.relative_to(config.ROOT)}")
 
 

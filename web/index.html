@@ -37,6 +37,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 #ftab td{padding:4px 6px;text-align:right;white-space:nowrap}#ftab td:first-child,#ftab td:nth-child(2){text-align:left}#ftab td:first-child{white-space:normal}#ftab tbody tr{cursor:pointer}#ftab tbody tr:hover{background:var(--bg)}
 #ftab svg{width:110px;height:22px;display:block;margin-left:auto}.tw{overflow:auto;max-height:520px}
 .feednote{font-size:12px;color:var(--mut);border-left:3px solid var(--acc);padding-left:8px}
+.note-est{font-size:12px;border-left:3px solid var(--uc);padding:4px 8px;margin:4px 0 8px;background:var(--panel)}
 #dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
@@ -74,7 +75,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
-<div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to Europe" aria-label="Back to Europe">⌂</button></div><div id="tip"></div><div id="note"></div>
+<div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
 <div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span><span id="bleg" style="display:block">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
@@ -82,7 +83,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
 <h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="dtip"></div></div>
 <aside>
-<div><h1>European offshore wake monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
+<div><h1>Offshore wind wake monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" aria-label="Region"></select>
 <div><div class="big" id="mw">–</div><div class="mut" id="mwsub"></div></div>
 <div id="mapctl"><label id="live"><input type="checkbox" id="LV"> Use forecast wind for now</label>
@@ -109,7 +110,14 @@ const fg=mw=>mw==null?"–":mw>=1000?(mw/1000).toFixed(2)+" GW":Math.round(mw)+"
 const TY=DATA.types||[];
 F.forEach(f=>{f.lay=!!f.xy;f.inst=f.lay?(f.inst||f.mw*f.xy.length/2):f.cap;f.tix=f.lay&&f.ti!=null&&TY.length?(Array.isArray(f.ti)?f.ti:Array(f.xy.length/2).fill(f.ti)):null;
  if(!f.lay){const kx=111320*Math.cos(f.lat*Math.PI/180);f.o=f.ol.map(r=>r.map((v,i)=>i%2?(v-f.lat)*110574:(v-f.lon)*kx))}});
-function sum(c){return F.filter(f=>f.c===c).reduce((a,f)=>a+f.inst,0)}
+F.forEach(f=>{f.rg=f.rg||"Europe"});Z.forEach(z=>{z.rg=z.rg||"Europe"});
+const RGOF={};[...F,...Z].forEach(x=>{RGOF[x.c]=x.rg});
+const REGIONS=[...new Set(F.map(f=>f.rg))].sort((a,b)=>F.filter(f=>f.rg===b).reduce((s,f)=>s+f.inst,0)-F.filter(f=>f.rg===a).reduce((s,f)=>s+f.inst,0));
+const isReg=c=>REGIONS.includes(c);
+// c: null = world, a region name, or a country
+function inC(x,c){return !c||x.c===c||x.rg===c}
+const place=c=>c||"World";
+function sum(c){return F.filter(f=>inC(f,c)).reduce((a,f)=>a+f.inst,0)}
 const COUNTRIES=[...new Set([...F.map(f=>f.c),...Z.map(z=>z.c)])].sort((a,b)=>sum(b)-sum(a)||a.localeCompare(b));
 
 /* ---------- in-browser wake models (map heatmap + what-if) ---------- */
@@ -162,10 +170,10 @@ const hl=h=>HRS[h].toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}),dl=h
 const LIVE=()=>$("LV").checked;
 function curWind(f){return LIVE()&&f.U48[N0]!=null?[f.U48[N0],f.D48[N0]]:[+$("U").value,+$("D").value]}
 function cur(f){const m=$("M").value,[U,D]=curWind(f),k=+$("K").value,key=m+U+"|"+D+"|"+k;if(f._k!==key){f._k=key;f._r=run(f,m,U,D,k)}return f._r}
-const now=c=>F.filter(f=>!c||f.c===c).reduce((a,f)=>a+cur(f).pw,0);
+const now=c=>F.filter(f=>!c||inC(f,c)).reduce((a,f)=>a+cur(f).pw,0);
 
 /* ---------- map: pan / zoom with level of detail ---------- */
-const EU=[-11,40.5,27,62.5],V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
+const EU=[-11,40.5,27,62.5],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
 F.forEach(f=>{let e=0;const add=(x,y)=>{e=Math.max(e,Math.abs(x),Math.abs(y))};if(f.xy)for(let i=0;i<f.xy.length;i+=2)add(f.xy[i],f.xy[i+1]);(f.o||[]).forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])});let t=0;if(f.xy)for(let i=0;i<f.xy.length;i+=2)t=Math.max(t,Math.abs(f.xy[i]),Math.abs(f.xy[i+1]));f.tex=f.xy?Math.max(t,300):Math.max(e,400);f.ext=Math.max(e,400);f.kx=111320*Math.cos(f.lat*Math.PI/180)});
 const cosR=()=>Math.cos(V.lat*Math.PI/180),pxm=()=>V.s/110574;
 const P=(lon,lat)=>[W0/2+(lon-V.lon)*cosR()*V.s,H0/2-(lat-V.lat)*V.s];
@@ -177,10 +185,29 @@ function fit(b,pad=.08){const lat=(b[1]+b[3])/2,c=Math.cos(lat*Math.PI/180),w=Ma
  return{lon:(b[0]+b[2])/2,lat,s:Math.min(4e5,Math.min(W0*(1-2*pad)/w,H0*(1-2*pad)/h))}}
 function farmBox(f){if(f.lay){const e=(f.tex+800)/110574,c=Math.cos(f.lat*Math.PI/180);return[f.lon-e/c,f.lat-e,f.lon+e/c,f.lat+e]}const b=[180,90,-180,-90];f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2){b[0]=Math.min(b[0],r[i]);b[1]=Math.min(b[1],r[i+1]);b[2]=Math.max(b[2],r[i]);b[3]=Math.max(b[3],r[i+1])}});
  const e=f.ext/110574;return[Math.min(b[0],f.lon-e/Math.cos(f.lat*Math.PI/180)),Math.min(b[1],f.lat-e),Math.max(b[2],f.lon+e/Math.cos(f.lat*Math.PI/180)),Math.max(b[3],f.lat+e)]}
+// coastline strokes: land polygon edges, except edges along the borders of the detailed-land boxes (dbox).
+// Split once into polylines (lon/lat); each paint only projects them.
+const SEAML=[];const COASTL=(()=>{const DB=DATA.dbox||[],out=[];
+ const TL=DATA.tile||0,onT=v=>TL&&Math.abs(v/TL-Math.round(v/TL))<1e-4;
+ const seam=(x0,y0,x1,y1)=>(Math.abs(x0-x1)<1e-6&&onT(x0))||(Math.abs(y0-y1)<1e-6&&onT(y0))||DB.some(b=>(Math.abs(x0-x1)<1e-6&&(Math.abs(x0-b[0])<.006||Math.abs(x0-b[2])<.006))||(Math.abs(y0-y1)<1e-6&&(Math.abs(y0-b[1])<.006||Math.abs(y0-b[3])<.006)));
+ for(const r of DATA.coast){const n=r.length/2;let cur=[];
+  for(let k=0;k<n;k++){const i=2*k,j=2*((k+1)%n);if(seam(r[i],r[i+1],r[j],r[j+1])){SEAML.push(r[i],r[i+1],r[j],r[j+1]);if(cur.length>2)out.push(cur);cur=[];continue}
+   if(!cur.length)cur.push(r[i],r[i+1]);cur.push(r[j],r[j+1])}
+  if(cur.length>2)out.push(cur)}return out})();
+const COASTLB=COASTL.map(r=>{let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<r.length;i+=2){a[0]=Math.min(a[0],r[i]);a[1]=Math.min(a[1],r[i+1]);a[2]=Math.max(a[2],r[i]);a[3]=Math.max(a[3],r[i+1])}return a});
+// land rings with their bounding boxes; only rings overlapping the view are drawn
+const LANDB=DATA.coast.map(r=>{let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<r.length;i+=2){a[0]=Math.min(a[0],r[i]);a[1]=Math.min(a[1],r[i+1]);a[2]=Math.max(a[2],r[i]);a[3]=Math.max(a[3],r[i+1])}return a});
+function viewBox(){const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W0,H0),mx=(l1-l0)*.05,my=(a1-a0)*.05;return[l0-mx,a0-my,l1+mx,a1+my]}
+function landInView(){const v=viewBox();return DATA.coast.filter((r,i)=>{const b=LANDB[i];return b[2]>=v[0]&&b[0]<=v[2]&&b[3]>=v[1]&&b[1]<=v[3]})}
+// canvas anti-aliasing leaves hairlines where two land polygons meet along a cut: paint over them in land colour
+function seamCover(){const v=viewBox(),p=new Path2D();for(let i=0;i<SEAML.length;i+=4){const x0=SEAML[i],y0=SEAML[i+1],x1=SEAML[i+2],y1=SEAML[i+3];
+ if(Math.max(x0,x1)<v[0]||Math.min(x0,x1)>v[2]||Math.max(y0,y1)<v[1]||Math.min(y0,y1)>v[3])continue;const[a,b]=P(x0,y0),[c,d]=P(x1,y1);p.moveTo(a,b);p.lineTo(c,d)}
+ const lw=cx.lineWidth,ss=cx.strokeStyle;cx.strokeStyle=css("--land");cx.lineWidth=1.5;cx.stroke(p);cx.lineWidth=lw;cx.strokeStyle=ss}
+function coastPath(){const p=new Path2D(),v=viewBox();for(let q=0;q<COASTL.length;q++){const r=COASTL[q],b=COASTLB[q];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}}return p}
 function bbox(c){let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
- F.filter(f=>f.c===c).forEach(f=>f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
- if($("Z").checked||!F.some(f=>f.c===c))Z.filter(z=>z.c===c).forEach(z=>z.r.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
- return a[0]>a[2]?EU:a}
+ F.filter(f=>inC(f,c)).forEach(f=>f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
+ if($("Z").checked||!F.some(f=>inC(f,c)))Z.filter(z=>inC(z,c)).forEach(z=>z.r.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
+ return a[0]>a[2]?WORLD():a}
 function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat,s:V.s},t0=performance.now();
  const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
 function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(6,V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat+=lat-a2;repaint()}
@@ -231,23 +258,28 @@ async function bathyLoad(){if(BG.meta||BG.fail)return;BG.fail=true;
   const bm=await createImageBitmap(bl,{colorSpaceConversion:"none",premultiplyAlpha:"none"}),c=document.createElement("canvas");c.width=m.w;c.height=m.h;
   const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(bm,0,0);const d=g.getImageData(0,0,m.w,m.h).data,v=new Uint8Array(m.w*m.h);for(let i=0;i<v.length;i++)v[i]=d[4*i];
   BG.meta=m;BG.v=v;BG.cv=c;BG.fail=false;bathyColour();S.bathyKey="";repaint()}catch(e){console.info("no depth grid yet, using EMODnet WMS colours",e);S.bathyKey="";repaint()}}
+// the depth grid covers European seas only: show it when the view is centred on it, with faded edges
+function bathyHere(){const b=BG.meta.bbox,[l0]=Pinv(0,0),[l1]=Pinv(W0,H0);return l1-l0<80&&V.lon>b[0]&&V.lon<b[2]&&V.lat>b[1]&&V.lat<b[3]}
 function bathyColour(){BG.max=+$("BD").value;$("BDv").textContent="0–"+BG.max+" m";
  const lut=new Uint8ClampedArray(256*4);for(let v=0;v<255;v++){const c=bcol(bdec(v)/BG.max);lut.set([c[0],c[1],c[2],255],4*v)}
  $("blegc").style.background="linear-gradient(90deg,"+BRAMP.map(c=>"rgb("+c.join(",")+")").join(",")+")";$("blegt").textContent="0 – ≥"+BG.max+" m";
  if(!BG.v)return;const m=BG.meta,g=BG.cv.getContext("2d"),im=g.createImageData(m.w,m.h),o=im.data,v=BG.v;
- for(let i=0;i<v.length;i++){const k=4*v[i];o[4*i]=lut[k];o[4*i+1]=lut[k+1];o[4*i+2]=lut[k+2];o[4*i+3]=lut[k+3]}g.putImageData(im,0,0)}
-function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W,H),ct=V.s>150,grid=!!BG.meta;
+ const fw=Math.round(m.w*.04),fh=Math.round(m.h*.05);
+ for(let y=0,i=0;y<m.h;y++){const ey=Math.min(1,Math.min(y,m.h-1-y)/fh);for(let x=0;x<m.w;x++,i++){const k=4*v[i],e=Math.min(ey,Math.min(1,Math.min(x,m.w-1-x)/fw));o[4*i]=lut[k];o[4*i+1]=lut[k+1];o[4*i+2]=lut[k+2];o[4*i+3]=lut[k+3]*e}}g.putImageData(im,0,0)}
+function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();if(BG.meta&&!bathyHere()){S.bathy=null;S.bathyKey="";return}const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W,H),ct=V.s>150,grid=!!BG.meta;
  if(grid&&!ct){S.bathy=null;S.bathyKey="";return}  // grid alone; WMS only for contours when zoomed in
  const key=[l0,a0,l1,a1].map(v=>v.toFixed(3)).join(",")+ct+grid;if(S.bathyKey===key)return;S.bathyKey=key;clearTimeout(bathyT);
  bathyT=setTimeout(()=>{const mx=(l1-l0)*.15,my=(a1-a0)*.15,b=[l0-mx,Math.max(-85,a0-my),l1+mx,Math.min(85,a1+my)],sc=Math.min(1,2048/(1.3*Math.max(W,H)));
   const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b,lines:grid};repaint()};
   img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(grid?"emodnet:contours":ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
 function bathyDraw(){if(!$("BY").checked)return;const al=+css("--bathy-a")||.75;cx.imageSmoothingEnabled=true;
- if(BG.meta){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
+ if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
  const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
 function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];bathyWant(W,H);bathyDraw();
- const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
- cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
+ // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
+const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
+const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2||onTile(r[i])||onTile(r[i+1])){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}return p};
+ cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath());
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
  if($("Z").checked)Z.forEach((z,i)=>{const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
  const vis=[];F.forEach((f,i)=>{const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
@@ -265,30 +297,31 @@ function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.
   cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+20)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,104,w,42);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,104.5,w,42);
   cx.fillStyle=css("--mut");cx.fillText(l1,20,121);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,139)}}
  scaleBar(W,H);if(S.heatShown)heatLegend(W,H)}
-function crumb(){const p=[["Europe","e"]];if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
+function crumb(){const p=[["World","e"]];if(S.c&&!isReg(S.c))p.push([RGOF[S.c],"r"]);if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
  $("wif").style.display=LIVE()?"none":"block";$("mapctl").style.display=S.tab==="map"?"block":"none";$("list").style.display=S.tab==="map"?"flex":"none";
- const fs=F.filter(f=>!S.c||f.c===S.c),zs=Z.filter(z=>!S.c||z.c===S.c),cap=fs.reduce((a,f)=>a+f.inst,0);
- if(S.tab!=="map"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=(S.c||"Europe")+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
+ const fs=F.filter(f=>inC(f,S.c)),zs=Z.filter(z=>inC(z,S.c)),cap=fs.reduce((a,f)=>a+f.inst,0);
+ if(S.tab!=="map"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=place(S.c)+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
   $("sub").textContent=fs.length+" operating farms · "+zs.length+" future zones";return}
  const src=LIVE()?"forecast wind":"what-if wind";
  if(S.farm===null){
-  $("mw").textContent=fmt(now(S.c));$("mwsub").textContent=(S.c||"Europe")+" now with "+src+", of "+fmt(cap)+" operating";
+  $("mw").textContent=fmt(now(S.c));$("mwsub").textContent=place(S.c)+" now with "+src+", of "+fmt(cap)+" operating";
   $("sub").textContent=fs.length+" operating farms ("+fs.filter(f=>f.lay).length+" with turbine layouts) · "+zs.length+" future zones ("+fmt(zs.reduce((a,z)=>a+z.mw,0))+" where capacity is stated)";$("cmp").innerHTML="";
-  if(S.c===null)$("list").innerHTML=COUNTRIES.map(c=>{const i=sum(c);return"<button data-c='"+c+"'><span>"+c+"</span><span class='mut'>"+(i?fmt(now(c))+" / "+fmt(i):"zones only")+"</span></button>"}).join("");
-  else $("list").innerHTML=fs.length?F.map((f,i)=>f.c!==S.c?"":"<button data-i='"+i+"' class='"+(f.lay?"":"est")+"'><span>"+f.n+"</span><span class='mut'>"+fmt(cur(f).pw)+" / "+fmt(f.inst)+"</span></button>").join(""):"<div class='mut'>No operating farms here yet. Hover the zones on the map.</div>"}
+  if(S.c===null||isReg(S.c))$("list").innerHTML=(S.c===null?REGIONS:COUNTRIES.filter(c=>RGOF[c]===S.c)).map(c=>{const i=sum(c);return"<button data-c='"+c+"'><span>"+c+"</span><span class='mut'>"+(i?fmt(now(c))+" / "+fmt(i):"zones only")+"</span></button>"}).join("");
+  else $("list").innerHTML=fs.length?F.map((f,i)=>!inC(f,S.c)?"":"<button data-i='"+i+"' class='"+(f.lay?"":"est")+"'><span>"+f.n+"</span><span class='mut'>"+fmt(cur(f).pw)+" / "+fmt(f.inst)+"</span></button>").join(""):"<div class='mut'>No operating farms here yet. Hover the zones on the map.</div>"}
  else{const f=F[S.farm],r=cur(f),[U,D]=curWind(f);$("mw").textContent=fmt(r.pw);
-  if(f.lay){$("mwsub").textContent="of "+fmt(f.inst)+" · wake loss "+(100*(1-r.pw/r.free||0)).toFixed(1)+"% · "+U.toFixed(1)+" m/s from "+D+"° at hub ("+src+")";const sp=spacingOf(f);$("sub").innerHTML=(f.mixed?Object.entries(f.mixed).map(([t,c])=>c+" × "+t).join(" + "):f.xy.length/2+" × "+f.t)+(f.mixed?" · hub "+f.h+" m":" · D "+f.D+" m · hub "+f.h+" m")+" · COD "+f.y+" · site "+f.a+" km² ("+(f.inst/f.a).toFixed(1)+" MW/km²)"+(sp?"<br>Spacing to nearest turbine: min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D":"");
+  if(f.lay){$("mwsub").textContent="of "+fmt(f.inst)+" · wake loss "+(100*(1-r.pw/r.free||0)).toFixed(1)+"% · "+U.toFixed(1)+" m/s from "+D+"° at hub ("+src+")";const sp=spacingOf(f);$("sub").innerHTML=(f.mixed?Object.entries(f.mixed).map(([t,c])=>c+" × "+t).join(" + "):f.xy.length/2+" × "+f.t)+(f.mixed?" · hub "+f.h+" m":" · D "+f.D+" m · hub "+f.h+" m")+(f.src==="gowt"?" · first seen "+f.y+(f.y==="2015"?" or earlier":""):" · COD "+f.y)+" · site "+f.a+" km² ("+(f.inst/f.a).toFixed(1)+" MW/km²)"+(sp?"<br>Spacing to nearest turbine: min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D":"");
    const kk=+$("K").value,m0=$("M").value,br={jensen:run(f,"j",U,D,m0==="j"?kk:K_DEF.j).pw,bastankhah:run(f,"g",U,D,m0==="g"?kk:K_DEF.g).pw,nowake:run(f,"n",U,D,0).pw};
    const pyw=FEED&&LIVE()&&f.S,names={jensen:"Jensen (NOJ)",bastankhah:"Bastankhah & Porté-Agel 2014",niayifar:"Niayifar & Porté-Agel 2016",turbopark:"TurbOPark (Nygaard 2022)",nowake:"No wake"};
    const keys=pyw?Object.keys(MODELS):["jensen","bastankhah","nowake"];
    let h="<h2>Models at this wind</h2><table><tr><td class='mut'>Model</td><td class='mut'>Browser</td>"+(pyw?"<td class='mut'>PyWake "+hl(N0)+"</td>":"")+"</tr>"+keys.map(m=>"<tr><td>"+(names[m]||MODELS[m])+"</td><td>"+(m in br?fmt(br[m]):"–")+"</td>"+(pyw?"<td>"+fmt(f.S[m][N0])+"</td>":"")+"</tr>").join("")+"</table>";
    h+="<div class='mut' style='font-size:12px;margin-top:6px'>Browser = PyWake's formulas re-implemented here (agree within ~0.1%). They differ only when k is changed, or because the browser uses the wind rounded to 0.1 m/s. No blockage in either. Niayifar and TurbOPark need turbulence modelling, so they run in PyWake only.</div>";
+   if(f.src==="gowt")h="<div class='note-est'><b>Estimated turbines.</b> Positions are Sentinel-1 radar detections up to 2021 (Zhang et al.); the turbine type isn't known"+(f.est==="known turbine type"?", except this project's published type":", so "+f.mw+" MW and a "+f.D+" m rotor are assumed ("+f.est+")")+". Project data from the dataset: "+(f.pmw?f.pmw+" MW, ":"")+(f.own||"owner unknown")+". Treat output and wake loss as indicative.</div>"+h;
    $("cmp").innerHTML=h}
   else{$("mwsub").textContent="of "+fmt(f.inst)+" · estimated";$("sub").textContent="Site "+f.a+" km²";$("cmp").innerHTML="";const n=$("note");n.style.display="block";n.textContent="There are no turbine positions for this farm in the dataset, so there's no wake field. Output is the free-stream power curve with an assumed 10% wake loss."}
   $("list").innerHTML=F.map((g,i)=>g.c!==f.c?"":"<button data-i='"+i+"' class='"+(i===S.farm?"on ":"")+(g.lay?"":"est")+"'><span>"+g.n+"</span><span class='mut'>"+fmt(cur(g).pw)+"</span></button>").join("")}}
-function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):EU));sidebar()}else draw()}
+function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):WORLD()));sidebar()}else draw()}
 
 /* ---------- Compare tab ---------- */
 S.fm=MODELS.turbopark?"turbopark":"jensen";
@@ -307,20 +340,20 @@ function chartSVG(vals,W,H,dot,g=.5,gl="50%"){const L=line(vals,1,W,H,3);
  s+="<line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='"+H+"'/>";
  s+="<path class='ar' d='"+area(L.p,L,H)+"'/><path class='ar fc' d='"+area(L.f,L,H)+"'/><path class='ln' d='"+L.p+"'/><path class='ln fc' d='"+L.f+"'/>";
  const h=S.hh>=0?S.hh:N0;if(S.hh>=0)s+="<line class='xh' x1='"+L.x(h)+"' x2='"+L.x(h)+"' y1='0' y2='"+H+"'/>";if(dot&&vals[h]!=null)s+="<circle class='dot' r='4' cx='"+L.x(h)+"' cy='"+L.y(vals[h])+"'/>";return s}
-const CO=()=>COUNTRIES.filter(c=>F.some(f=>f.c===c));
+const CO=()=>COUNTRIES.filter(c=>F.some(f=>f.c===c)&&(!S.c||!isReg(S.c)||RGOF[c]===S.c));
 const UMAX=25;
 function aggW(fs){return[...Array(NT)].map((_,h)=>{let a=0,w=0;fs.forEach(f=>{const u=f.U48[h];if(u!=null){a+=u*f.inst;w+=f.inst}});return w?a/w:null})}
 const arrow=d=>d==null?"":"<span class='arr' style='transform:rotate("+d+"deg)' title='from "+d+"°'>↓</span>";
 const ms=u=>u==null?"–":u.toFixed(1)+" m/s";
-function dash(){series();const fs=F.filter(f=>!S.c||f.c===S.c),A=agg(fs),lay=fs.filter(f=>f.lay),fr=lay.reduce((a,f)=>a+(f.Fr[N0]||0),0),pl=lay.reduce((a,f)=>a+(f.P[N0]||0),0);
+function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filter(f=>f.lay),fr=lay.reduce((a,f)=>a+(f.Fr[N0]||0),0),pl=lay.reduce((a,f)=>a+(f.P[N0]||0),0);
  const age=FEED?(Date.now()-new Date(FEED.generated))/36e5:0;
  $("fnote").innerHTML=FEED?("<b>Feed: "+(SRC==="synthetic"?"synthetic test wind":SRC==="openmeteo"?"Open-Meteo, "+(FEED.nwp_model||"")+" forecast":SRC==="windy"?"Windy "+(FEED.windy_model||""):"ECMWF open data")+"</b>, wake losses from PyWake. Generated "+new Date(FEED.generated).toLocaleString()+(age>3?" <span class='warn'>(more than 3 h old, the hourly job may have stopped)</span>":"")+". History "+hl(0)+" → now "+hl(N0)+", forecast to "+dl(NT-1)+".")
   :"<b>No feed.json found</b>, showing synthetic wind through the in-browser models. Run the pipeline to get PyWake results.";
  const cfN=A.P[N0]/A.inst,pv=past(A.P).filter(x=>x!=null);
- $("hero").innerHTML=[[fg(A.P[N0]),(S.c||"Europe")+" now"],[(100*cfN).toFixed(0)+"%","capacity factor now"],[fg(mean(past(A.P))),"last 24 h mean"],[fg(mean(fut(A.P))),"next 24 h mean"],[pv.length?fg(Math.min(...pv))+" – "+fg(Math.max(...pv)):"–","last 24 h range"],[ms(aggW(fs)[N0]),"mean hub-height wind now"],[fr?(100*(1-pl/fr)).toFixed(1)+"%":"–","wake loss now (farms with layouts)"]].map(q=>"<div><b>"+q[0]+"</b><span>"+q[1]+"</span></div>").join("");
+ $("hero").innerHTML=[[fg(A.P[N0]),place(S.c)+" now"],[(100*cfN).toFixed(0)+"%","capacity factor now"],[fg(mean(past(A.P))),"last 24 h mean"],[fg(mean(fut(A.P))),"next 24 h mean"],[pv.length?fg(Math.min(...pv))+" – "+fg(Math.max(...pv)):"–","last 24 h range"],[ms(aggW(fs)[N0]),"mean hub-height wind now"],[fr?(100*(1-pl/fr)).toFixed(1)+"%":"–","wake loss now (farms with layouts)"]].map(q=>"<div><b>"+q[0]+"</b><span>"+q[1]+"</span></div>").join("");
  const h=S.hh>=0?S.hh:N0;
- $("cards").innerHTML=CO().map(c=>{const a=agg(F.filter(f=>f.c===c));return"<div class='card"+(c===S.c?" on":"")+"' data-c='"+c+"'><h3>"+c+"<span>"+fg(a.P[h])+" · CF "+(a.P[h]==null?"–":(100*a.P[h]/a.inst).toFixed(0)+"%")+"</span></h3><div class='v mut'>"+(h===N0?"now":dl(h))+" · last 24 h mean "+fg(mean(past(a.P)))+" of "+fg(a.inst)+"</div><svg data-c='"+c+"'></svg><div class='v mut' style='margin-top:4px'>Wind at hub "+ms(aggW(F.filter(f=>f.c===c))[h])+"</div><svg class='w' data-c='"+c+"' data-w='1'></svg></div>"}).join("");
- $("cards").querySelectorAll("svg").forEach(sv=>{const W=sv.clientWidth||200,fc=F.filter(f=>f.c===sv.dataset.c),a=agg(fc),L=line([],1,W,64,3);
+ $("cards").innerHTML=CO().map(c=>{const a=agg(F.filter(f=>inC(f,c)));return"<div class='card"+(c===S.c?" on":"")+"' data-c='"+c+"'><h3>"+c+"<span>"+fg(a.P[h])+" · CF "+(a.P[h]==null?"–":(100*a.P[h]/a.inst).toFixed(0)+"%")+"</span></h3><div class='v mut'>"+(h===N0?"now":dl(h))+" · last 24 h mean "+fg(mean(past(a.P)))+" of "+fg(a.inst)+"</div><svg data-c='"+c+"'></svg><div class='v mut' style='margin-top:4px'>Wind at hub "+ms(aggW(F.filter(f=>inC(f,c)))[h])+"</div><svg class='w' data-c='"+c+"' data-w='1'></svg></div>"}).join("");
+ $("cards").querySelectorAll("svg").forEach(sv=>{const W=sv.clientWidth||200,fc=F.filter(f=>inC(f,sv.dataset.c)),a=agg(fc),L=line([],1,W,64,3);
   if(sv.dataset.w){sv.setAttribute("viewBox","0 0 "+W+" 48");sv.innerHTML=chartSVG(aggW(fc).map(u=>u==null?null:u/UMAX),W,46,true,11.5/UMAX,"≈ rated 11.5 m/s");return}
   sv.setAttribute("viewBox","0 0 "+W+" 78");
   sv.innerHTML=chartSVG(a.P.map(p=>p==null?null:p/a.inst),W,64,true)+"<text class='tl' x='3' y='76'>−24 h</text><text class='tl' x='"+L.x(N0)+"' y='76' text-anchor='middle'>now</text><text class='tl' x='"+(W-3)+"' y='76' text-anchor='end'>+24 h</text>"});
@@ -411,7 +444,7 @@ const axl=(W,H,a,m,b,mx)=>"<text class='tl' x='3' y='"+(H+11)+"'>"+a+"</text>"+(
 function modSum(fs,k){let s=0,n=0;fs.forEach(f=>{if(f.P[k]!=null){s+=f.P[k];n++}});return n?s:null}
 function market(){series();const el=$("mkt");TIPS=[];
  if(!MK){el.innerHTML="<div class='feednote'><b>No market data yet.</b> The pipeline adds it on its next run with a real forecast source.</div>";return}
- const zinst=z=>F.filter(f=>f.zone===z).reduce((a,f)=>a+f.inst,0),zones=Object.keys(MK.prices).filter(z=>F.some(f=>f.zone===z&&(!S.c||f.c===S.c))).sort((a,b)=>zinst(b)-zinst(a));
+ const zinst=z=>F.filter(f=>f.zone===z).reduce((a,f)=>a+f.inst,0),zones=Object.keys(MK.prices).filter(z=>F.some(f=>f.zone===z&&(inC(f,S.c)))).sort((a,b)=>zinst(b)-zinst(a));
  let lo=0,hi=50;zones.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
  let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because the price licence is private use only: "+MK.restricted_zones.join(", ")+". ":"")+"UK has no day-ahead price in this source yet.</div>";
  const pz=Object.keys(MK.prices).filter(z=>ZONEFLAG[z]),tAv=pz.some(z=>MK.prices[z].slice(N0+1).some(v=>v!=null));S.prng=S.prng||"past";if(S.prng==="next"&&!tAv)S.prng="past";
@@ -516,9 +549,9 @@ $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").s
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 
 /* ---------- events ---------- */
-$("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
+$("C").innerHTML="<option value=''>World</option>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
-$("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):go(S.c,null)};
+$("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):a.dataset.go==="r"?go(RGOF[S.c],null):go(S.c,null)};
 ["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;$("BY").onchange=()=>{S.bathyKey="";$("bleg").style.display=$("bys").style.display=$("BY").checked?"block":"none";draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
@@ -551,14 +584,14 @@ $("cards").onclick=e=>{const c=e.target.closest(".card");if(c)go(c.dataset.c===S
 $("ftab").onclick=e=>{const th=e.target.closest("th");if(th){if(th.dataset.k==="sp"||th.dataset.k==="sw")return;S.sort=[th.dataset.k,S.sort[0]===th.dataset.k?-S.sort[1]:(["n","c"].includes(th.dataset.k)?1:-1)];draw();return}
  const tr=e.target.closest("tbody tr");if(tr){const i=+tr.dataset.i;tab("map");go(F[i].c,i)}};
 $("cards").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){if(S.hh>=0){S.hh=-1;dash()}$("dtip").style.display="none";return}const h=hourAt(sv,e,3);
- if(h!==S.hh){S.hh=h;dash()}const fc=F.filter(f=>f.c===sv.dataset.c),a=agg(fc);dtip(e,sv.dataset.c+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fg(a.P[h])+(a.P[h]==null?"":" · CF "+(100*a.P[h]/a.inst).toFixed(0)+"%")+" · wind "+ms(aggW(fc)[h]))};
+ if(h!==S.hh){S.hh=h;dash()}const fc=F.filter(f=>inC(f,sv.dataset.c)),a=agg(fc);dtip(e,sv.dataset.c+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fg(a.P[h])+(a.P[h]==null?"":" · CF "+(100*a.P[h]/a.inst).toFixed(0)+"%")+" · wind "+ms(aggW(fc)[h]))};
 $("cards").onmouseleave=()=>{S.hh=-1;$("dtip").style.display="none";dash()};
 $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").style.display="none";return}const f=F[+sv.dataset.i],h=hourAt(sv,e,2);
  dtip(e,f.n+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fmt(f.P[h])+(f.P[h]==null?"":" · CF "+(100*f.P[h]/f.inst).toFixed(0)+"%")+(f.U48[h]!=null?" · "+f.U48[h].toFixed(1)+" m/s from "+f.D48[h]+"°":""))};
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
-$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
-addEventListener("resize",draw);size();Object.assign(V,fit(EU));draw();
+$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated, and farms built since 2021 are missing. Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
+addEventListener("resize",draw);size();Object.assign(V,fit(WORLD()));draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json")).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}

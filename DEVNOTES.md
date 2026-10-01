@@ -65,7 +65,30 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Wind and output are never on a shared dual axis; separate charts.
 - The user's PC folder is on OneDrive: don't create virtual environments there.
 
+## World coverage (Oct 2026)
+- Farms outside Europe come from the Global offshore wind turbine dataset (Zhang et al. 2021, CC0, figshare
+  13280252): 12 338 Sentinel-1 turbine detections to 2021 with 4C project names/capacities. build_site.py uses
+  the non-European ones (Europe stays on EuroWindWakes): 6 116 turbines after dropping 87 double detections,
+  152 farms (China 122, Vietnam 22, Taiwan 4, South Korea 2, US 2).
+- Farms = project name, split into sites by 3 km single linkage; 1-3 stray turbines join the nearest group.
+- Taiwan's farms are labelled China in the source; reassigned by position (south of 25N from 119.6E, or east of
+  120.5E). Name fields are cp1252 (the unused lat/lon text columns hold GBK degree signs).
+- Turbine type unknown except KNOWN_TYPES (Block Island, CVOW, Formosa 1, Greater Changhua, Korean demos).
+  Otherwise MW = project MW / turbines detected when 2-8.5 MW, else a regional default; rotor from 330 W/m2,
+  hub = D/2 + 25 m, generic power/Ct curve. Farms carry `est` (the basis), `src: "gowt"`, `rg` (region); the
+  page shows an "Estimated turbines" note. Project grouping in the source is loose (e.g. 170 turbines under one
+  Rudong intertidal name), so installed MW outside Europe is indicative. Farms built after 2021 are missing.
+- Page hierarchy World > Region > Country > Farm; S.c is null, a region or a country; inC(x, c) filters.
+  Market/System tabs stay European (Energy-Charts).
+- Land: Natural Earth 10m, detailed (0.01 deg Europe, 0.02 deg around other farms) inside `dbox`, 0.1 deg
+  elsewhere, cut into 20-degree tiles (`tile`) so the page culls off-screen land. The page strokes coastlines
+  from the polygons except along tile cuts and dbox borders, and paints over those cuts in land colour
+  (canvas anti-aliasing seams). Paths skip vertices < 1.2 px apart (except on tile cuts).
+- Depth grid only shows when the view spans < 80 deg longitude and is centred on it.
+- Hourly run: ~280 farms, ~30 s more PyWake time; Open-Meteo ~230 locations per 6 h (< 2000/day cap).
+
 ## Known gaps / next ideas
+- Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).
   scripts/fetch_osm_turbines.py fills gaps from OpenStreetMap into data/raw/extra_turbines.csv (run where
   Overpass is reachable, i.e. not in the cloud build environment). Unknown turbine types get a generic curve.

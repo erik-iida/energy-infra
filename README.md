@@ -1,7 +1,8 @@
-# European offshore wake monitor
+# Offshore wind wake monitor
 
-Live, wake-aware output of Europe's offshore wind farms. A map drills down from Europe to a
-country to a farm, with the turbine layout and a wake-deficit heatmap. A Compare tab shows every
+Live, wake-aware output of the world's offshore wind farms: Europe from the EuroWindWakes turbine
+database, China, Taiwan, Vietnam, South Korea and the US from satellite-detected turbine positions (types
+estimated). A map drills down from the world to a region, a country and a farm, with the turbine layout and a wake-deficit heatmap. A Compare tab shows every
 country and farm over the last 24 h plus a 24 h forecast.
 
 ```
@@ -14,6 +15,7 @@ forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models
 |---|---|
 | `data/raw/eww/` | Open European offshore wind turbine database (EuroWindWakes, version 2026-01-27): one row per turbine, plus power and Ct curves per turbine type |
 | `data/raw/European_offshore_wind_farm_outline.geojson` | Farm and zone outlines (own compilation, WGS84) |
+| `data/raw/global_offshore_wind_turbines_2021.zip`, `global_turbines.csv` | Global offshore wind turbine dataset (Zhang et al. 2021, CC0) and its CSV conversion (`scripts/fetch_global_turbines.py --local`); used for farms outside Europe |
 | `scripts/build_site.py` | Turns the GeoJSONs into `web/data/site.json` (run again when the data changes) |
 | `scripts/fetch_osm_turbines.py` | Adds farms missing from the turbine database (e.g. Tahkoluoto, Finland) from OpenStreetMap into `data/raw/extra_turbines.csv` |
 | `scripts/windy_test.py` | One-off check of your Windy key and which models it allows |
@@ -167,6 +169,7 @@ in it.
 | Turbine positions, types and power/Ct curves | "Open European offshore wind turbine database" (version 2026-01-27), Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
 | Bathymetry underlay (map) | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) Consortium, EMODnet Digital Bathymetry (DTM), via WMS | CC BY 4.0 |
+| Turbine positions outside Europe (China, Taiwan, Vietnam, South Korea, United States) | Zhang, T., Tian, B., Sengupta, D., Zhang, L., Si, Y. (2021), Global offshore wind turbine dataset, *Scientific Data* 8, 191; [doi:10.6084/m9.figshare.13280252](https://doi.org/10.6084/m9.figshare.13280252). Sentinel-1 detections up to 2021; project names and capacities as given in the dataset. Turbine types are estimated here | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |

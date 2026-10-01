@@ -13,6 +13,7 @@ SAR imagery, 2015-2019, with country, sea area and the year/month a turbine firs
 from __future__ import annotations
 
 import csv
+import sys
 import io
 import zipfile
 from pathlib import Path
@@ -61,36 +62,37 @@ def main() -> None:
 
 
 def convert(content: bytes, log: list[str]) -> None:
+    """Shapefile -> CSV. Name fields are cp1252 (the unused lat/lon text columns hold GBK degree signs); positions come from the point geometry (the lat/lon
+    attribute columns are degree-minute-second strings)."""
     z = zipfile.ZipFile(io.BytesIO(content))
     log.append(f"zip {len(content)} bytes")
     names = z.namelist()
-    log += [f"  {n} {z.getinfo(n).file_size}" for n in names]
-    shps = [n for n in names if n.lower().endswith(".shp") and not n.startswith("__MACOSX")]
-    rows, fields_all = [], []
-    for shp in shps:
-        base = shp[:-4]
-        get = lambda ext: io.BytesIO(z.read(next(n for n in names if n.lower() == (base + ext).lower())))
-        sf = shapefile.Reader(shp=get(".shp"), dbf=get(".dbf"), shx=get(".shx"))
-        fields = [f[0] for f in sf.fields[1:]]
-        log.append(f"{shp}: {len(sf)} records, type {sf.shapeTypeName}, fields {fields}")
-        for i, rec in enumerate(sf.iterShapeRecords()):
-            if i < 3:
-                log.append(f"    sample: {rec.shape.points[:1]} {list(rec.record)}")
-            pts = rec.shape.points
-            if not pts:
-                continue
-            lon = sum(p[0] for p in pts) / len(pts)
-            lat = sum(p[1] for p in pts) / len(pts)
-            d = {"file": Path(shp).name, "lon": round(lon, 6), "lat": round(lat, 6)}
-            d.update({k: v for k, v in zip(fields, rec.record)})
-            rows.append(d)
-        fields_all += [f for f in fields if f not in fields_all]
+    shp = next(n for n in names if n.lower().endswith(".shp") and "__MACOSX" not in n)
+    base = shp[:-4]
+    get = lambda ext: io.BytesIO(z.read(next(n for n in names if n.lower() == (base + ext).lower())))
+    sf = shapefile.Reader(shp=get(".shp"), dbf=get(".dbf"), shx=get(".shx"), encoding="cp1252", encodingErrors="replace")
+    fields = [f[0] for f in sf.fields[1:]]
+    log.append(f"{shp}: {len(sf)} records, fields {fields}")
+    cols = ["lon", "lat", "country", "project", "owner", "project_mw", "first_seen", "owfid"]
     with open(OUT, "w", newline="", encoding="utf-8") as fh:
-        w = csv.DictWriter(fh, fieldnames=["file", "lon", "lat"] + fields_all)
-        w.writeheader()
-        w.writerows(rows)
-    log.append(f"wrote {len(rows)} rows -> {OUT.relative_to(ROOT)}")
+        w = csv.writer(fh)
+        w.writerow(cols)
+        n = 0
+        for shape, rec in zip(sf.iterShapes(), sf.iterRecords()):
+            d = dict(zip(fields, rec))
+            x, y = shape.points[0]
+            ym = [int(v) for v in str(d.get("yearmonth") or "").replace("-", "/").split("/") if v.strip().isdigit()]
+            w.writerow([round(x, 6), round(y, 6), (d.get("country") or "").strip(), (d.get("p_name_4c") or "").strip(),
+                        (d.get("o_name_4c") or "").strip(), (d.get("capacity4c") or "").strip(),
+                        f"{ym[0]}-{ym[1]:02d}" if len(ym) >= 2 else (str(ym[0]) if ym else ""), d.get("owfid")])
+            n += 1
+    log.append(f"wrote {n} rows -> {OUT.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "--local":  # convert the committed zip without downloading
+        lg: list[str] = []
+        convert(ZIP.read_bytes(), lg)
+        print("\n".join(lg))
+    else:
+        main()

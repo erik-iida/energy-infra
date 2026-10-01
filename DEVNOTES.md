@@ -136,6 +136,19 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   zone x hour, rows sorted by mean, one warm sequential ramp for >= 0 (capped at the 97th percentile) and a cool
   ramp for negative prices, hover = value and rank in that hour. Shares the Last 24 h / Tomorrow switch.
 
+## Energy-system direction (Oct 2026)
+- Renamed "Energy infra monitor". Offshore wind stays the most detailed layer; the structure (farms with `on`,
+  technology colours, legend by technology) is meant to take onshore wind, nuclear and gas plants next. Large
+  concentrated assets (offshore farms, nuclear, large gas/CCGT) are the easiest to show at the same detail.
+- Technology colours (System tab, onshore farms on the map): nuclear red, hydro light blue, gas orange, offshore
+  wind dark blue, onshore wind medium blue, solar yellow, coal dark brown, biomass & other green. Stack order
+  nuc, hyd, gas, woff, won, sol, coal, oth is the one that passes the colour-vision checks in light and dark mode
+  (coal next to gas or nuclear, and green next to orange or yellow, fail).
+- Sidebar: on Compare / Market / System only the title, breadcrumb and region/country selector stay (class
+  `keep`, body[data-tab]), plus "Sources and disclaimer" as a fold-out. Market highlights the selected country's
+  bidding zones (line chart + heatmap); System opens the selected country's detail, and clicking a country card
+  selects that country everywhere.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

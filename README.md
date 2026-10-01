@@ -1,6 +1,6 @@
-# Offshore wind wake monitor
+# Energy infra monitor
 
-Live, wake-aware output of the world's offshore wind farms: Europe from the EuroWindWakes turbine
+An energy-infrastructure monitor, starting from offshore wind: live, wake-aware output of the world's offshore wind farms: Europe from the EuroWindWakes turbine
 database, China, Taiwan, Vietnam, South Korea and the US from satellite-detected turbine positions (types
 estimated). A map drills down from the world to a region, a country and a farm, with the turbine layout and a wake-deficit heatmap. A Compare tab shows every
 country and farm over the last 24 h plus a 24 h forecast.

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Offshore Wind Wake Monitor</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Energy Infra Monitor</title>
 <style>
 :root{--bg:#eef3f4;--panel:#fff;--ink:#10252d;--mut:#5b7078;--sea:#cfe3ea;--land:#e6e2d5;--line:#b8c9cf;--acc:#0b6e8a;--uc:#b4531c;--cs:#7a5bb0;--pl:#6d7f86;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1a20;--panel:#12262e;--ink:#e3eef1;--mut:#8aa3ac;--sea:#0f2b36;--land:#23353a;--line:#2b4650;--acc:#5fc4e0;--uc:#f0935c;--cs:#b39cf0;--pl:#8fa4ab}}
@@ -57,6 +57,9 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 #legt{all:unset;cursor:pointer;font-weight:600;font-size:12px;display:flex;justify-content:space-between;gap:10px;border-radius:3px}
 #legt:focus-visible{outline:2px solid var(--acc)}#legb{display:flex;flex-direction:column;gap:3px;margin-top:3px}#legb[hidden]{display:none}
 svg.hm{width:100%;display:block;cursor:crosshair}
+@media (min-width:900px){body:not([data-tab="map"]) main{grid-template-columns:1fr 250px}}
+body:not([data-tab="map"]) aside>*:not(.keep){display:none!important}
+body[data-tab="map"] #footd{display:none}#footd summary{cursor:pointer;font-size:12px;color:var(--mut)}
 #dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
@@ -79,9 +82,9 @@ main{align-items:start}
 aside>*{flex-shrink:0}
 @media(max-width:800px){#stage{height:70vh}}
 #sys{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
-:root{--m-nuc:#e87ba4;--m-coal:#4a3aa7;--m-gas:#eb6834;--m-hyd:#1baf7a;--m-oth:#e34948;--m-woff:#2a78d6;--m-won:#008300;--m-sol:#eda100;--imp:#2a78d6;--exp:#e34948}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#d55181;--m-coal:#9085e9;--m-gas:#d95926;--m-hyd:#199e70;--m-oth:#e66767;--m-woff:#3987e5;--m-won:#008300;--m-sol:#c98500;--imp:#3987e5;--exp:#e66767}}
-:root[data-theme="dark"]{--m-nuc:#d55181;--m-coal:#9085e9;--m-gas:#d95926;--m-hyd:#199e70;--m-oth:#e66767;--m-woff:#3987e5;--m-won:#008300;--m-sol:#c98500;--imp:#3987e5;--exp:#e66767}
+:root{--m-nuc:#d42c2c;--m-coal:#93501c;--m-gas:#ee7d1e;--m-hyd:#38a6e8;--m-oth:#439632;--m-woff:#1f52a8;--m-won:#5b93e6;--m-sol:#dcac00;--imp:#2a78d6;--exp:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#9a4f2a;--m-gas:#d4721a;--m-hyd:#2a92cc;--m-oth:#3f8f33;--m-woff:#2d5bb0;--m-won:#6592d8;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}}
+:root[data-theme="dark"]{--m-nuc:#e5484d;--m-coal:#9a4f2a;--m-gas:#d4721a;--m-hyd:#2a92cc;--m-oth:#3f8f33;--m-woff:#2d5bb0;--m-won:#6592d8;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}
 .mixbar{position:relative;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bg)}.mixbar span{position:absolute;top:0;bottom:0}
 .mixleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}.mixleg i,.mixtab i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .syswrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.card.wide{grid-column:1/-1;cursor:default}.syswrap .card{cursor:default}
@@ -95,15 +98,15 @@ svg.cmp{display:block;width:100%;overflow:visible}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
-<div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Operating farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div></div>
+<div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
 <h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="dtip"></div></div>
 <aside>
-<div><h1>Offshore wind wake monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
-<select id="C" aria-label="Region"></select>
+<div class="keep"><h1>Energy infra monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
+<select id="C" class="keep" aria-label="Region or country"></select>
 <div><div class="big" id="mw">–</div><div class="mut" id="mwsub"></div></div>
 <div id="mapctl"><label id="live"><input type="checkbox" id="LV"> Use forecast wind for now</label>
 <div id="wif"><label>What-if wind speed <span id="uv"></span></label><input id="U" type="range" min="3" max="25" step="0.5" value="9">
@@ -117,6 +120,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 <div id="cmp"></div>
 <div id="list"></div>
 <div class="mut" id="foot"></div>
+<details id="footd" class="keep"><summary>Sources and disclaimer</summary><div class="mut" id="foot2" style="font-size:12px;margin-top:6px"></div></details>
 </aside></main>
 <script>
 function main(DATA,FEED,MHIST){
@@ -447,7 +451,7 @@ function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filte
  const cols=[["n","Farm"],["c","Country"],["inst","Installed"],["now","Now"],["cf","CF now"],["wl","Wake loss"],["cp","Capture 24 h"],["wc","Wake cost 24 h"],["u","Wind now"],["sp","Output ±24 h"],["sw","Wind ±24 h"],["avg","Last 24 h"],["nx","Next 24 h"]];
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
-function tab(t){S.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+function tab(t){S.tab=t;document.body.dataset.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
  $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
@@ -484,6 +488,11 @@ const FLAGS={
  sk:'<rect width="30" height="7" fill="#fff"/><rect y="6.6" width="30" height="7" fill="#0B4EA2"/><rect y="13.3" width="30" height="6.7" fill="#EE1C25"/>',
  ua:'<rect width="30" height="10" fill="#0057B7"/><rect y="10" width="30" height="10" fill="#FFD700"/>',
  gb:'<rect width="30" height="20" fill="#012169"/><path d="M0,0 30,20 M30,0 0,20" stroke="#fff" stroke-width="4"/><path d="M0,0 30,20 M30,0 0,20" stroke="#C8102E" stroke-width="1.5"/><rect x="12.5" width="5" height="20" fill="#fff"/><rect y="7.5" width="30" height="5" fill="#fff"/><rect x="13.5" width="3" height="20" fill="#C8102E"/><rect y="8.5" width="30" height="3" fill="#C8102E"/>'};
+const CFLAG={Germany:"de",France:"fr",Netherlands:"nl",Belgium:"be",Denmark:"dk",Norway:"no",Sweden:"se",Finland:"fi",Poland:"pl",Austria:"at",Switzerland:"ch",
+ Ireland:"ie",Spain:"es",Portugal:"pt",Italy:"it",Bulgaria:"bg",Czechia:"cz","Czech Republic":"cz",Estonia:"ee",Greece:"gr",Croatia:"hr",Hungary:"hu",Lithuania:"lt",Latvia:"lv",
+ Montenegro:"me",Romania:"ro",Serbia:"rs",Slovenia:"si",Slovakia:"sk",Ukraine:"ua","United Kingdom":"gb"};
+// bidding zones that belong to the selected place: null = no filter (world / Europe)
+function selZones(){if(!S.c||S.c==="Europe")return null;const fc=CFLAG[S.c];if(isReg(S.c))return new Set();return new Set(Object.keys(ZONEFLAG).filter(z=>fc&&ZONEFLAG[z]===fc))}
 const ZONEFLAG={"BG":"bg","CZ":"cz","EE":"ee","GR":"gr","HR":"hr","HU":"hu","LT":"lt","LV":"lv","ME":"me","RO":"ro","RS":"rs","SI":"si","SK":"sk","UA-IPS":"ua",
  "NO3":"no","NO4":"no","NO5":"no","SE1":"se","SE2":"se","IT-North":"it","IT-Centre-North":"it","IT-Centre-South":"it","IT-South":"it","IT-Calabria":"it","IT-Sicily":"it","IT-Sardinia":"it","DE-LU":"de","FR":"fr","NL":"nl","BE":"be","DK1":"dk","DK2":"dk","NO1":"no","NO2":"no","SE3":"se","SE4":"se","FI":"fi","PL":"pl","AT":"at","CH":"ch","IE(SEM)":"ie","ES":"es","PT":"pt"};
 let FLAGN=0;
@@ -501,8 +510,8 @@ function cmpRender(id){const C=CMP[id],sv=document.getElementById(id);if(!sv)ret
  const n=C.b-C.a,x=k=>L+(W-L-R)*(k-C.a)/Math.max(1,n),y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));C.x=x;C.y=y;C.L=L;C.R=R;C.W=W;
  let s="";for(let g=y0;g<=y1+1e-9;g+=step){s+="<line class='ax' x1='"+L+"' x2='"+(W-R)+"' y1='"+y(g)+"' y2='"+y(g)+"' "+(Math.abs(g)<1e-9?"":"stroke-dasharray='2 3'")+"/><text class='tl' x='"+(L-6)+"' y='"+(y(g)+3)+"' text-anchor='end'>"+C.fmt(g)+"</text>"}
  for(let k=C.a;k<=C.b;k+=6)s+="<text class='tl' x='"+x(k)+"' y='"+(H-6)+"' text-anchor='middle'>"+hl(k)+"</text>";
- const ord=C.series.map((se,i)=>i).sort((p,q)=>(p===C.hl)-(q===C.hl));
- ord.forEach(i=>{const se=C.series[i],on=i===C.hl;s+="<path d='"+pathOf(se.v,x,y,C.a,C.b)+"' fill='none' stroke='"+(on?"var(--acc)":"var(--mut)")+"' stroke-width='"+(on?2.6:1.4)+"' stroke-opacity='"+(on||C.hl==null?.9:.35)+"' stroke-linejoin='round'/>"});
+ const ord=C.series.map((se,i)=>i).sort((p,q)=>(p===C.hl||!!(C.sel&&C.sel.has(C.series[p].id)))-(q===C.hl||!!(C.sel&&C.sel.has(C.series[q].id))));
+ ord.forEach(i=>{const se=C.series[i],on=i===C.hl||(C.hl==null&&C.sel&&C.sel.has(se.id));s+="<path d='"+pathOf(se.v,x,y,C.a,C.b)+"' fill='none' stroke='"+(on?"var(--acc)":"var(--mut)")+"' stroke-width='"+(on?2.6:1.4)+"' stroke-opacity='"+(on||C.hl==null?.9:.35)+"' stroke-linejoin='round'/>"});
  // flags at line ends, nudged apart vertically
  const ends=C.series.map((se,i)=>{let k=C.b;while(k>C.a&&se.v[k]==null)k--;return se.v[k]==null?null:{i,k,yy:y(se.v[k])}}).filter(Boolean).sort((p,q)=>p.yy-q.yy);
  for(let j=1;j<ends.length;j++)ends[j].yy=Math.max(ends[j].yy,ends[j-1].yy+15);const over=ends.length?ends[ends.length-1].yy-(H-B):0;if(over>0)ends.forEach(e=>e.yy-=over);
@@ -528,7 +537,7 @@ function hmRender(id){const C=HM[id],sv=document.getElementById(id);if(!sv)retur
  const all=rows.flatMap(r=>r.v.filter(x=>x!=null)).sort((a,b)=>a-b);if(!all.length){sv.innerHTML="<text class='tl' x='"+W/2+"' y='20' text-anchor='middle'>No prices for this period yet</text>";sv.style.height="30px";return}
  const top=Math.max(50,all[Math.floor(all.length*.97)]),low=Math.min(0,all[0]),n=C.b-C.a+1,cw=(W-L-R)/n,H=T+rows.length*rh+B;C.rows=rows;C.top=top;C.low=low;C.L=L;C.R=R;C.T=T;C.rh=rh;C.cw=cw;C.W=W;
  sv.setAttribute("viewBox","0 0 "+W+" "+H);sv.style.height=H+"px";let s="";
- rows.forEach((r,i)=>{const y=T+i*rh;s+=flagSVG(ZONEFLAG[r.z]||"",8,y+rh/2,5)+"<text x='18' y='"+(y+rh-3.5)+"' font-size='11' fill='var(--ink)'>"+r.z+"</text>";
+ rows.forEach((r,i)=>{const y=T+i*rh,on=C.sel&&C.sel.has(r.z);if(on)s+="<rect x='0' y='"+y+"' width='"+(W-R+40)+"' height='"+rh+"' fill='var(--acc)' opacity='.13'/>";s+=flagSVG(ZONEFLAG[r.z]||"",8,y+rh/2,5)+"<text x='18' y='"+(y+rh-3.5)+"' font-size='11' fill='var(--ink)' font-weight='"+(on?700:400)+"'>"+r.z+"</text>";
   r.v.forEach((v,k)=>{if(v!=null)s+="<rect x='"+(L+k*cw).toFixed(1)+"' y='"+(y+.5)+"' width='"+Math.max(.5,cw-1).toFixed(1)+"' height='"+(rh-1)+"' fill='"+hmColor(v,top,low)+"'/>"});
   s+="<text x='"+(W-R+6)+"' y='"+(y+rh-3.5)+"' font-size='11' fill='var(--mut)'>"+Math.round(r.m)+"</text>"});
  for(let k=0;k<n;k+=6)s+="<text class='tl' x='"+(L+k*cw+cw/2)+"' y='"+(H-6)+"' text-anchor='middle'>"+hl(C.a+k)+"</text>";
@@ -573,6 +582,7 @@ function market(){series();const el=$("mkt");TIPS=[];
  let lo=0,hi=50;zones.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
  let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because their price licence is private use only: "+MK.restricted_zones.length+" zones ("+MK.restricted_zones.join(", ")+"). ":"")+"UK has no day-ahead price in this source yet.</div>";
  const pz=(MK.core_zones||Object.keys(MK.prices)).filter(z=>MK.prices[z]&&ZONEFLAG[z]),tAv=pz.some(z=>MK.prices[z].slice(N0+1).some(v=>v!=null));S.prng=S.prng||"past";if(S.prng==="next"&&!tAv)S.prng="past";
+ const SZ=selZones();if(SZ&&!SZ.size)h+="<div class='feednote'>No day-ahead price data for "+S.c+" in this source yet; showing Europe.</div>";else if(SZ)h+="<div class='feednote'>"+S.c+"'s bidding zones are highlighted"+([...SZ].some(z=>MK.prices[z])?"":" (none of them has an openly licensed price)")+". Pick World or Europe in the selector to clear.</div>";
  h+="<div class='card' style='cursor:default'><h3>Day-ahead prices by zone<span class='seg'><button data-pr='past' class='"+(S.prng==="past"?"on":"")+"'>Last 24 h</button><button data-pr='next' "+(tAv?"":"disabled title='Published around midday'")+" class='"+(S.prng==="next"?"on":"")+"'>Tomorrow</button></span></h3><svg class='cmp' id='cmpPrice'></svg><div class='mut' style='font-size:12px'>Hourly averages of the 15-minute day-ahead auction, €/MWh. Hover to rank all zones for one hour; the line under the cursor is highlighted.</div></div>";
  const hz=Object.keys(MK.prices);
  h+="<div class='card' style='cursor:default'><h3>All bidding zones · "+(S.prng==="next"?"tomorrow":"last 24 h")+"<span class='mut' style='font-size:12px;font-weight:400'>"+hz.length+" zones, highest average first</span></h3><svg class='hm' id='hmPrice'></svg><div class='mut' style='font-size:12px' id='hmPriceL'></div><div class='mut' style='font-size:12px'>Hourly day-ahead price per zone; the colour scale tops out at the 97th percentile so a few spikes don't wash out the rest. Hover a cell for its value and rank in that hour. Same Last 24 h / Tomorrow switch as above.</div></div>";
@@ -590,7 +600,7 @@ function market(){series();const el=$("mkt");TIPS=[];
   h+="</div>"}
  h+="<h2>History: offshore capture rate by month <span class='mut' style='font:13px system-ui'>· from actual national offshore output and day-ahead prices, not the model</span></h2><div id='mhist' class='grid'></div><div class='tw'><table id='mtab'></table></div>";
  el.innerHTML=h;
- CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:290};cmpRender("cmpPrice");HM.hmPrice={zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1};hmRender("hmPrice");
+ CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:290,sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1};hmRender("hmPrice");
  el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
   if(sv.dataset.z)sv.innerHTML=tsSVG(W,Hh,NT,[{v:MK.prices[sv.dataset.z],cls:"pr"}],+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1));
   else{const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
@@ -612,9 +622,10 @@ $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
 
 /* ---------- System tab: generation mix, load, prices, cross-border flows (Energy-Charts) ---------- */
 const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland"};
-const MIXC=[["nuc","Nuclear",["nuclear"]],["coal","Coal",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["gas","Gas",["fossil_gas"]],
- ["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],["oth","Biomass & other",["biomass","geothermal","waste","others","fossil_oil"]],
- ["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]]];
+// stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
+const MIXC=[["nuc","Nuclear",["nuclear"]],["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],["gas","Gas",["fossil_gas"]],
+ ["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]],
+ ["coal","Coal",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["oth","Biomass & other",["biomass","geothermal","waste","others","fossil_oil"]]];
 const NOTGEN=new Set(["load","residual_load","cross_border_electricity_trading","hydro_pumped_storage_consumption"]);
 const RENEW=["hydro_run_of_river","hydro_water_reservoir","biomass","geothermal","wind_offshore","wind_onshore","solar"];
 let STIPS=[];S.sys=null;
@@ -642,9 +653,11 @@ function sysCard(D){const h=D.last,g=D.gen[h]||1,pz=D.zones.map(z=>MK.prices[z]&
 function system(){const el=$("sys");STIPS=[];
  if(!MK||!Object.keys(SYS).length){el.innerHTML="<div class='feednote'><b>No system data yet.</b> It arrives with the next pipeline run.</div>";return}
  const all=Object.keys(SYS).map(sysData).filter(Boolean).sort((a,b)=>(b.load?b.load[b.last]:b.gen[b.last])-(a.load?a.load[a.last]:a.gen[a.last]));
+ const csel=S.c&&!isReg(S.c)?Object.keys(SYSN).find(k=>SYSN[k]===S.c):null;
+ if(csel&&all.some(d=>d.c===csel))S.sys=csel;
  if(!S.sys||!all.some(d=>d.c===S.sys))S.sys=all[0]&&all[0].c;
  const D=all.find(d=>d.c===S.sys);
- let h="<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. Public net generation, last 24 h, hourly averages. Flows: positive = import.</div>";
+ let h=(S.c&&S.c!=="Europe"&&!csel?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. Public net generation, last 24 h, hourly averages. Flows: positive = import.</div>";
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
  h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
  const offc=all.filter(d=>SYS[d.c].series.wind_offshore&&SYS[d.c].series.wind_offshore.some(v=>v>0));S.offm=S.offm||"gen";
@@ -670,7 +683,7 @@ function system(){const el=$("sys");STIPS=[];
   else if(k==="price"){const zs=D.zones.filter(z=>MK.prices[z]);sv.innerHTML=tsSVG(W,Hh,NT,zs.map((z,j)=>({v:MK.prices[z],cls:j?"act":"pr"})),+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1))}
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
-$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;system()}};
+$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
 $("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;market()}});
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
@@ -722,6 +735,7 @@ cv.ondblclick=e=>{zoomAt(e.offsetX,e.offsetY,2)};
 cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0){S.hover=-1;S.zh=-1;repaint()}};
 $("zin").onclick=()=>zoomAt(W0/2,H0/2,1.6);$("zout").onclick=()=>zoomAt(W0/2,H0/2,1/1.6);$("zhome").onclick=()=>go(null,null);
 
+document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(b)tab(b.dataset.t)};
 $("cards").onclick=e=>{const c=e.target.closest(".card");if(c)go(c.dataset.c===S.c?null:c.dataset.c,null)};
 $("ftab").onclick=e=>{const th=e.target.closest("th");if(th){if(th.dataset.k==="sp"||th.dataset.k==="sw")return;S.sort=[th.dataset.k,S.sort[0]===th.dataset.k?-S.sort[1]:(["n","c"].includes(th.dataset.k)?1:-1)];draw();return}

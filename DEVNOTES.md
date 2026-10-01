@@ -87,6 +87,19 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Depth grid only shows when the view spans < 80 deg longitude and is centred on it.
 - Hourly run: ~280 farms, ~30 s more PyWake time; Open-Meteo ~230 locations per 6 h (< 2000/day cap).
 
+## OpenStreetMap layer (Oct 2026)
+- scripts/fetch_osm_world.py (osm-world workflow, every 2 h until complete, resumable via `done` in
+  data/raw/osm/osm_wind.json): wind generators in ~20 small coastal boxes outside Europe (positions first, keep
+  those outside Natural Earth land or < 500 m inside, then tags by id) + power=plant centres for names; and all
+  of Estonia (onshore demo, bbox + Natural Earth country filter). Country from NE admin-0. Overpass is often
+  overloaded (504/timeouts): each part is retried by later runs; the workflow rebuilds site.json each time.
+- build_site.osm_farms: within 400 m of a satellite turbine = duplicate; within 2 km of a satellite farm = joins
+  it (`osm_added`); others cluster into new farms (`src: "osm"`), named from the nearest named plant within
+  5 km, else "Unnamed wind farm <lat> <lon>". Size from tags, then MODEL_SPECS by model name, else
+  OSM_DEFAULT_MW per country (`est` says which). Chinese OSM turbines are usually untagged ("yes").
+- Estonia onshore demo: farms with `on: 1`, region Europe, green on the map, PyWake with TI 10 %
+  (config.TI_ONSHORE), still flat terrain / no forest or stability. Not in Market/System.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

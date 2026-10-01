@@ -67,7 +67,7 @@ def overpass(q: str, what: str) -> list[dict] | None:
     """One try per server; a part that fails stays undone and the next run retries it."""
     for url in OVERPASS:
         try:
-            r = requests.post(url, data={"data": q}, timeout=200, headers=UA)
+            r = requests.post(url, data={"data": q}, timeout=120, headers=UA)
             if r.status_code == 200:
                 els = r.json().get("elements", [])
                 log(f"  {what}: {url.split('/')[2]} -> {len(els)} elements")
@@ -85,21 +85,28 @@ def ne(path: Path, name: str) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def estonia(turbines: dict, plants: dict) -> bool:
+EE_BOX = (57.4, 21.6, 59.9, 28.3)
+
+
+def estonia(turbines: dict, plants: dict, country) -> bool:
+    """All wind generators and plants in Estonia: bounding box query (lighter than an area query), then
+    keep the ones Natural Earth puts in Estonia."""
     log("estonia (onshore demo)")
-    area = 'area["ISO3166-1"="EE"]["admin_level"="2"]->.ee;'
-    ee = overpass(f'[out:json][timeout:180];{area}node["power"="generator"]["generator:source"="wind"](area.ee);out;',
+    s, w, n, e = EE_BOX
+    ee = overpass(f'[out:json][timeout:100];node["power"="generator"]["generator:source"="wind"]({s},{w},{n},{e});out;',
                   "turbines")
     for el in ee or []:
-        turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "estonia",
-                              "tags": el.get("tags", {})}
-    pl = overpass(f'[out:json][timeout:180];{area}nwr["power"="plant"]["plant:source"="wind"](area.ee);out center tags;',
+        if country(el["lon"], el["lat"]) == "Estonia":
+            turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "estonia",
+                                  "tags": el.get("tags", {}), "country": "Estonia"}
+    pl = overpass(f'[out:json][timeout:100];nwr["power"="plant"]["plant:source"="wind"]({s},{w},{n},{e});out center tags;',
                   "plants")
     for el in pl or []:
         c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
-        if c.get("lat") is not None:
+        if c.get("lat") is not None and country(c["lon"], c["lat"]) == "Estonia":
             plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
-                                                 "set": "estonia", "tags": el.get("tags", {})}
+                                                 "set": "estonia", "tags": el.get("tags", {}), "country": "Estonia"}
+    log(f"  {sum(1 for t in turbines.values() if t['set'] == 'estonia')} turbines in Estonia")
     return ee is not None and pl is not None
 
 
@@ -140,15 +147,18 @@ def main() -> None:
                                   ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
 
+    if set(done) >= {"estonia"} | {b[0] for b in BOXES}:
+        log("all parts fetched; nothing to do (delete data/raw/osm/osm_wind.json to refetch)")
+        return
     if "estonia" not in done:
-        if estonia(turbines, plants):
+        if estonia(turbines, plants, country):
             done.append("estonia")
         save()
     for name, s, w, n, e in BOXES:
         if name in done:
             continue
         log(f"{name}: {s},{w},{n},{e}")
-        skel = overpass(f'[out:json][timeout:180];node["power"="generator"]["generator:source"="wind"]'
+        skel = overpass(f'[out:json][timeout:100];node["power"="generator"]["generator:source"="wind"]'
                         f'({s},{w},{n},{e});out skel qt;', "positions")
         if skel is None:
             continue
@@ -158,13 +168,15 @@ def main() -> None:
         sea = [el for el in skel if el["id"] not in turbines and not core.contains(Point(el["lon"], el["lat"]))]
         log(f"  {len(skel)} wind generators, {len(sea)} at sea or on the coast")
         ids = [el["id"] for el in sea]
-        for i in range(0, len(ids), 1500):
-            chunk = ids[i:i + 1500]
-            full = overpass(f'[out:json][timeout:180];node(id:{",".join(map(str, chunk))});out;', f"tags {i}")
+        tags_ok = True
+        for i in range(0, len(ids), 500):
+            chunk = ids[i:i + 500]
+            full = overpass(f'[out:json][timeout:100];node(id:{",".join(map(str, chunk))});out;', f"tags {i}")
+            tags_ok = tags_ok and full is not None
             for el in full or []:
                 turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "offshore",
                                       "tags": el.get("tags", {})}
-        pl = overpass(f'[out:json][timeout:180];nwr["power"="plant"]["plant:source"="wind"]'
+        pl = overpass(f'[out:json][timeout:100];nwr["power"="plant"]["plant:source"="wind"]'
                       f'({s},{w},{n},{e});out center tags;', "plants")
         for el in pl or []:
             c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
@@ -172,7 +184,7 @@ def main() -> None:
                 continue
             plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
                                                  "set": "offshore", "tags": el.get("tags", {})}
-        if skel is not None and pl is not None:
+        if skel is not None and pl is not None and tags_ok:
             done.append(name)
         save()
 

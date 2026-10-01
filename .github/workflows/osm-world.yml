@@ -3,6 +3,8 @@ name: osm-world
 # Fetch offshore wind turbines outside Europe and (demo) Estonian onshore turbines from OpenStreetMap; commit
 # the raw JSON. Runs when the script changes, or manually. build_site.py turns it into farms (run locally).
 on:
+  schedule:
+    - cron: "40 */2 * * *"   # resumes until every part is fetched, then each run exits at once
   workflow_dispatch:
   push:
     branches: [main]
@@ -25,12 +27,14 @@ jobs:
         run: python scripts/fetch_osm_world.py
         timeout-minutes: 45
         continue-on-error: true
+      - name: Rebuild site.json
+        run: python scripts/build_site.py
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/raw/osm/osm_wind_log.txt 2>/dev/null || true
-          git add data/raw/osm/osm_wind.json 2>/dev/null || true
+          git add data/raw/osm/osm_wind.json web/data/site.json 2>/dev/null || true
           git commit -m "OpenStreetMap wind turbines (offshore outside Europe, Estonia onshore)" || echo "no changes"
           git pull --rebase
           git push

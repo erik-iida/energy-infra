@@ -170,6 +170,7 @@ in it.
 | Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
 | Bathymetry underlay (map) | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) Consortium, EMODnet Digital Bathymetry (DTM), via WMS | CC BY 4.0 |
 | Turbine positions outside Europe (China, Taiwan, Vietnam, South Korea, United States) | Zhang, T., Tian, B., Sengupta, D., Zhang, L., Si, Y. (2021), Global offshore wind turbine dataset, *Scientific Data* 8, 191; [doi:10.6084/m9.figshare.13280252](https://doi.org/10.6084/m9.figshare.13280252). Sentinel-1 detections up to 2021; project names and capacities as given in the dataset. Turbine types are estimated here | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| Newer offshore turbines outside Europe; Estonian onshore turbines (demo) | © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, via Overpass API | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |

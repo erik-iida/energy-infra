@@ -42,13 +42,17 @@ OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.sy
 UA = {"User-Agent": "offshore-wake-monitor/1.0 (+https://github.com/erik-iida/energy-infra)"}
 
 # (name, south, west, north, east): coasts with offshore wind outside Europe
-BOXES = [
-    ("china-north", 34.0, 117.0, 41.5, 125.5),
-    ("china-east", 26.0, 118.0, 34.0, 124.5),
-    ("china-south-taiwan", 18.0, 106.5, 26.0, 122.5),
-    ("korea-japan", 30.0, 124.5, 46.0, 146.5),
-    ("vietnam", 8.0, 104.0, 18.0, 110.0),
-    ("us-east", 35.0, -77.5, 42.5, -68.5),
+BOXES = [  # small coastal boxes keep each Overpass query light
+    ("cn-bohai", 38.0, 117.5, 41.5, 122.5), ("cn-shandong-n", 36.0, 119.0, 38.0, 123.0),
+    ("cn-shandong-s", 34.0, 119.0, 36.0, 122.0), ("cn-jiangsu-n", 32.5, 119.5, 34.0, 122.5),
+    ("cn-jiangsu-s", 30.5, 120.5, 32.5, 123.0), ("cn-zhejiang-n", 28.0, 120.5, 30.5, 123.5),
+    ("cn-zhejiang-s", 26.0, 119.0, 28.0, 122.0), ("cn-fujian", 23.5, 117.0, 26.0, 120.3),
+    ("cn-guangdong-e", 21.5, 113.0, 23.5, 117.5), ("cn-guangdong-w", 20.0, 109.5, 22.5, 113.0),
+    ("cn-hainan-guangxi", 18.0, 107.5, 21.5, 111.5), ("taiwan", 22.0, 119.5, 25.5, 122.5),
+    ("korea", 33.0, 124.5, 38.5, 130.0), ("japan-sw", 30.0, 128.0, 35.0, 135.0),
+    ("japan-c", 33.0, 135.0, 42.0, 142.0), ("japan-n", 40.0, 138.0, 46.0, 146.0),
+    ("vietnam", 8.0, 104.0, 11.5, 109.5), ("us-ne", 40.0, -74.5, 42.0, -69.5),
+    ("us-nj-de", 38.5, -75.5, 40.5, -73.0), ("us-va-md", 36.0, -77.0, 38.5, -74.5),
 ]
 INLAND_KEEP_DEG = 0.005  # keep turbines up to ~500 m inside the Natural Earth coastline
 log_lines: list[str] = []
@@ -60,19 +64,18 @@ def log(msg: str) -> None:
 
 
 def overpass(q: str, what: str) -> list[dict] | None:
-    for attempt in range(2):
-        for url in OVERPASS:
-            try:
-                r = requests.post(url, data={"data": q}, timeout=300, headers=UA)
-                if r.status_code == 200:
-                    els = r.json().get("elements", [])
-                    log(f"  {what}: {url.split('/')[2]} -> {len(els)} elements")
-                    return els
-                log(f"  {what}: {url.split('/')[2]} -> HTTP {r.status_code} {r.text[:120]!r}")
-            except Exception as ex:
-                log(f"  {what}: {url.split('/')[2]} -> {ex!r}")
-            time.sleep(15)
-        time.sleep(60)
+    """One try per server; a part that fails stays undone and the next run retries it."""
+    for url in OVERPASS:
+        try:
+            r = requests.post(url, data={"data": q}, timeout=200, headers=UA)
+            if r.status_code == 200:
+                els = r.json().get("elements", [])
+                log(f"  {what}: {url.split('/')[2]} -> {len(els)} elements")
+                return els
+            log(f"  {what}: {url.split('/')[2]} -> HTTP {r.status_code} {r.text[:120]!r}")
+        except Exception as ex:
+            log(f"  {what}: {url.split('/')[2]} -> {ex!r}")
+        time.sleep(10)
     return None
 
 
@@ -80,6 +83,24 @@ def ne(path: Path, name: str) -> dict:
     if not path.exists():
         urllib.request.urlretrieve(NE + name, path)
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def estonia(turbines: dict, plants: dict) -> bool:
+    log("estonia (onshore demo)")
+    area = 'area["ISO3166-1"="EE"]["admin_level"="2"]->.ee;'
+    ee = overpass(f'[out:json][timeout:180];{area}node["power"="generator"]["generator:source"="wind"](area.ee);out;',
+                  "turbines")
+    for el in ee or []:
+        turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "estonia",
+                              "tags": el.get("tags", {})}
+    pl = overpass(f'[out:json][timeout:180];{area}nwr["power"="plant"]["plant:source"="wind"](area.ee);out center tags;',
+                  "plants")
+    for el in pl or []:
+        c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
+        if c.get("lat") is not None:
+            plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
+                                                 "set": "estonia", "tags": el.get("tags", {})}
+    return ee is not None and pl is not None
 
 
 def main() -> None:
@@ -100,9 +121,34 @@ def main() -> None:
 
     turbines: dict[int, dict] = {}
     plants: dict[str, dict] = {}
+    done: list[str] = []
+    if OUT.exists():  # resume: keep what earlier runs fetched, skip finished parts
+        old = json.loads(OUT.read_text(encoding="utf-8"))
+        turbines = {t["id"]: t for t in old["turbines"]}
+        plants = {p["id"]: p for p in old["plants"]}
+        done = old.get("done", [])
+        log(f"resuming: {len(turbines)} turbines, {len(plants)} plants, done {done}")
+
+    def save() -> None:
+        for x in list(turbines.values()) + list(plants.values()):
+            if "country" not in x:
+                x["country"] = country(x["lon"], x["lat"])
+        OUT.write_text(json.dumps({"fetched": time.strftime("%Y-%m-%d"), "boxes": BOXES, "done": done,
+                                   "turbines": sorted(turbines.values(), key=lambda t: t["id"]),
+                                   "plants": sorted(plants.values(), key=lambda p: p["id"]),
+                                   "attribution": "(c) OpenStreetMap contributors, ODbL 1.0"},
+                                  ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+
+    if "estonia" not in done:
+        if estonia(turbines, plants):
+            done.append("estonia")
+        save()
     for name, s, w, n, e in BOXES:
+        if name in done:
+            continue
         log(f"{name}: {s},{w},{n},{e}")
-        skel = overpass(f'[out:json][timeout:240];node["power"="generator"]["generator:source"="wind"]'
+        skel = overpass(f'[out:json][timeout:180];node["power"="generator"]["generator:source"="wind"]'
                         f'({s},{w},{n},{e});out skel qt;', "positions")
         if skel is None:
             continue
@@ -114,11 +160,11 @@ def main() -> None:
         ids = [el["id"] for el in sea]
         for i in range(0, len(ids), 1500):
             chunk = ids[i:i + 1500]
-            full = overpass(f'[out:json][timeout:240];node(id:{",".join(map(str, chunk))});out;', f"tags {i}")
+            full = overpass(f'[out:json][timeout:180];node(id:{",".join(map(str, chunk))});out;', f"tags {i}")
             for el in full or []:
                 turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "offshore",
                                       "tags": el.get("tags", {})}
-        pl = overpass(f'[out:json][timeout:240];nwr["power"="plant"]["plant:source"="wind"]'
+        pl = overpass(f'[out:json][timeout:180];nwr["power"="plant"]["plant:source"="wind"]'
                       f'({s},{w},{n},{e});out center tags;', "plants")
         for el in pl or []:
             c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
@@ -126,21 +172,9 @@ def main() -> None:
                 continue
             plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
                                                  "set": "offshore", "tags": el.get("tags", {})}
-
-    log("estonia (onshore demo)")
-    area = 'area["ISO3166-1"="EE"]["admin_level"="2"]->.ee;'
-    ee = overpass(f'[out:json][timeout:240];{area}node["power"="generator"]["generator:source"="wind"](area.ee);out;',
-                  "turbines")
-    for el in ee or []:
-        turbines[el["id"]] = {"id": el["id"], "lat": el["lat"], "lon": el["lon"], "set": "estonia",
-                              "tags": el.get("tags", {})}
-    pl = overpass(f'[out:json][timeout:240];{area}nwr["power"="plant"]["plant:source"="wind"](area.ee);out center tags;',
-                  "plants")
-    for el in pl or []:
-        c = el.get("center") or {"lat": el.get("lat"), "lon": el.get("lon")}
-        if c.get("lat") is not None:
-            plants[f'{el["type"]}/{el["id"]}'] = {"id": f'{el["type"]}/{el["id"]}', "lat": c["lat"], "lon": c["lon"],
-                                                 "set": "estonia", "tags": el.get("tags", {})}
+        if skel is not None and pl is not None:
+            done.append(name)
+        save()
 
     # plants only matter near the turbines we keep (they name the farms)
     tt = STRtree([Point(t["lon"], t["lat"]) for t in turbines.values()]) if turbines else None
@@ -151,18 +185,14 @@ def main() -> None:
             j = int(tt.nearest(pt))
             if tt.geometries[j].distance(pt) < 0.1:  # ~10 km
                 keep_pl[k] = p
-    for x in list(turbines.values()) + list(keep_pl.values()):
-        x["country"] = country(x["lon"], x["lat"])
     by = {}
     for t in turbines.values():
         by[(t["set"], t["country"])] = by.get((t["set"], t["country"]), 0) + 1
     for k, v in sorted(by.items()):
         log(f"  {k[0]:8} {k[1] or '?':20} {v}")
-    OUT.write_text(json.dumps({"fetched": time.strftime("%Y-%m-%d"), "boxes": BOXES,
-                               "turbines": sorted(turbines.values(), key=lambda t: t["id"]),
-                               "plants": sorted(keep_pl.values(), key=lambda p: p["id"]),
-                               "attribution": "(c) OpenStreetMap contributors, ODbL 1.0"},
-                              ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    plants.clear()
+    plants.update(keep_pl)
+    save()
     log(f"wrote {len(turbines)} turbines, {len(keep_pl)} plants -> {OUT.relative_to(ROOT)}")
 
 

@@ -119,6 +119,23 @@ def rated_speed(c: dict) -> float:
     return next(ws for ws, p in zip(c["ws"], c["p"]) if p >= 0.99 * pmax)
 
 
+def num(v: str | None) -> float | None:
+    """First number in an OSM value, in MW if it says kW/MW ('6.45 MW', '3600 kW', '6,45')."""
+    import re
+    if not v:
+        return None
+    m = re.search(r"[\d.]+", str(v).replace(",", "."))
+    if not m:
+        return None
+    try:
+        x = float(m.group())
+    except ValueError:
+        return None
+    if "kw" in str(v).lower():
+        x /= 1000
+    return x
+
+
 def country_of(c: str, lon: float, lat: float) -> str:
     c = GLOBAL_COUNTRY.get(c, c)
     # Taiwan's farms are labelled China in the source. Fujian's farms (Putian, Pingtan, Changle) are north of
@@ -154,7 +171,8 @@ def clusters(pts: list[tuple[float, float]], km: float = 2.5) -> list[list[int]]
 def global_farms(add_type) -> list[dict]:
     """Farms outside Europe from the global SAR turbine dataset. Turbine types are unknown except for a few
     projects (KNOWN_TYPES); otherwise rated power = project capacity / turbines detected when that is 2-8.5 MW,
-    else a regional default, rotor from 330 W/m2 specific power, hub = D/2 + 25 m. Farms are marked est."""
+    else a regional default, rotor from 330 W/m2 specific power, hub = D/2 + 25 m. Farms are marked est.
+    Returns farm prototypes (turbine points + fields); make_farm() turns them into site.json farms."""
     path = RAW / "global_turbines.csv"
     if not path.exists():
         return []
@@ -216,21 +234,143 @@ def global_farms(add_type) -> list[dict]:
             ti = add_type(tname, mw, float(d), "unknown" if not known else tname.split()[0])
             pts = [(t["lon"], t["lat"]) for t in gt]
             lon0, lat0 = sum(p[0] for p in pts) / len(pts), sum(p[1] for p in pts) / len(pts)
-            kx, ky = 111320 * cos(radians(lat0)), 110574
-            geom = MultiPoint(pts).convex_hull.buffer(300 / ky)
             name = proj if len(groups) == 1 else f"{proj} ({gi + 1})"
             if name == "Unnamed":
                 name = f"Unnamed, {lat0:.2f}° {lon0:.2f}°"
-            out.append({
-                "id": 800000 + len(out), "n": name, "c": c, "rg": REGION.get(c, "Other"),
-                "cap": round(mw * len(gt), 1), "inst": round(mw * len(gt), 1),
-                "a": round(geom.area * kx * ky / 1e6, 1), "ol": [flat(x, 3) for x in rings(geom, 0.003)],
-                "lon": round(lon0, 4), "lat": round(lat0, 4), "mw": mw, "D": float(d), "h": float(hub), "y": year,
-                "t": tname, "oem": "" if not known else tname.split()[0], "ti": ti,
-                "xy": [round(v) for p in pts for v in ((p[0] - lon0) * kx, (p[1] - lat0) * ky)],
-                "o": [[round(v) for x, y in r for v in ((x - lon0) * kx, (y - lat0) * ky)] for r in rings(geom, 0.0002)],
-                "est": basis, "own": ts[0]["owner"], "pmw": ts[0]["project_mw"], "src": "gowt",
-            })
+            out.append({"pts": pts, "n": name, "c": c, "mw": mw, "D": float(d), "h": float(hub), "y": year,
+                        "t": tname, "oem": "" if not known else tname.split()[0], "ti": ti, "est": basis,
+                        "own": ts[0]["owner"], "pmw": ts[0]["project_mw"], "src": "gowt"})
+    return out
+
+
+def make_farm(fid: int, p: dict) -> dict:
+    """site.json farm from a prototype: local layout in metres, hull outline, installed MW."""
+    pts = p["pts"]
+    lon0, lat0 = sum(q[0] for q in pts) / len(pts), sum(q[1] for q in pts) / len(pts)
+    kx, ky = 111320 * cos(radians(lat0)), 110574
+    geom = MultiPoint(pts).convex_hull.buffer(300 / ky)
+    f = {k: v for k, v in p.items() if k != "pts" and v not in (None, "")}
+    f.update({"id": fid, "rg": REGION.get(p["c"], "Europe" if p.get("on") else "Other"),
+              "cap": round(p["mw"] * len(pts), 1), "inst": round(p["mw"] * len(pts), 1),
+              "a": round(geom.area * kx * ky / 1e6, 1), "ol": [flat(x, 3) for x in rings(geom, 0.003)],
+              "lon": round(lon0, 4), "lat": round(lat0, 4),
+              "xy": [round(v) for q in pts for v in ((q[0] - lon0) * kx, (q[1] - lat0) * ky)],
+              "o": [[round(v) for x, y in r for v in ((x - lon0) * kx, (y - lat0) * ky)] for r in rings(geom, 0.0002)]})
+    return f
+
+
+# rated MW and rotor for common turbine models, used when OSM tags give the model but not the size
+MODEL_SPECS = [  # (regex on "manufacturer model", MW, rotor m)
+    (r"E-?70", 2.3, 71), (r"E-?82", 2.3, 82), (r"E-?101", 3.05, 101), (r"E-?115", 3.0, 115), (r"E-?138", 4.2, 138),
+    (r"V-?80", 2.0, 80), (r"V-?90", 2.0, 90), (r"V-?100", 2.0, 100), (r"V-?112", 3.45, 112), (r"V-?117", 4.2, 117),
+    (r"V-?126", 3.45, 126), (r"V-?136", 4.2, 136), (r"V-?150", 4.2, 150), (r"V-?162", 6.2, 162),
+    (r"V-?164", 9.5, 164), (r"V-?174", 9.5, 174), (r"V-?236", 15.0, 236),
+    (r"N-?90", 2.5, 90), (r"N-?100", 2.5, 100), (r"N-?117", 3.0, 117), (r"N-?131", 3.6, 131),
+    (r"N-?149", 4.5, 149), (r"N-?163", 5.7, 163),
+    (r"SG ?5\.0-145", 5.0, 145), (r"SG ?6\.6-170", 6.6, 170), (r"SG ?8\.0-167", 8.0, 167),
+    (r"SG ?11\.0-200", 11.0, 200), (r"SG ?14", 14.0, 222), (r"SWT-?2\.3-93", 2.3, 93), (r"SWT-?3\.6-120", 3.6, 120),
+    (r"SWT-?4\.0-130", 4.0, 130), (r"SWT-?6\.0-154", 6.0, 154), (r"SWT-?7\.0-154", 7.0, 154),
+    (r"Haliade-?X", 13.0, 220), (r"Haliade ?150", 6.0, 150), (r"5\.3-158|Cypress", 5.3, 158),
+    (r"MySE ?5\.5", 5.5, 155), (r"MySE ?6\.45|MySE ?6\.5", 6.45, 180), (r"MySE ?11", 11.0, 230),
+    (r"MySE ?16", 16.0, 242), (r"GW ?6\.7|GW ?184", 6.7, 184), (r"H171", 6.45, 171),
+]
+
+
+def model_spec(name: str) -> tuple[float, float] | None:
+    import re
+    for pat, mw, d in MODEL_SPECS:
+        if re.search(pat, name or "", re.I):
+            return mw, float(d)
+    return None
+
+
+OSM_COUNTRY = {"People's Republic of China": "China", "United States of America": "United States",
+               "Republic of Korea": "South Korea", "Korea": "South Korea"}
+# fallback turbine for OSM farms without tags: farms not in the 2021 satellite data are recent
+OSM_DEFAULT_MW = {"China": 6.5, "Taiwan": 8.0, "Japan": 4.2, "South Korea": 5.5, "Vietnam": 4.2,
+                  "United States": 12.0, "Estonia": 3.0}
+
+
+def osm_farms(protos: list[dict], add_type) -> list[dict]:
+    """OpenStreetMap turbines (scripts/fetch_osm_world.py): offshore turbines outside Europe that the satellite
+    dataset lacks, and (demo) Estonia's onshore turbines. An offshore turbine within 400 m of a satellite turbine
+    is the same turbine; within 2 km of a satellite farm it joins that farm (built after 2021); the rest form new
+    farms (3 km single linkage, 2.5 km onshore), named after the nearest OSM wind power plant within 5 km."""
+    path = RAW / "osm" / "osm_wind.json"
+    if not path.exists():
+        return []
+    d = json.loads(path.read_text(encoding="utf-8"))
+    plants = [p for p in d["plants"] if p["tags"].get("name:en") or p["tags"].get("name")]
+    ref = [(q, k) for k, p in enumerate(protos) for q in p["pts"]]
+    rtree = STRtree([Point(q) for q, _ in ref]) if ref else None
+    new, joined, dup = collections.defaultdict(list), 0, 0
+    for t in d["turbines"]:
+        c = OSM_COUNTRY.get(t.get("country", ""), t.get("country", ""))
+        if c in EUROPE_IN_GLOBAL or not c or (t["set"] == "offshore" and c in ("Estonia",)):
+            continue
+        if t["set"] == "offshore" and rtree is not None:
+            pt = Point(t["lon"], t["lat"])
+            j = int(rtree.nearest(pt))
+            dkm = rtree.geometries[j].distance(pt) * 111 * max(0.5, cos(radians(t["lat"])))
+            if dkm < 0.4:
+                dup += 1
+                continue
+            if dkm < 2.0:
+                protos[ref[j][1]]["pts"].append((t["lon"], t["lat"]))
+                protos[ref[j][1]]["osm_added"] = protos[ref[j][1]].get("osm_added", 0) + 1
+                joined += 1
+                continue
+        new[(t["set"], c)].append({**t, "c": c})
+    out = []
+    for (kind, c), ts in sorted(new.items()):
+        onshore = kind == "estonia"
+        for g in clusters([(t["lon"], t["lat"]) for t in ts], km=2.5 if onshore else 3.0):
+            gt = [ts[i] for i in g]
+            pts = [(t["lon"], t["lat"]) for t in gt]
+            lon0, lat0 = sum(q[0] for q in pts) / len(pts), sum(q[1] for q in pts) / len(pts)
+            vals = lambda key: sorted(x for x in (num(t["tags"].get(key)) for t in gt) if x)
+            med = lambda v: v[len(v) // 2] if v else None
+            mw, d_, hub = med(vals("generator:output:electricity")), med(vals("rotor:diameter")), med(vals("height:hub"))
+            if mw and mw > 50:  # kW written without unit
+                mw /= 1000
+            models = collections.Counter(t["tags"].get("model") for t in gt if t["tags"].get("model"))
+            model = models.most_common(1)[0][0] if models else None
+            man = collections.Counter(t["tags"].get("manufacturer") for t in gt if t["tags"].get("manufacturer"))
+            spec = model_spec(f"{man.most_common(1)[0][0] if man else ''} {model or ''}") if model else None
+            tagged = bool(mw) or bool(spec)
+            mw = round(mw, 2) if mw else (spec[0] if spec else OSM_DEFAULT_MW.get(c, 5.0))
+            sp = 300 if onshore else 330
+            d_ = d_ if d_ and 40 <= d_ <= 260 else (spec[1] if spec else round((4 * mw * 1e6 / (pi * sp)) ** 0.5))
+            hub = hub if hub and 30 <= hub <= 200 else round(d_ / 2 + (40 if onshore else 25))
+            tname = (f"{man.most_common(1)[0][0] + ' ' if man else ''}{model}" if model
+                     else f"Unknown (~{mw:g} MW, ~{d_:.0f} m rotor)")
+            ti = add_type(tname, mw, float(d_), man.most_common(1)[0][0] if man else "unknown")
+            near = [p for p in plants if ((p["lon"] - lon0) * cos(radians(lat0))) ** 2 + (p["lat"] - lat0) ** 2
+                    < (5 / 111) ** 2]
+            near.sort(key=lambda p: ((p["lon"] - lon0) * cos(radians(lat0))) ** 2 + (p["lat"] - lat0) ** 2)
+            name = (near[0]["tags"].get("name:en") or near[0]["tags"]["name"]) if near else \
+                f"Unnamed wind farm {lat0:.2f}°N {lon0:.2f}°E"
+            years = sorted(t["tags"]["start_date"][:4] for t in gt if t["tags"].get("start_date", "")[:4].isdigit())
+            if not years and near and near[0]["tags"].get("start_date", "")[:4].isdigit():
+                years = [near[0]["tags"]["start_date"][:4]]
+            p = {"pts": pts, "n": name, "c": c, "mw": mw, "D": float(d_), "h": float(hub),
+                 "y": years[len(years) // 2] if years else "", "t": tname, "oem": man.most_common(1)[0][0] if man else "",
+                 "ti": ti, "src": "osm",
+                 "est": "OpenStreetMap tags" if tagged and model else
+                        ("OpenStreetMap rated power" if tagged else f"assumed for {c}"),
+                 "own": near[0]["tags"].get("operator", "") if near else ""}
+            if onshore:
+                p["on"] = 1
+            out.append(p)
+    names = collections.Counter(p["n"] for p in out)  # same plant name for several clusters: number them
+    seen = collections.Counter()
+    for p in out:
+        if names[p["n"]] > 1:
+            seen[p["n"]] += 1
+            p["n"] = f'{p["n"]} ({seen[p["n"]]})'
+    print(f"  OpenStreetMap: {dup} turbines already in the satellite data, {joined} joined those farms, "
+          f"{sum(len(p['pts']) for p in out)} in {len(out)} new farms "
+          f"({sum(1 for p in out if p.get('on'))} onshore demo farms)")
     return out
 
 
@@ -355,10 +495,12 @@ def main() -> None:
         return type_index[key]
     for fm in farms:
         fm["rg"] = "Europe"
-    gl = global_farms(add_type)
+    protos = global_farms(add_type)
+    print(f"+ {len(protos)} farms outside Europe from {sum(len(p['pts']) for p in protos)} turbines (global SAR dataset)")
+    osm = osm_farms(protos, add_type)
+    gl = [make_farm(800000 + i, p) for i, p in enumerate(protos)] + [make_farm(850000 + i, p) for i, p in enumerate(osm)]
     for fm in gl:
         fm["ur"] = types[fm["ti"]]["ur"]
-    print(f"+ {len(gl)} farms outside Europe from {sum(len(f['xy']) // 2 for f in gl)} turbines (global SAR dataset)")
     farms += gl
 
     # 4) remaining non-operational polygons are future zones

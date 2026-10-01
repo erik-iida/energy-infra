@@ -26,6 +26,7 @@ CELL_DEG = 0.1  # farms inside the same 0.1 deg cell share one forecast call (12
 # Physics
 Z0 = 0.0002  # offshore roughness length [m] for the log-law shear to hub height
 TI = 0.06    # ambient turbulence intensity offshore
+TI_ONSHORE = 0.10  # onshore demo farms (flat terrain, no forest/stability effects)
 NO_LAYOUT_EFFICIENCY = 0.90  # farms without turbine positions: free-stream power x this
 GENERIC_RATED_SPEED = 11.5   # rated wind speed for farms without rotor data [m/s]
 CUT_IN, CUT_OUT = 3.0, 25.0

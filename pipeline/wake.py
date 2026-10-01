@@ -17,6 +17,7 @@ from py_wake.wind_turbines.power_ct_functions import PowerCtTabular
 from . import config
 
 SITE = UniformSite(p_wd=[1], ti=config.TI)
+SITE_ONSHORE = UniformSite(p_wd=[1], ti=config.TI_ONSHORE)  # onshore demo farms (f["on"])
 
 
 # ---------------------------------------------------------------- curves
@@ -64,11 +65,12 @@ def farm_power(f: dict, types: list[dict], ws_hub: np.ndarray, wd: np.ndarray) -
     counts = {g: ti.count(g) for g in set(ti)}
     out = {"nowake": sum(c * type_power(types[g], ws_hub) for g, c in counts.items())}
     ws_in = np.maximum(ws_hub, 0.1)
+    site = SITE_ONSHORE if f.get("on") else SITE
     models = {
-        "jensen": Jensen_1983(SITE, wt, k=0.04),
-        "bastankhah": Bastankhah_PorteAgel_2014(SITE, wt, k=0.0324555),
-        "niayifar": Niayifar_PorteAgel_2016(SITE, wt),
-        "turbopark": Nygaard_2022(SITE, wt),
+        "jensen": Jensen_1983(site, wt, k=0.04),
+        "bastankhah": Bastankhah_PorteAgel_2014(site, wt, k=0.0324555),
+        "niayifar": Niayifar_PorteAgel_2016(site, wt),
+        "turbopark": Nygaard_2022(site, wt),
     }
     for key, wfm in models.items():
         sim = wfm(x, y, type=tloc, ws=ws_in, wd=wd % 360, time=True)

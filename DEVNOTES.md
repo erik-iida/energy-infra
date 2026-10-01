@@ -42,7 +42,7 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   or of load). With 10-15 series a colour per line can't be told apart, so lines are neutral grey, identified by
   a round flag + label at the line end (labels nudged apart), and the line under the cursor is highlighted;
   the tooltip ranks all series at that hour. Shared code: FLAGS / flagSVG / cmpRender in index.html.
-- Bathymetry underlay: a coarse EMODnet depth grid (1.25', 12W-32E, 34-66N) fetched by
+- Bathymetry underlay: a coarse EMODnet depth grid (1.25', 20W-32E, 34-66N) fetched by
   scripts/fetch_bathymetry.py (bathymetry workflow, runs when the script changes) into web/data/bathy.png
   (8-bit: metres up to 200, then 100 m steps, 255 = land) + bathy.json. The browser colours it with a sequential
   blue ramp over 0..slider depth (default 60 m, deeper = darkest), so the scale suits fixed-bottom depths. When

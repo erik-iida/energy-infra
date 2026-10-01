@@ -113,8 +113,8 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   ("not located at their real geographic location"). Not used.
 
 ## Legend toggles (Oct 2026)
-- Legend entries are buttons (data-k): off/on farms, uc/cs/pl zones, g750..g220/gdc/gbuild grid classes, depth.
-  Hidden keys live in HID and localStorage "wm-hide" (per browser). A selected farm stays visible. Zone entries
+- Legend entries are buttons (data-k): off/on farms, uc/cs/pl zones, g750..g220/gdc grid classes, depth.
+  Hidden keys live in HID and localStorage "wm-hide" (per browser). The legend folds (button #legt, "wm-legend"). A selected farm stays visible. Zone entries
   re-enable the "Show future zones" checkbox; depth mirrors the bathymetry checkbox.
 
 ## Basemaps (Oct 2026)

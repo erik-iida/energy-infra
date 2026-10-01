@@ -101,8 +101,8 @@ def fetch(name: str, p: dict) -> list[dict]:
                 continue
             els = r.json().get("elements", [])
             log(f"{name}: {url} -> {len(els)} elements")
-        except Exception as e:
-            log(f"{name}: {url} -> {e!r}")
+        except Exception as ex:
+            log(f"{name}: {url} -> {ex!r}")
             time.sleep(20)
     if els is None:  # fall back to the main OSM API (small bounding boxes only)
         els = osm_api(name, s, w, n, e)

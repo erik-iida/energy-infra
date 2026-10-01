@@ -149,6 +149,17 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   bidding zones (line chart + heatmap); System opens the selected country's detail, and clicking a country card
   selects that country everywhere.
 
+## Gas layer (Oct 2026)
+- scripts/fetch_gas.py (gas workflow, daily 09:17 UTC + on change): ENTSOG public API, no token. connectionpoints
+  (committed) + 8 days of daily Physical Flow per gas day (not committed) -> web/data/gas.json: points (IP,
+  import, LNG, production) with GWh/d series and direction, and per-country entries by origin.
+- ENTSOG positions are schematic (tpMapX/Y): cubic fit + IDW correction on ~54 known points (A dict),
+  leave-one-out median ~20 km. Shown as "position approximate".
+- Flow per point/day = max(entry, exit) over operator countries (operatorKey prefix); direction = exit country ->
+  entry country. Country supply = entries into that country's operators, by origin (includes transit).
+- Map: circles / diamonds (LNG) / squares (production), gas orange, sqrt-scaled; legend toggles gip/glng/gprod.
+  System tab: "Gas supply into the system" card for the selected country.
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

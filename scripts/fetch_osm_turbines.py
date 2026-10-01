@@ -83,6 +83,8 @@ def fetch(name: str, p: dict) -> list[dict]:
     rows = []
     for el in els:
         t = el.get("tags", {})
+        log(f"    osm node {el['id']} {el['lat']:.5f} {el['lon']:.5f} tags: " +
+            "; ".join(f"{k}={v}" for k, v in sorted(t.items()) if k not in ("power", "generator:source")))
         fb = p["fallback"]
         rows.append({
             "wind_farm": p["wind_farm"], "country": p["country"],

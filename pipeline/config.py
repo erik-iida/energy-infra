@@ -19,7 +19,7 @@ WINDY_KEY = os.environ.get("WINDY_KEY", "")
 WINDY_MODEL = os.environ.get("WM_WINDY_MODEL", "iconEu")  # run windy_test.py to see which models your key allows
 
 # Call budget. Your hard ceiling is 10 000 per day; the pipeline stops well before it.
-DAILY_CALL_CAP = int(os.environ.get("WM_DAILY_CALL_CAP", "2000"))
+DAILY_CALL_CAP = int(os.environ.get("WM_DAILY_CALL_CAP", "3000"))  # Open-Meteo free tier: 10 000/day
 REFRESH_HOURS = float(os.environ.get("WM_REFRESH_HOURS", "6"))  # refetch a forecast only when older than this
 CELL_DEG = 0.1  # farms inside the same 0.1 deg cell share one forecast call (128 farms -> ~115 cells)
 

@@ -284,14 +284,15 @@ def model_spec(name: str) -> tuple[float, float] | None:
     return None
 
 
-OSM_COUNTRY = {"People's Republic of China": "China", "United States of America": "United States",
+OSM_COUNTRY = {"Hong Kong": "China", "Macao": "China",  # Pearl River estuary farms snap to these at sea
+               "People's Republic of China": "China", "United States of America": "United States",
                "Republic of Korea": "South Korea", "Korea": "South Korea"}
 # fallback turbine for OSM farms without tags: farms not in the 2021 satellite data are recent
 OSM_DEFAULT_MW = {"China": 6.5, "Taiwan": 8.0, "Japan": 4.2, "South Korea": 5.5, "Vietnam": 4.2,
                   "United States": 12.0, "Estonia": 3.0}
 
 
-def osm_farms(protos: list[dict], add_type) -> list[dict]:
+def osm_farms(protos: list[dict], add_type, land=None) -> list[dict]:
     """OpenStreetMap turbines (scripts/fetch_osm_world.py): offshore turbines outside Europe that the satellite
     dataset lacks, and (demo) Estonia's onshore turbines. An offshore turbine within 400 m of a satellite turbine
     is the same turbine; within 2 km of a satellite farm it joins that farm (built after 2021); the rest form new
@@ -303,9 +304,16 @@ def osm_farms(protos: list[dict], add_type) -> list[dict]:
     plants = [p for p in d["plants"] if p["tags"].get("name:en") or p["tags"].get("name")]
     ref = [(q, k) for k, p in enumerate(protos) for q in p["pts"]]
     rtree = STRtree([Point(q) for q, _ in ref]) if ref else None
-    new, joined, dup = collections.defaultdict(list), 0, 0
+    from shapely.prepared import prep
+    land_p = prep(land) if land is not None else None
+    seaish = lambda t: t["tags"].get("offshore") == "yes" or any(k.startswith("seamark") for k in t["tags"])
+    new, joined, dup, coastal = collections.defaultdict(list), 0, 0, 0
     for t in d["turbines"]:
         c = OSM_COUNTRY.get(t.get("country", ""), t.get("country", ""))
+        # untagged turbines inside the Natural Earth coastline are most likely coastal onshore turbines
+        if t["set"] == "offshore" and land_p is not None and not seaish(t) and land_p.contains(Point(t["lon"], t["lat"])):
+            coastal += 1
+            continue
         if c in EUROPE_IN_GLOBAL or not c or (t["set"] == "offshore" and c in ("Estonia",)):
             continue
         if t["set"] == "offshore" and rtree is not None:
@@ -368,7 +376,7 @@ def osm_farms(protos: list[dict], add_type) -> list[dict]:
         if names[p["n"]] > 1:
             seen[p["n"]] += 1
             p["n"] = f'{p["n"]} ({seen[p["n"]]})'
-    print(f"  OpenStreetMap: {dup} turbines already in the satellite data, {joined} joined those farms, "
+    print(f"  OpenStreetMap: {coastal} untagged coastal turbines dropped, {dup} turbines already in the satellite data, {joined} joined those farms, "
           f"{sum(len(p['pts']) for p in out)} in {len(out)} new farms "
           f"({sum(1 for p in out if p.get('on'))} onshore demo farms)")
     return out
@@ -497,7 +505,12 @@ def main() -> None:
         fm["rg"] = "Europe"
     protos = global_farms(add_type)
     print(f"+ {len(protos)} farms outside Europe from {sum(len(p['pts']) for p in protos)} turbines (global SAR dataset)")
-    osm = osm_farms(protos, add_type)
+    land_path = RAW / "ne_10m_land.geojson"
+    if not land_path.exists():
+        print("downloading Natural Earth land ...")
+        urllib.request.urlretrieve(LAND_URL, land_path)
+    land = unary_union([shape(f["geometry"]) for f in json.loads(land_path.read_text(encoding="utf-8"))["features"]])
+    osm = osm_farms(protos, add_type, land)
     gl = [make_farm(800000 + i, p) for i, p in enumerate(protos)] + [make_farm(850000 + i, p) for i, p in enumerate(osm)]
     for fm in gl:
         fm["ur"] = types[fm["ti"]]["ur"]
@@ -517,11 +530,6 @@ def main() -> None:
     farms.sort(key=lambda f: -f["cap"])
     zones.sort(key=lambda z: -z["a"])
 
-    land_path = RAW / "ne_10m_land.geojson"
-    if not land_path.exists():
-        print("downloading Natural Earth land ...")
-        urllib.request.urlretrieve(LAND_URL, land_path)
-    land = unary_union([shape(f["geometry"]) for f in json.loads(land_path.read_text(encoding="utf-8"))["features"]])
     # detailed land around the farms (Europe box + a box around every other farm), coarse land elsewhere.
     # The page strokes coastlines from these polygons but skips edges on the box borders ("dbox").
     eu_box = box(-14, 34, 34, 72)

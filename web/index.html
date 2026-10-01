@@ -37,7 +37,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 #ftab td{padding:4px 6px;text-align:right;white-space:nowrap}#ftab td:first-child,#ftab td:nth-child(2){text-align:left}#ftab td:first-child{white-space:normal}#ftab tbody tr{cursor:pointer}#ftab tbody tr:hover{background:var(--bg)}
 #ftab svg{width:110px;height:22px;display:block;margin-left:auto}.tw{overflow:auto;max-height:520px}
 .feednote{font-size:12px;color:var(--mut);border-left:3px solid var(--acc);padding-left:8px}
-#dtip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
+#dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
 .warn{color:var(--uc)}
@@ -46,6 +46,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}td{padding:3px 0;border
 #ftab td:first-child{min-width:170px}#ftab svg{width:104px!important}
 #mkt{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
 .card svg.mk,.card svg.mh{height:82px}
+:root{--bathy-a:.7}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bathy-a:.42}}:root[data-theme="dark"]{--bathy-a:.42}
 :root{--prc:#6b4fbb}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--prc:#a894f0}}:root[data-theme="dark"]{--prc:#a894f0}
 .ln.pr{stroke:var(--prc)}.ln.act{stroke:var(--ink);opacity:.75}
 #mtab{width:100%;font-size:13px}#mtab th{text-align:right;font-weight:600;color:var(--mut);padding:5px 6px;border-bottom:1px solid var(--line);white-space:nowrap}#mtab td{padding:4px 6px;text-align:right;white-space:nowrap}#mtab th:nth-child(-n+2),#mtab td:nth-child(-n+2){text-align:left}
@@ -68,11 +69,13 @@ aside>*{flex-shrink:0}
 .flows{display:flex;flex-direction:column;gap:3px;margin-top:6px}.fr{display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;font-size:12px}.fl{color:var(--ink)}.fv{text-align:right;color:var(--mut)}
 .fb{position:relative;height:12px;background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}.fb b{position:absolute;top:1px;bottom:1px;border-radius:2px}
 svg.sx{display:block;width:100%;overflow:visible}
+.seg{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{width:auto;border:0;border-radius:0;padding:3px 10px;font-size:12px;background:var(--panel);color:var(--mut)}.seg button.on{background:var(--acc);color:var(--panel)}.seg button:disabled{opacity:.45;cursor:default}
+svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to Europe" aria-label="Back to Europe">⌂</button></div><div id="tip"></div><div id="note"></div>
-<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span></div></div>
+<div id="leg"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span><i></i>Operating farm</span><span><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</span><span><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</span><span><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</span><span id="bleg">Depth: <img alt="EMODnet depth legend" style="max-width:150px;max-height:90px;vertical-align:top" src="https://ows.emodnet-bathymetry.eu/wms?service=WMS&request=GetLegendGraphic&version=1.1.1&format=image/png&layer=emodnet:mean"></span></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
@@ -88,6 +91,7 @@ svg.sx{display:block;width:100%;overflow:visible}
 <label>Wake field model (in browser)</label><select id="M"><option value="j">Jensen (NOJ)</option><option value="g">Bastankhah &amp; Porté-Agel 2014</option><option value="n">No wake</option></select>
 <label style="margin-top:8px">Wake decay k <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change k to explore.</div></div>
 <label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="Z" checked> Show future zones</label>
+<label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="BY" checked> Bathymetry (EMODnet), contours when zoomed in</label>
 <div id="cmp"></div>
 <div id="list"></div>
 <div class="mut" id="foot"></div>
@@ -147,6 +151,7 @@ const NP=24,NF=24,NT=NP+NF,N0=NP-1; // index N0 = now
 let HRS,MODELS,SRC;
 if(FEED){HRS=[...FEED.hours,...FEED.fc_hours].map(s=>new Date(s.replace("Z",":00Z")));MODELS=FEED.models;SRC=FEED.source}
 else{const t0=new Date();t0.setMinutes(0,0,0);HRS=[...Array(NT)].map((_,h)=>new Date(t0.getTime()+(h-N0)*3600e3));MODELS={jensen:"Jensen (NOJ)",bastankhah:"Bastankhah & Porté-Agel 2014",nowake:"No wake"};SRC="browser"}
+if(FEED){const keep=F.filter(f=>FEED.farms[String(f.id)]);if(keep.length<F.length){console.info("farms not yet in feed (shown after next hourly run):",F.filter(f=>!FEED.farms[String(f.id)]).map(f=>f.n));F.splice(0,F.length,...keep)}}
 F.forEach((f,i)=>{const q=FEED&&FEED.farms[String(f.id)];
  if(q){f.U48=[...q.U,...(q.fU||Array(NF).fill(null))];f.D48=[...q.dir,...(q.fdir||Array(NF).fill(null))];f.S={};for(const m in MODELS)f.S[m]=[...q.P[m],...(q.fP?q.fP[m]:Array(NF).fill(null))];return}
  let s=Math.sin((i+1)*12.9898)*43758.5453;s-=Math.floor(s);f.U48=[];f.D48=[];
@@ -212,7 +217,17 @@ function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.m
  S.pts.push([x,y,Ro,i])}
 function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
  cx.fillStyle=css("--ink");cx.font="12px sans-serif";cx.fillText(km+" km",W-16-w,H-16);cx.fillRect(W-16-w,H-12,w,2)}
-function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];
+// Bathymetry underlay: EMODnet Bathymetry WMS (EPSG:4326 maps linearly onto this projection), requested for the
+// visible area after panning/zooming settles; depth contours added when zoomed in.
+const BATHY_URL="https://ows.emodnet-bathymetry.eu/wms";let bathyT=0;S.bathy=null;S.bathyKey="";
+function bathyWant(W,H){if(!$("BY").checked)return;const[l0,a1]=Pinv(0,0),[l1,a0]=Pinv(W,H),ct=V.s>150;
+ const key=[l0,a0,l1,a1].map(v=>v.toFixed(3)).join(",")+ct;if(S.bathyKey===key)return;S.bathyKey=key;clearTimeout(bathyT);
+ bathyT=setTimeout(()=>{const mx=(l1-l0)*.15,my=(a1-a0)*.15,b=[l0-mx,Math.max(-85,a0-my),l1+mx,Math.min(85,a1+my)],sc=Math.min(1,2048/(1.3*Math.max(W,H)));
+  const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b};repaint()};
+  img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
+function bathyDraw(){const B=S.bathy;if(!B||!$("BY").checked)return;const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);
+ cx.globalAlpha=+css("--bathy-a")||.75;cx.imageSmoothingEnabled=true;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0);cx.globalAlpha=1}
+function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];bathyWant(W,H);bathyDraw();
  const pth=fl=>{const p=new Path2D();for(const r of fl){for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);i?p.lineTo(x,y):p.moveTo(x,y)}p.closePath()}return p};
  cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(DATA.coast);cx.fill(land);cx.stroke(land);
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
@@ -300,7 +315,59 @@ function dash(){series();const fs=F.filter(f=>!S.c||f.c===S.c),A=agg(fs),lay=fs.
 function tab(t){S.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
  $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
-function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;d.style.left=Math.min(e.clientX+12,innerWidth-260)+"px";d.style.top=e.clientY+14+"px"}
+function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
+
+/* ---------- shared: round flags and comparison line charts ---------- */
+const FLAGS={
+ de:'<rect width="30" height="7" fill="#000"/><rect y="6.6" width="30" height="7" fill="#DD0000"/><rect y="13.3" width="30" height="6.7" fill="#FFCE00"/>',
+ fr:'<rect width="10" height="20" fill="#0055A4"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#EF4135"/>',
+ nl:'<rect width="30" height="7" fill="#AE1C28"/><rect y="6.6" width="30" height="7" fill="#fff"/><rect y="13.3" width="30" height="6.7" fill="#21468B"/>',
+ be:'<rect width="10" height="20" fill="#000"/><rect x="10" width="10" height="20" fill="#FDDA24"/><rect x="20" width="10" height="20" fill="#EF3340"/>',
+ dk:'<rect width="30" height="20" fill="#C8102E"/><rect x="11" width="3.5" height="20" fill="#fff"/><rect y="8.25" width="30" height="3.5" fill="#fff"/>',
+ no:'<rect width="30" height="20" fill="#BA0C2F"/><rect x="10" width="5" height="20" fill="#fff"/><rect y="7.5" width="30" height="5" fill="#fff"/><rect x="11.25" width="2.5" height="20" fill="#00205B"/><rect y="8.75" width="30" height="2.5" fill="#00205B"/>',
+ se:'<rect width="30" height="20" fill="#006AA7"/><rect x="11" width="3.5" height="20" fill="#FECC02"/><rect y="8.25" width="30" height="3.5" fill="#FECC02"/>',
+ fi:'<rect width="30" height="20" fill="#fff"/><rect x="11" width="4" height="20" fill="#002F6C"/><rect y="8" width="30" height="4" fill="#002F6C"/>',
+ pl:'<rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#DC143C"/>',
+ at:'<rect width="30" height="7" fill="#C8102E"/><rect y="6.6" width="30" height="7" fill="#fff"/><rect y="13.3" width="30" height="6.7" fill="#C8102E"/>',
+ ch:'<rect width="30" height="20" fill="#DA291C"/><rect x="13.5" y="5" width="3" height="10" fill="#fff"/><rect x="10" y="8.5" width="10" height="3" fill="#fff"/>',
+ ie:'<rect width="10" height="20" fill="#169B62"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#FF883E"/>',
+ es:'<rect width="30" height="20" fill="#AA151B"/><rect y="5" width="30" height="10" fill="#F1BF00"/>',
+ pt:'<rect width="12" height="20" fill="#046A38"/><rect x="12" width="18" height="20" fill="#DA291C"/>',
+ gb:'<rect width="30" height="20" fill="#012169"/><path d="M0,0 30,20 M30,0 0,20" stroke="#fff" stroke-width="4"/><path d="M0,0 30,20 M30,0 0,20" stroke="#C8102E" stroke-width="1.5"/><rect x="12.5" width="5" height="20" fill="#fff"/><rect y="7.5" width="30" height="5" fill="#fff"/><rect x="13.5" width="3" height="20" fill="#C8102E"/><rect y="8.5" width="30" height="3" fill="#C8102E"/>'};
+const ZONEFLAG={"DE-LU":"de","FR":"fr","NL":"nl","BE":"be","DK1":"dk","DK2":"dk","NO1":"no","NO2":"no","SE3":"se","SE4":"se","FI":"fi","PL":"pl","AT":"at","CH":"ch","IE(SEM)":"ie","ES":"es","PT":"pt"};
+let FLAGN=0;
+function flagSVG(code,x,y,r){const id="fg"+(FLAGN++),k=r/10;
+ return"<g><clipPath id='"+id+"'><circle cx='"+x+"' cy='"+y+"' r='"+r+"'/></clipPath><g clip-path='url(#"+id+")'><g transform='translate("+(x-15*k)+","+(y-10*k)+") scale("+k+")'>"+(FLAGS[code]||"<rect width='30' height='20' fill='#999'/>")+"</g></g><circle cx='"+x+"' cy='"+y+"' r='"+r+"' fill='none' stroke='var(--line)' stroke-width='1'/></g>"}
+const flagHTML=(code,r=8)=>"<svg width='"+(2*r+2)+"' height='"+(2*r+2)+"' style='vertical-align:middle'>"+flagSVG(code,r+1,r+1,r)+"</svg>";
+const CMP={};
+function niceRange(lo,hi){if(!(hi>lo)){hi=lo+1}const span=hi-lo,st=Math.pow(10,Math.floor(Math.log10(span/4))),m=[1,2,2.5,5,10].find(q=>span/(q*st)<=5)*st;return[Math.floor(lo/m)*m,Math.ceil(hi/m)*m,m]}
+// spec: {series:[{id,label,flag,v:[...]}], a, b (index range), unit, fmt(v), tipT(k)}
+function cmpRender(id){const C=CMP[id],sv=document.getElementById(id);if(!sv)return;const W=sv.clientWidth||600,H=C.H||260,L=46,R=C.right||70,T=10,B=24;
+ sv.setAttribute("viewBox","0 0 "+W+" "+H);sv.style.height=H+"px";
+ let lo=1e9,hi=-1e9;C.series.forEach(s=>{for(let k=C.a;k<=C.b;k++){const v=s.v[k];if(v!=null){lo=Math.min(lo,v);hi=Math.max(hi,v)}}});
+ if(lo>hi){sv.innerHTML="<text class='tl' x='"+W/2+"' y='"+H/2+"' text-anchor='middle'>No data for this period yet</text>";return}
+ if(C.zero&&lo>0)lo=0;const[y0,y1,step]=niceRange(lo,hi);C.y0=y0;C.y1=y1;
+ const n=C.b-C.a,x=k=>L+(W-L-R)*(k-C.a)/Math.max(1,n),y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));C.x=x;C.y=y;C.L=L;C.R=R;C.W=W;
+ let s="";for(let g=y0;g<=y1+1e-9;g+=step){s+="<line class='ax' x1='"+L+"' x2='"+(W-R)+"' y1='"+y(g)+"' y2='"+y(g)+"' "+(Math.abs(g)<1e-9?"":"stroke-dasharray='2 3'")+"/><text class='tl' x='"+(L-6)+"' y='"+(y(g)+3)+"' text-anchor='end'>"+C.fmt(g)+"</text>"}
+ for(let k=C.a;k<=C.b;k+=6)s+="<text class='tl' x='"+x(k)+"' y='"+(H-6)+"' text-anchor='middle'>"+hl(k)+"</text>";
+ const ord=C.series.map((se,i)=>i).sort((p,q)=>(p===C.hl)-(q===C.hl));
+ ord.forEach(i=>{const se=C.series[i],on=i===C.hl;s+="<path d='"+pathOf(se.v,x,y,C.a,C.b)+"' fill='none' stroke='"+(on?"var(--acc)":"var(--mut)")+"' stroke-width='"+(on?2.6:1.4)+"' stroke-opacity='"+(on||C.hl==null?.9:.35)+"' stroke-linejoin='round'/>"});
+ // flags at line ends, nudged apart vertically
+ const ends=C.series.map((se,i)=>{let k=C.b;while(k>C.a&&se.v[k]==null)k--;return se.v[k]==null?null:{i,k,yy:y(se.v[k])}}).filter(Boolean).sort((p,q)=>p.yy-q.yy);
+ for(let j=1;j<ends.length;j++)ends[j].yy=Math.max(ends[j].yy,ends[j-1].yy+15);const over=ends.length?ends[ends.length-1].yy-(H-B):0;if(over>0)ends.forEach(e=>e.yy-=over);
+ ends.forEach(e=>{const se=C.series[e.i],xe=x(e.k)+10;s+="<line x1='"+x(e.k)+"' x2='"+(xe-7)+"' y1='"+y(se.v[e.k])+"' y2='"+e.yy+"' stroke='var(--line)'/>"+flagSVG(se.flag,xe,e.yy,6.5)+"<text x='"+(xe+9)+"' y='"+(e.yy+4)+"' font-size='11' fill='"+(e.i===C.hl?"var(--ink)":"var(--mut)")+"' font-weight='"+(e.i===C.hl?600:400)+"'>"+se.label+"</text>"});
+ if(C.hk!=null)s+="<line class='xh' x1='"+x(C.hk)+"' x2='"+x(C.hk)+"' y1='"+T+"' y2='"+(H-B)+"'/>";
+ sv.innerHTML=s}
+function cmpHover(e,sv){const C=CMP[sv.id];if(!C||!C.x)return;const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*C.W/r.width,py=(e.clientY-r.top)*C.W/r.width;
+ const k=Math.max(C.a,Math.min(C.b,Math.round(C.a+(px-C.L)/(C.W-C.L-C.R)*(C.b-C.a))));let best=null,bd=1e9;
+ C.series.forEach((se,i)=>{const v=se.v[k];if(v!=null){const d=Math.abs(C.y(v)-py);if(d<bd){bd=d;best=i}}});
+ if(px>C.W-C.R){const lab=[...sv.querySelectorAll("text")].find(t=>{const b=t.getBBox();return py>=b.y-4&&py<=b.y+b.height+4&&px>=b.x-20});if(lab){const i=C.series.findIndex(se=>se.label===lab.textContent);if(i>=0)best=i}}
+ if(best!==C.hl||k!==C.hk){C.hl=best;C.hk=k;cmpRender(sv.id)}
+ const rows=C.series.map(se=>[se.label,se.v[k]]).filter(q=>q[1]!=null).sort((p,q)=>q[1]-p[1]);
+ dtip(e,dl(k)+"\n"+rows.map(([l,v])=>l+"  "+C.fmt(v)).join("\n"))}
+function cmpLeave(sv){const C=CMP[sv.id];if(C){C.hl=null;C.hk=null;cmpRender(sv.id)}$("dtip").style.display="none"}
+document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv)cmpHover(e,sv)});
+document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv&&!sv.contains(e.relatedTarget))cmpLeave(sv)});
 
 /* ---------- Market tab (Energy-Charts prices + actual generation) ---------- */
 const MK=FEED&&FEED.market,ZN={"DK1":"Denmark West (DK1)","DK2":"Denmark East (DK2)","DE-LU":"Germany–Luxembourg","NL":"Netherlands","BE":"Belgium","FR":"France","SE4":"Sweden South (SE4)","IE(SEM)":"Ireland (SEM)","PT":"Portugal","ES":"Spain"};
@@ -329,6 +396,8 @@ function market(){series();const el=$("mkt");TIPS=[];
  const zinst=z=>F.filter(f=>f.zone===z).reduce((a,f)=>a+f.inst,0),zones=Object.keys(MK.prices).filter(z=>F.some(f=>f.zone===z&&(!S.c||f.c===S.c))).sort((a,b)=>zinst(b)-zinst(a));
  let lo=0,hi=50;zones.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
  let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because the price licence is private use only: "+MK.restricted_zones.join(", ")+". ":"")+"UK has no day-ahead price in this source yet.</div>";
+ const pz=Object.keys(MK.prices).filter(z=>ZONEFLAG[z]),tAv=pz.some(z=>MK.prices[z].slice(N0+1).some(v=>v!=null));S.prng=S.prng||"past";if(S.prng==="next"&&!tAv)S.prng="past";
+ h+="<div class='card' style='cursor:default'><h3>Day-ahead prices by zone<span class='seg'><button data-pr='past' class='"+(S.prng==="past"?"on":"")+"'>Last 24 h</button><button data-pr='next' "+(tAv?"":"disabled title='Published around midday'")+" class='"+(S.prng==="next"?"on":"")+"'>Tomorrow</button></span></h3><svg class='cmp' id='cmpPrice'></svg><div class='mut' style='font-size:12px'>Hourly averages of the 15-minute day-ahead auction, €/MWh. Hover to rank all zones for one hour; the line under the cursor is highlighted.</div></div>";
  h+="<h2>Offshore capture price by bidding zone <span class='mut' style='font:13px system-ui'>· last 24 h modelled, next 24 h once tomorrow's auction is published (dashed); same €/MWh scale</span></h2><div class='grid'>";
  zones.forEach(z=>{const fs=F.filter(f=>f.zone===z),pr=MK.prices[z],L=capStats(fs,pr,0,N0),N=capStats(fs,pr,N0+1,NT-1),rate=L.cap!=null&&L.base>0?L.cap/L.base:null;
   const i=TIPS.push(k=>(ZN[z]||z)+" · "+dl(k)+(k>N0?" (forecast)":"")+" · "+pm(pr[k])+" · offshore "+fmt(modSum(fs,k)))-1;
@@ -343,6 +412,7 @@ function market(){series();const el=$("mkt");TIPS=[];
   h+="</div>"}
  h+="<h2>History: offshore capture rate by month <span class='mut' style='font:13px system-ui'>· from actual national offshore output and day-ahead prices, not the model</span></h2><div id='mhist' class='grid'></div><div class='tw'><table id='mtab'></table></div>";
  el.innerHTML=h;
+ CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:290};cmpRender("cmpPrice");
  el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
   if(sv.dataset.z)sv.innerHTML=tsSVG(W,Hh,NT,[{v:MK.prices[sv.dataset.z],cls:"pr"}],+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1));
   else{const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
@@ -399,6 +469,8 @@ function system(){const el=$("sys");STIPS=[];
  let h="<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. Public net generation, last 24 h, hourly averages. Flows: positive = import.</div>";
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
  h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
+ const offc=all.filter(d=>SYS[d.c].series.wind_offshore&&SYS[d.c].series.wind_offshore.some(v=>v>0));S.offm=S.offm||"gen";
+ if(offc.length)h+="<div class='card' style='cursor:default'><h3>Offshore wind share<span class='seg'><button data-om='gen' class='"+(S.offm==="gen"?"on":"")+"'>of generation</button><button data-om='load' class='"+(S.offm==="load"?"on":"")+"'>of consumption</button></span></h3><svg class='cmp' id='cmpOff'></svg><div class='mut' style='font-size:12px'>Offshore wind output as a share of national public net generation, or of load (consumption), last 24 h, hourly.</div></div>";
  if(D){const lh=D.last,g=D.gen[lh]||1;
   h+="<h2>"+(SYSN[D.c]||D.c)+" <span class='mut' style='font:13px system-ui'>· last 24 h</span></h2>";
   const i1=STIPS.push(k=>(SYSN[D.c]||D.c)+" · "+dl(k)+" · generation "+fmt(D.gen[k])+(D.load?" · load "+v1(D.load[k]):"")+" · "+MIXC.filter(([c])=>D.mix[c][k]>0).map(([c,n])=>n+" "+fmt(D.mix[c][k])).join(", "))-1;
@@ -414,12 +486,14 @@ function system(){const el=$("sys");STIPS=[];
    h+="<div class='card'><h3>Cross-border physical flows<span>"+(D.net[lh]>=0?"net import ":"net export ")+fmt(Math.abs(D.net[lh]))+"</span></h3><div class='flows'>"+now.map(([k,v])=>"<div class='fr'><span class='fl'>"+(D.fn[k]||k)+"</span><span class='fb'><b style='"+(v>=0?"left:50%;width:"+(50*v/mxf)+"%;background:var(--imp)":"right:50%;width:"+(50*-v/mxf)+"%;background:var(--exp)")+"'></b></span><span class='fv'>"+(v>0?"+":"")+fmt(v).replace(" MW","")+" MW</span></div>").join("")+"</div><div class='mut' style='font-size:12px;margin:6px 0 2px'><span style='color:var(--imp)'>■</span> import · <span style='color:var(--exp)'>■</span> export · at "+hl(lh)+". Net import, last 24 h:</div><svg class='sx' data-t='"+i3+"' data-n='"+NP+"' data-k='net'></svg></div>"}
   h+="</div>"}
  el.innerHTML=h;
+ if(offc.length){CMP.cmpOff={series:offc.map(d=>{const w=SYS[d.c].series.wind_offshore;return{id:d.c,label:SYSN[d.c]||d.c,flag:d.c,v:w.map((v,hh)=>{const den=S.offm==="gen"?d.gen[hh]:(d.load&&d.load[hh]);return v==null||!den?null:100*v/den})}}),a:0,b:Math.max(...offc.map(d=>d.last)),fmt:v=>Math.round(v)+"%",zero:true,H:260,right:110};cmpRender("cmpOff")}
  el.querySelectorAll("svg.sx").forEach(sv=>{const W=sv.clientWidth||400,k=sv.dataset.k,Hh=k==="mix"?180:70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+(k==="mix"?0:12)));sv.style.height=(Hh+(k==="mix"?0:12))+"px";
   if(k==="mix")sv.innerHTML=stackSVG(D,W,Hh);
   else if(k==="price"){const zs=D.zones.filter(z=>MK.prices[z]);sv.innerHTML=tsSVG(W,Hh,NT,zs.map((z,j)=>({v:MK.prices[z],cls:j?"act":"pr"})),+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1))}
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
-$("sys").onclick=e=>{const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;system()}};
+$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;system()}};
+$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;market()}});
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 
@@ -427,7 +501,7 @@ $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 $("C").innerHTML="<option value=''>Europe</option>"+COUNTRIES.map(c=>"<option>"+c+"</option>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
 $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):go(S.c,null)};
-["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;
+["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=draw;$("LV").onchange=draw;$("BY").onchange=()=>{S.bathyKey="";$("bleg").style.display=$("BY").checked?"block":"none";draw()};
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
  const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);
@@ -465,7 +539,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
  dtip(e,f.n+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fmt(f.P[h])+(f.P[h]==null?"":" · CF "+(100*f.P[h]/f.inst).toFixed(0)+"%")+(f.U48[h]!=null?" · "+f.U48[h].toFixed(1)+" m/s from "+f.D48[h]+"°":""))};
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
-$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Wake models: PyWake (DTU).";
+$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
 addEventListener("resize",draw);size();Object.assign(V,fit(EU));draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;

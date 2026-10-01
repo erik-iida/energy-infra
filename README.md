@@ -166,6 +166,7 @@ in it.
 | Weather forecasts | [Open-Meteo](https://open-meteo.com/) (ECMWF IFS and other models) | CC BY 4.0, free for non-commercial use |
 | Turbine positions, types and power/Ct curves | "Open European offshore wind turbine database" (version 2026-01-27), Fischereit, Vollmer & Hansen, [doi:10.5281/zenodo.17311571](https://doi.org/10.5281/zenodo.17311571). © Contributors to the EuroWindWakes European Offshore Dataset; includes data from © OpenStreetMap contributors and EMODnet | [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/) |
 | Farm and zone outlines | Compiled by Erik Iida; geometry partly based on [EMODnet Human Activities](https://emodnet.ec.europa.eu/en/human-activities) | Compilation: all rights reserved. EMODnet data: generally CC BY 4.0 |
+| Bathymetry underlay (map) | [EMODnet Bathymetry](https://emodnet.ec.europa.eu/en/bathymetry) Consortium, EMODnet Digital Bathymetry (DTM), via WMS | CC BY 4.0 |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |

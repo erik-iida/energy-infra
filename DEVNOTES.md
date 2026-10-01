@@ -38,6 +38,15 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - System tab (SYSTEM_COUNTRIES in market.py): mix in 8 groups with validated colour order (nuclear magenta, coal
   violet, gas orange, hydro aqua, biomass & other red, wind offshore blue, wind onshore green, solar yellow),
   load line, prices, flows (import blue / export red).
+- Comparison charts (Market: day-ahead price per zone, last 24 h / tomorrow; System: offshore share of generation
+  or of load). With 10-15 series a colour per line can't be told apart, so lines are neutral grey, identified by
+  a round flag + label at the line end (labels nudged apart), and the line under the cursor is highlighted;
+  the tooltip ranks all series at that hour. Shared code: FLAGS / flagSVG / cmpRender in index.html.
+- Bathymetry underlay: EMODnet Bathymetry WMS (ows.emodnet-bathymetry.eu, layer emodnet:mean, plus
+  emodnet:contours when zoomed in), requested by the browser for the visible bbox (EPSG:4326, debounced 350 ms)
+  and drawn under the land. Plate carrée maps linearly to the map projection. Toggle in the sidebar. CC BY 4.0.
+- Farms in site.json but not yet in feed.json (between a site update and the next hourly run) are hidden
+  instead of breaking the page.
 
 ## Decisions so far
 - Windy dropped: free key returns shuffled test data (500 calls/day), Professional is €990/yr and has no ECMWF.
@@ -62,7 +71,7 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   Reposaari). All are labelled SWT-4.0-130 4 MW; one is probably the 2010 ~2.3 MW pilot (not identifiable).
 - Direction-uncertainty averaging (±5°) for aligned rows (Horns Rev I at 270° gives ~55–70 % loss vs ~40 % measured).
 - Farm-to-farm (cluster) wakes: run neighbouring farms together in PyWake.
-- Inter-array cables, bathymetry layer.
+- Inter-array cables.
 - Validation per farm: Elexon (UK, per BM unit) and ENTSO-E per unit; country-level check vs Energy-Charts is in the Market tab.
 - Product thinking: capture-price discount and wake-cost analytics per farm/zone are the most commercial part so far.
 - Price data and cross-border flows (later phase).

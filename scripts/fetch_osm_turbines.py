@@ -59,15 +59,36 @@ def num(v: str | None) -> float | None:
     return x
 
 
+def osm_api(name: str, s: float, w: float, n: float, e: float) -> list[dict] | None:
+    import xml.etree.ElementTree as ET
+
+    url = f"https://api.openstreetmap.org/api/0.6/map?bbox={w},{s},{e},{n}"
+    try:
+        r = requests.get(url, timeout=120, headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
+        if r.status_code != 200:
+            log(f"{name}: OSM API -> HTTP {r.status_code}: {r.text[:120]!r}")
+            return None
+        els = []
+        for nd in ET.fromstring(r.content).iter("node"):
+            tags = {t.get("k"): t.get("v") for t in nd.iter("tag")}
+            if tags.get("generator:source") == "wind":
+                els.append({"id": int(nd.get("id")), "lat": float(nd.get("lat")), "lon": float(nd.get("lon")), "tags": tags})
+        log(f"{name}: OSM API -> {len(els)} wind generators")
+        return els
+    except Exception as ex:
+        log(f"{name}: OSM API -> {ex!r}")
+        return None
+
+
 def fetch(name: str, p: dict) -> list[dict]:
     s, w, n, e = p["bbox"]
     q = f'[out:json][timeout:60];node["generator:source"="wind"]({s},{w},{n},{e});out;'
     els = None
-    for url in OVERPASS * 2:  # public Overpass servers are often busy: two rounds, pause between tries
+    for url in OVERPASS:  # public Overpass servers are often busy; the OSM API is the fallback
         if els is not None:
             break
         try:
-            r = requests.post(url, data={"data": q}, timeout=180,
+            r = requests.post(url, data={"data": q}, timeout=60,
                               headers={"User-Agent": "offshore-wake-monitor (personal, non-commercial)"})
             if r.status_code != 200:
                 log(f"{name}: {url} -> HTTP {r.status_code}: {r.text[:120]!r}")
@@ -78,6 +99,8 @@ def fetch(name: str, p: dict) -> list[dict]:
         except Exception as e:
             log(f"{name}: {url} -> {e!r}")
             time.sleep(20)
+    if els is None:  # fall back to the main OSM API (small bounding boxes only)
+        els = osm_api(name, s, w, n, e)
     if els is None:
         return []
     rows = []

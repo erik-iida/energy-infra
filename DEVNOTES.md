@@ -29,6 +29,8 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - No GB price in Energy-Charts → UK farms lack market numbers (Elexon/N2EX would be the source).
 
 ## Web page
+- Wake fields are drawn on a wind-aligned grid (D/10 across, D/3 along), transparent below 0.8 % deficit,
+  one sequential ramp 0-30 % with a legend.
 - Map is one pan/zoom canvas (drag, wheel, pinch, double-click, +/− buttons). Projection: equirectangular around
   the view centre. Level of detail by the turbine layout's on-screen radius: < 30 px ring glyph (outer ring =
   capacity, filled radius = capacity factor), ≥ 30 px turbines, ≥ 90 px wake heatmap (max 4 farms, cached per
@@ -54,6 +56,10 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).
   scripts/fetch_osm_turbines.py fills gaps from OpenStreetMap into data/raw/extra_turbines.csv (run where
   Overpass is reachable, i.e. not in the cloud build environment). Unknown turbine types get a generic curve.
+  On GitHub: the extra-turbines workflow runs it when the script changes and commits the CSV + site.json.
+  Overpass servers are often overloaded; the script falls back to the main OSM API (bbox < 0.25 deg²).
+- Tahkoluoto: 11 offshore turbines kept by OSM node id (the bbox also holds 6 harbour turbines and one at
+  Reposaari). All are labelled SWT-4.0-130 4 MW; one is probably the 2010 ~2.3 MW pilot (not identifiable).
 - Direction-uncertainty averaging (±5°) for aligned rows (Horns Rev I at 270° gives ~55–70 % loss vs ~40 % measured).
 - Farm-to-farm (cluster) wakes: run neighbouring farms together in PyWake.
 - Inter-array cables, bathymetry layer.

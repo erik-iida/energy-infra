@@ -1,0 +1,30 @@
+https://ndownloader.figshare.com/files/32822453 [offshore-wake-monito] -> HTTP 200 application/zip 1136318 bytes, final https://s3-eu-west-1.amazonaws.com/pfigshare-u-files/32822453/GlobalOffshoreWindTurbineDataset2021.zip?X-Amz-Algorithm=A
+zip 1136318 bytes
+  Global Offshore Wind Turbine Dataset 2021/ 0
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/ 0
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021.xls 2478592
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/GOWF_V2021.dbf 8402532
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/GOWF_V2021.prj 145
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/GOWF_V2021.shp 345564
+  Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/GOWF_V2021.shx 98804
+Global Offshore Wind Turbine Dataset 2021/Global Offshore Wind Turbine Dataset 2021/GOWF_V2021.shp: 12338 records, type POINT, fields ['owfid', 'yearmonth', 'country', 'lat', 'lon', 'o_name_4c', 'capacity4c', 'p_name_4c', 'median', 'zone']
+Traceback (most recent call last):
+  File "/home/runner/work/energy-infra/energy-infra/scripts/fetch_global_turbines.py", line 55, in main
+    convert(r.content, log)
+  File "/home/runner/work/energy-infra/energy-infra/scripts/fetch_global_turbines.py", line 76, in convert
+    for i, rec in enumerate(sf.iterShapeRecords()):
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/shapefile.py", line 4215, in iterShapeRecords
+    for shape, record in zip(
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/shapefile.py", line 3282, in iterRecords
+    r = self._record(
+        ^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/shapefile.py", line 3187, in _record
+    value = _decode_C_or_M_field(
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/shapefile.py", line 503, in _decode_C_or_M_field
+    retval = _try_to_decode_dbf_name_or_text_field(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/shapefile.py", line 491, in _try_to_decode_dbf_name_or_text_field
+    raise dbfFileException(
+shapefile.dbfFileException: Could not decode field name or text/memo field: b'39\xa1\xe3 26\' 39.234" N                                                              ' using encoding='utf-8' and encodingErrors='strict' no matter how many trailing pad bytes (if any) ({pad_bytes!r}) were used. 
+

@@ -84,6 +84,15 @@ def load_curves() -> dict:
     return out
 
 
+def generic_curve(mw: float, d: float) -> dict:
+    """For turbine types without a database curve: P = rated * (U/U_rated)^3 (Cp 0.45), cut-in 4, cut-out 25."""
+    ur = min(13.5, max(9.5, (mw * 1e6 / (0.5 * 1.225 * pi * d * d / 4 * 0.45)) ** (1 / 3)))
+    ws = [x / 2 for x in range(8, 51)]
+    p = [round(mw * min(1.0, (w / ur) ** 3), 4) for w in ws]
+    ct = [round(0.8 if w <= ur else max(0.05, 0.8 * (ur / w) ** 3), 4) for w in ws]
+    return {"ws": ws, "p": p, "ct": ct}
+
+
 def rated_speed(c: dict) -> float:
     pmax = max(c["p"])
     return next(ws for ws, p in zip(c["ws"], c["p"]) if p >= 0.99 * pmax)
@@ -92,6 +101,13 @@ def rated_speed(c: dict) -> float:
 def main() -> None:
     csv_path = sorted(glob.glob(str(EWW / "*_eww_opendatabase.csv")))[-1]
     turbines = list(csv.DictReader(open(csv_path, encoding="utf-8")))
+    extra = RAW / "extra_turbines.csv"  # farms the database lacks (scripts/fetch_osm_turbines.py)
+    if extra.exists():
+        rows = list(csv.DictReader(open(extra, encoding="utf-8")))
+        known = {t["wind_farm"] for t in turbines}
+        rows = [r for r in rows if r["wind_farm"] not in known]
+        print(f"+ {len(rows)} extra turbines from {extra.name}: {sorted({r['wind_farm'] for r in rows})}")
+        turbines += rows
     curves = load_curves()
     outl = json.loads((RAW / "European_offshore_wind_farm_outline.geojson").read_text(encoding="utf-8"))
 
@@ -129,7 +145,7 @@ def main() -> None:
     def type_id(t: dict) -> int:
         key = curve_key(t["turbine_type"])
         if key not in type_index:
-            c = curves[key]
+            c = curves.get(key) or generic_curve(float(t["rated_power"]), float(t["rotor_diameter"]))
             type_index[key] = len(types)
             types.append({"name": t["turbine_type"], "key": key, "oem": t["oem_manufacturer"],
                           "mw": float(t["rated_power"]), "D": float(t["rotor_diameter"]),

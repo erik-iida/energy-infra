@@ -15,6 +15,7 @@ forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models
 | `data/raw/eww/` | Open European offshore wind turbine database (EuroWindWakes, version 2026-01-27): one row per turbine, plus power and Ct curves per turbine type |
 | `data/raw/European_offshore_wind_farm_outline.geojson` | Farm and zone outlines (own compilation, WGS84) |
 | `scripts/build_site.py` | Turns the GeoJSONs into `web/data/site.json` (run again when the data changes) |
+| `scripts/fetch_osm_turbines.py` | Adds farms missing from the turbine database (e.g. Tahkoluoto, Finland) from OpenStreetMap into `data/raw/extra_turbines.csv` |
 | `scripts/windy_test.py` | One-off check of your Windy key and which models it allows |
 | `pipeline/` | The hourly job: `config.py` (settings), `sources.py` (forecasts), `budget.py` (call cap), `wake.py` (PyWake), `run.py` (main) |
 | `web/` | The static site: `index.html` + `data/site.json` + `data/feed.json` |

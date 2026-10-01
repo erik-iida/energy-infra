@@ -51,6 +51,9 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - The user's PC folder is on OneDrive: don't create virtual environments there.
 
 ## Known gaps / next ideas
+- The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).
+  scripts/fetch_osm_turbines.py fills gaps from OpenStreetMap into data/raw/extra_turbines.csv (run where
+  Overpass is reachable, i.e. not in the cloud build environment). Unknown turbine types get a generic curve.
 - Direction-uncertainty averaging (±5°) for aligned rows (Horns Rev I at 270° gives ~55–70 % loss vs ~40 % measured).
 - Farm-to-farm (cluster) wakes: run neighbouring farms together in PyWake.
 - Inter-array cables, bathymetry layer.

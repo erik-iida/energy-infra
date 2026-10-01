@@ -27,11 +27,13 @@ HISTORY_MONTHS = 24
 # Bidding zone of each country's offshore farms. Denmark is split by longitude (see farm_zone).
 ZONE_BY_COUNTRY = {
     "Germany": "DE-LU", "Netherlands": "NL", "Belgium": "BE", "France": "FR", "Sweden": "SE4",
-    "Ireland": "IE(SEM)", "Portugal": "PT", "Spain": "ES", "United Kingdom": None,
+    "Ireland": "IE(SEM)", "Portugal": "PT", "Spain": "ES", "Finland": "FI", "Norway": None,
+    "United Kingdom": None,
 }
 COUNTRY_CODE = {
     "Germany": "de", "Netherlands": "nl", "Belgium": "be", "Denmark": "dk", "France": "fr",
-    "Sweden": "se", "Ireland": "ie", "Portugal": "pt", "Spain": "es", "United Kingdom": "uk",
+    "Sweden": "se", "Ireland": "ie", "Portugal": "pt", "Spain": "es", "Finland": "fi",
+    "United Kingdom": "uk",
 }
 # Countries on the System tab (country code -> bidding zones shown for it)
 SYSTEM_COUNTRIES = {

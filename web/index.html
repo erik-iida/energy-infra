@@ -227,13 +227,18 @@ const now=c=>F.filter(f=>!c||inC(f,c)).reduce((a,f)=>a+cur(f).pw,0);
 /* ---------- map: pan / zoom with level of detail ---------- */
 const EU=[-11,40.5,27,62.5],HOME=[-14,34,44,71],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
 F.forEach(f=>{let e=0;const add=(x,y)=>{e=Math.max(e,Math.abs(x),Math.abs(y))};if(f.xy)for(let i=0;i<f.xy.length;i+=2)add(f.xy[i],f.xy[i+1]);(f.o||[]).forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])});let t=0;if(f.xy)for(let i=0;i<f.xy.length;i+=2)t=Math.max(t,Math.abs(f.xy[i]),Math.abs(f.xy[i+1]));f.tex=f.xy?Math.max(t,300):Math.max(e,400);f.ext=Math.max(e,400);f.kx=111320*Math.cos(f.lat*Math.PI/180)});
-const cosR=()=>Math.cos(V.lat*Math.PI/180),pxm=()=>V.s/110574;
-const P=(lon,lat)=>[W0/2+(lon-V.lon)*cosR()*V.s,H0/2-(lat-V.lat)*V.s];
-const Pinv=(x,y)=>[V.lon+(x-W0/2)/(cosR()*V.s),V.lat-(y-H0/2)/V.s];
-const M=(f,x,y)=>[W0/2+(f.lon+x/f.kx-V.lon)*cosR()*V.s,H0/2-(f.lat+y/110574-V.lat)*V.s];
+// Web Mercator display: panning is a pure shift (no stretching); V.s = pixels per degree of longitude.
+// mercY(): Mercator y in degree units; YMAX = edge of the map (85.05 deg), north/south panning stops there.
+const D2R=Math.PI/180,mercY=lat=>Math.log(Math.tan(Math.PI/4+Math.max(-85.05,Math.min(85.05,lat))*D2R/2))/D2R,mercInv=y=>(2*Math.atan(Math.exp(y*D2R))-Math.PI/2)/D2R,YMAX=mercY(85.05);
+const cosR=()=>Math.cos(V.lat*D2R),sl=()=>V.s/cosR(),pxm=()=>sl()/110574;  // sl: px per degree of latitude at the view centre
+const P=(lon,lat)=>[W0/2+(lon-V.lon)*V.s,H0/2-(mercY(lat)-mercY(V.lat))*V.s];
+const Pinv=(x,y)=>[V.lon+(x-W0/2)/V.s,mercInv(mercY(V.lat)-(y-H0/2)/V.s)];
+const M=(f,x,y)=>P(f.lon+x/f.kx,f.lat+y/110574);
+const zMin=()=>H0/(2*YMAX);  // zoomed fully out the world fills the height: no north/south movement left
+function clampV(){V.s=Math.max(zMin(),Math.min(4e5,V.s));const half=(H0/2)/V.s;if(half>=YMAX){V.lat=0;return}V.lat=mercInv(Math.max(-YMAX+half,Math.min(YMAX-half,mercY(V.lat))));V.lon=((V.lon+540)%360)-180}
 const LOD_TURB=30,LOD_WAKE=90; // farm radius on screen (px) where turbines / wake fields appear
 function size(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;cx.setTransform(d,0,0,d,0,0);W0=r.width;H0=r.height;return[r.width,r.height]}
-function fit(b,pad=.08){const lat=(b[1]+b[3])/2,c=Math.cos(lat*Math.PI/180),w=Math.max(.02,(b[2]-b[0])*c),h=Math.max(.02,b[3]-b[1]);
+function fit(b,pad=.08){const y0=mercY(b[1]),y1=mercY(b[3]),lat=mercInv((y0+y1)/2),w=Math.max(.02,b[2]-b[0]),h=Math.max(.02,y1-y0);
  return{lon:(b[0]+b[2])/2,lat,s:Math.min(4e5,Math.min(W0*(1-2*pad)/w,H0*(1-2*pad)/h))}}
 function farmBox(f){if(f.lay){const e=(f.tex+800)/110574,c=Math.cos(f.lat*Math.PI/180);return[f.lon-e/c,f.lat-e,f.lon+e/c,f.lat+e]}const b=[180,90,-180,-90];f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2){b[0]=Math.min(b[0],r[i]);b[1]=Math.min(b[1],r[i+1]);b[2]=Math.max(b[2],r[i]);b[3]=Math.max(b[3],r[i+1])}});
  const e=f.ext/110574;return[Math.min(b[0],f.lon-e/Math.cos(f.lat*Math.PI/180)),Math.min(b[1],f.lat-e),Math.max(b[2],f.lon+e/Math.cos(f.lat*Math.PI/180)),Math.max(b[3],f.lat+e)]}
@@ -278,7 +283,7 @@ function tileGet(L,key,z,x,y){const C=TL[L].cache;let e=C.get(key);if(e){C.delet
  const img=new Image();if(!TL[L].nocors)img.crossOrigin="anonymous";img.decoding="async";
  img.onload=()=>{try{e.v=L==="hs"?hillshade(img,z,y):img;e.ok=true}catch(err){e.fail=true}repaint()};img.onerror=()=>{e.fail=true};
  img.src=TL[L].url(z,x,y);return null}
-function tilesDraw(L,alpha){const t=TL[L],W=W0,H=H0,dpr=devicePixelRatio||1,ppl=V.s*cosR()*dpr; // device px per degree of longitude
+function tilesDraw(L,alpha){const t=TL[L],W=W0,H=H0,dpr=devicePixelRatio||1,ppl=V.s*dpr; // device px per degree of longitude
  let z=Math.round(Math.log2(360*ppl/t.T)+.2);z=Math.max(0,Math.min(t.zmax,z));const n=2**z,v=viewBox();
  const x0=Math.floor(tx(Math.max(-180,v[0]),z)),x1=Math.floor(tx(Math.min(179.999,v[2]),z)),y0=Math.floor(ty(Math.min(85,v[3]),z)),y1=Math.floor(ty(Math.max(-85,v[1]),z));
  if((x1-x0+1)*(y1-y0+1)>120)return;cx.save();cx.globalAlpha=alpha;cx.imageSmoothingEnabled=true;if(L==="osm"&&isDark())cx.filter="invert(1) hue-rotate(180deg) brightness(.92) contrast(.88)";
@@ -321,12 +326,12 @@ const gcls=kv=>kv===0?6:GCLS.findIndex(c=>kv>=c[0]);
 function gridLoad(){if(GRID.d||GRID.loading)return;GRID.loading=true;
  fetch("data/grid.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;GRID.d=j.lines;GRID.b=j.lines.map(l=>{const c=l[2];let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<c.length;i+=2){a[0]=Math.min(a[0],c[i]);a[1]=Math.min(a[1],c[i+1]);a[2]=Math.max(a[2],c[i]);a[3]=Math.max(a[3],c[i+1])}return a});
   repaint()}).catch(()=>{})}
-function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;const v=viewBox(),far=V.s<12;
+function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;const v=viewBox(),far=sl()<12;
  const P2=[...Array(14)].map(()=>new Path2D());
  GRID.d.forEach((l,i)=>{const b=GRID.b[i];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])return;const k=gcls(l[0]);if(far&&k>=4)return;if(HID.has(GKEY[k]))return;
   const p=P2[k*2+(l[1]&1)],c=l[2];let lx=1e9,ly=1e9;
   for(let j=0;j<c.length;j+=2){const[x,y]=P(c[j],c[j+1]);if(!j){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1||j>=c.length-2){p.lineTo(x,y);lx=x;ly=y}}});
- cx.save();cx.lineCap="round";cx.lineJoin="round";cx.globalAlpha=far?.55:.8;const zw=Math.min(1.6,Math.max(.6,V.s/60));
+ cx.save();cx.lineCap="round";cx.lineJoin="round";cx.globalAlpha=far?.55:.8;const zw=Math.min(1.6,Math.max(.6,sl()/60));
  for(let k=5;k>=0;k--)for(const uc of[0,1]){const st=k===6?["#d660d6",1.3]:[GCLS[k][1],GCLS[k][2]];cx.strokeStyle=st[0];cx.lineWidth=st[1]*zw;cx.setLineDash(uc?[5,3]:[]);cx.stroke(P2[k*2+uc])}
  for(const uc of[0,1]){cx.strokeStyle="#d660d6";cx.lineWidth=1.3*zw;cx.setLineDash(uc?[5,3]:[]);cx.stroke(P2[12+uc])}
  cx.restore()}
@@ -337,8 +342,8 @@ function bbox(c){if(GROUPS[c]){let a=[180,90,-180,-90];GROUPS[c].forEach(m=>{con
  if($("Z").checked||!F.some(f=>inC(f,c)))Z.filter(z=>inC(z,c)).forEach(z=>z.r.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
  return a[0]>a[2]?WORLD():a}
 function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat,s:V.s},t0=performance.now();
- const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
-function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(6,V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat+=lat-a2;repaint()}
+ const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);clampV();paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
+function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(zMin(),V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat=mercInv(mercY(V.lat)+mercY(lat)-mercY(a2));clampV();repaint()}
 function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
 function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}paint();sidebar()}
 // Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
@@ -359,13 +364,13 @@ function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;WTI=f.on?.10:.06;WHH=f.
    const fade=Math.min(1,(s1-s)/(.3*(s1-s0))),al=Math.pow(Math.min(1,(q-.008)/.08),.9)*.72*fade,col=rampC(q/DEF_MAX);
    im.data[o]=col[0];im.data[o+1]=col[1];im.data[o+2]=col[2];im.data[o+3]=al*255}}
   oc.putImageData(im,0,0);f._hm={key,c:off,s0,c0,DS,DC,dx,dy}}
- const h=f._hm,dpr=devicePixelRatio||1,ax=cosR()*V.s/f.kx,ay=V.s/110574,[Xo,Yo]=M(f,0,0);
+ const h=f._hm,dpr=devicePixelRatio||1,ax=V.s/f.kx,ay=V.s/Math.cos(f.lat*D2R)/110574,[Xo,Yo]=M(f,0,0);
  cx.save();cx.setTransform(dpr*ax*h.DS*h.dx,-dpr*ay*h.DS*h.dy,-dpr*ax*h.DC*h.dy,-dpr*ay*h.DC*h.dx,dpr*(Xo+ax*(h.s0*h.dx-h.c0*h.dy)),dpr*(Yo-ay*(h.s0*h.dy+h.c0*h.dx)));
  cx.imageSmoothingEnabled=true;cx.imageSmoothingQuality="high";cx.drawImage(h.c,0,0);cx.restore();S.heatShown=true}
 function heatLegend(W,H){const w=150,x=W-16-w,y=H-150;  // above the basemap switchercx.font="11px sans-serif";cx.fillStyle=css("--panel");cx.globalAlpha=.9;cx.fillRect(x-8,y-16,w+16,34);cx.globalAlpha=1;
  const g=cx.createLinearGradient(x,0,x+w,0);for(let i=0;i<=4;i++){const c=rampC(i/4),a=i?.72:.2;g.addColorStop(i/4,"rgba("+c.map(Math.round).join(",")+","+a+")")}
  cx.fillStyle=css("--mut");cx.fillText("Wind speed deficit",x,y-4);cx.fillStyle=g;cx.fillRect(x,y,w,8);cx.fillStyle=css("--mut");cx.fillText("0",x,y+18);cx.textAlign="right";cx.fillText(Math.round(DEF_MAX*100)+"%+",x+w,y+18);cx.textAlign="left"}
-function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,V.s/40))}
+function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,sl()/40))}
 // legend toggles: keys of map objects the viewer has hidden (remembered in this browser)
 const HID=new Set((()=>{try{return JSON.parse(localStorage.getItem("wm-hide")||"[]")}catch(e){return[]}})());
 const LCAT={farms:["off","on"],zones:["uc","cs","pl"],gas:["gip","glng","gprod"],grid:["g750","g500","g400","g300","g220","gdc"]};
@@ -406,9 +411,12 @@ function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();if(BG.meta&&!bath
  bathyT=setTimeout(()=>{const mx=(l1-l0)*.15,my=(a1-a0)*.15,b=[l0-mx,Math.max(-85,a0-my),l1+mx,Math.min(85,a1+my)],sc=Math.min(1,2048/(1.3*Math.max(W,H)));
   const w=Math.round(W*1.3*sc),h=Math.round(H*1.3*sc),img=new Image();img.onload=()=>{S.bathy={img,b,lines:grid};repaint()};
   img.src=BATHY_URL+"?service=WMS&version=1.1.1&request=GetMap&layers="+(grid?"emodnet:contours":ct?"emodnet:mean,emodnet:contours":"emodnet:mean")+"&styles=&srs=EPSG:4326&bbox="+b.map(v=>v.toFixed(5)).join(",")+"&width="+w+"&height="+h+"&format=image/png&transparent=true"},350)}
+// depth images are plain lat/lon grids: draw them in latitude strips so they sit right on the Mercator map
+function drawLatLonImg(img,b){const n=48,H=img.height,W=img.width;for(let k=0;k<n;k++){const la=b[3]-(b[3]-b[1])*k/n,lb=b[3]-(b[3]-b[1])*(k+1)/n,[x0,y0]=P(b[0],la),[x1,y1]=P(b[2],lb);
+ cx.drawImage(img,0,H*k/n,W,H/n,x0,y0,x1-x0,y1-y0+.6)}}
 function bathyDraw(){if(!$("BY").checked)return;const al=(+css("--bathy-a")||.75)*(BM()==="simple"?1:BM()==="sat"?.45:.55);cx.imageSmoothingEnabled=true;
- if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
- const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
+ if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;drawLatLonImg(BG.cv,b)}
+ const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;drawLatLonImg(B.img,B.b)}cx.globalAlpha=1}
 // ---- market overlay: bidding zones coloured by day-ahead price or BESS spread (web/data/zones.json) ----
 const MZ={d:null,loading:false,paths:[]};let MO="now";  // the site always opens on the current price
 const MOL={now:"Day-ahead price now",avg:"Day-ahead price, last 24 h average",next:"Day-ahead price, tomorrow's average",tb2:"TB2 spread, last 24 h",tb4:"TB4 spread, last 24 h"};
@@ -439,12 +447,12 @@ function moDraw(){MZ.paths=[];if(MO==="off"||!MK){moBar(null);return}mzLoad();if
  cx.restore()}
 function moTip(z){const p=MK.prices[z],f=v=>v==null?"–":Math.round(v);return z+" · now "+f(moVal(z,"now"))+" · 24 h avg "+f(moVal(z,"avg"))+(p&&p.slice(N0+1).some(x=>x!=null)?" · tomorrow "+f(moVal(z,"next")):"")+" €/MWh · TB2 "+f(moVal(z,"tb2"))+" · TB4 "+f(moVal(z,"tb4"))+(p?"":" · no openly licensed price")}
 function moSet(m){MO=m;if(m!=="off")S.moLast=m;document.querySelectorAll("#mosel button").forEach(b=>b.classList.toggle("on",b.dataset.mo===MO));legSync();repaint()}
-function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
+function paint(){if(S.tab!=="map")return;const[W,H]=size();clampV();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
  // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
 const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
 const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2||onTile(r[i])||onTile(r[i+1])){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}return p};
  if(BM()==="simple"){cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath())}if($("HS").checked)tilesDraw("hs",isDark()?.55:.8);moDraw();gridDraw();gasDraw();
- const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
+ const far=sl()<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
  if($("Z").checked)Z.forEach((z,i)=>{if(HID.has(z.s))return;const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
  const vis=[];F.forEach((f,i)=>{if(i!==S.farm&&HID.has(f.on?"on":"off"))return;const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
  vis.forEach(([i,,,R])=>{const f=F[i],p=pth(f.ol);S.fp.push([p,i]);if(f.lay&&R>=LOD_TURB)return;cx.fillStyle=fcol(f);cx.globalAlpha=.16;cx.fill(p);cx.globalAlpha=1;cx.strokeStyle=fcol(f);cx.lineWidth=i===S.farm||i===S.hover?2.4:1.1;cx.stroke(p)});
@@ -454,7 +462,7 @@ const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let
   if(f.lay&&R>=LOD_TURB){r.P.forEach((p,j)=>{const[a,b]=M(f,p[0],p[1]);cx.beginPath();cx.arc(a,b,Math.max(1.6,r.Dt[j]/2*pxm()),0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fill();cx.globalAlpha=1;cx.strokeStyle=fcol(f);cx.lineWidth=1;cx.stroke()});
    if(R>=LOD_TURB*2){cx.font="600 12px sans-serif";cx.fillStyle=css("--ink");const t=f.n+" · "+fmt(r.pw),w=cx.measureText(t).width,[lx,ly]=M(f,0,f.tex);cx.fillText(t,Math.max(4,Math.min(W-w-4,lx-w/2)),Math.max(14,ly-8))}}
   else glyph(f,r,x,y,i)});
- const fs=S.farm!==null?F[S.farm]:null,near=fs||(V.s>800?vis.map(v=>F[v[0]]).sort((a,b)=>{const[ax,ay]=P(a.lon,a.lat),[bx,by]=P(b.lon,b.lat);return Math.hypot(ax-W/2,ay-H/2)-Math.hypot(bx-W/2,by-H/2)})[0]:null);
+ const fs=S.farm!==null?F[S.farm]:null,near=fs||(sl()>800?vis.map(v=>F[v[0]]).sort((a,b)=>{const[ax,ay]=P(a.lon,a.lat),[bx,by]=P(b.lon,b.lat);return Math.hypot(ax-W/2,ay-H/2)-Math.hypot(bx-W/2,by-H/2)})[0]:null);
  if(near){const[U,D]=curWind(near),t=D*Math.PI/180,ax=40,ay=40;cx.strokeStyle=css("--ink");cx.fillStyle=css("--ink");cx.lineWidth=2;cx.beginPath();cx.moveTo(ax+Math.sin(t)*22,ay-Math.cos(t)*22);cx.lineTo(ax-Math.sin(t)*22,ay+Math.cos(t)*22);cx.stroke();
   cx.beginPath();cx.arc(ax-Math.sin(t)*22,ay+Math.cos(t)*22,4.5,0,7);cx.fill();cx.font="12px sans-serif";cx.fillText(U.toFixed(1)+" m/s from "+D+"°",14,ay+40);cx.fillStyle=css("--mut");cx.fillText(near.n.length>28?near.n.slice(0,27)+"…":near.n,14,ay+55)}
  if(fs&&fs.lay&&fs.tex*pxm()>=LOD_TURB){const sp=spacingOf(fs);if(sp){const l1="Spacing to nearest turbine",l2="min "+sp.min.toFixed(1)+" D · mean "+sp.mean.toFixed(1)+" D · max "+sp.max.toFixed(1)+" D";
@@ -912,7 +920,7 @@ cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.cl
 cv.onpointermove=e=>{if(ptr.has(e.pointerId))ptr.set(e.pointerId,[e.clientX,e.clientY]);
  if(drag){$("tip").style.display="none";
   if(ptr.size===2&&drag.pinch){const[a,b]=[...ptr.values()],dd=Math.hypot(a[0]-b[0],a[1]-b[1]),r=cv.getBoundingClientRect();zoomAt((a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top,dd/drag.pinch);drag.pinch=dd;return}
-  if(drag.lon!=null){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.abs(dx)+Math.abs(dy));V.lon=drag.lon-dx/(cosR()*V.s);V.lat=drag.lat+dy/V.s;cv.style.cursor="grabbing";repaint()}return}
+  if(drag.lon!=null){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved=Math.max(drag.moved,Math.abs(dx)+Math.abs(dy));V.lon=drag.lon-dx/V.s;V.lat=mercInv(mercY(drag.lat)+dy/V.s);clampV();cv.style.cursor="grabbing";repaint()}return}
  const[b,zh,x,y]=hit(e);if(b!==S.hover||zh!==S.zh){S.hover=b;S.zh=zh;repaint()}const t=$("tip");cv.style.cursor=b>=0?"pointer":"grab";
  const gi=b<0?gasHit(x,y):-1;if(gi>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";t.textContent=gasTip(gi);return}
  if(b>=0||zh>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";
@@ -942,7 +950,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Generation, load, flows and day-ahead prices for zones not openly licensed in Energy-Charts (incl. CEE / SEE): <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
-addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));$("M").value="t";$("K").value=K_DEF.t;$("kl").textContent="Wake expansion A";moSet(MO);draw();
+addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));clampV();$("M").value="t";$("K").value=K_DEF.t;$("kl").textContent="Wake expansion A";moSet(MO);draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json",{cache:"no-cache"})).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}

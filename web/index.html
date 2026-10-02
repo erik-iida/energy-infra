@@ -89,6 +89,7 @@ aside>*{flex-shrink:0}
 .mixbar{position:relative;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bg)}.mixbar span{position:absolute;top:0;bottom:0}
 .mixleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}.mixleg i,.mixtab i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .syswrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.card.wide{grid-column:1/-1;cursor:default}.syswrap .card{cursor:default}
+.captab{border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;width:100%}.captab th{color:var(--mut);font-weight:600;padding:3px 2px;text-align:center;white-space:nowrap}.captab td{text-align:center;padding:0;height:19px;min-width:30px;border:1px solid var(--panel)}.captab td.z{text-align:left;white-space:nowrap;padding:0 8px 0 2px;min-width:120px}.captab td.av{font-weight:700;padding:0 4px}.captab tr[data-cf]{cursor:pointer}.captab tr[data-cf]:hover td.z{color:var(--acc)}
 .mixtab{width:100%;font-size:13px;margin-top:8px}.mixtab th{text-align:right;color:var(--mut);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}.mixtab td{text-align:right;padding:3px 6px}.mixtab th:first-child,.mixtab td:first-child{text-align:left}
 .flows{display:flex;flex-direction:column;gap:3px;margin-top:6px}.fr{display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;font-size:12px}.fl{color:var(--ink)}.fv{text-align:right;color:var(--mut)}
 .fb{position:relative;height:12px;background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}.fb b{position:absolute;top:1px;bottom:1px;border-radius:2px}
@@ -526,7 +527,7 @@ const ZONEFLAG={"MK":"mk","BA":"ba","BG":"bg","CZ":"cz","EE":"ee","GR":"gr","HR"
 let FLAGN=0;
 function flagSVG(code,x,y,r){const id="fg"+(FLAGN++),k=r/10;
  return"<g><clipPath id='"+id+"'><circle cx='"+x+"' cy='"+y+"' r='"+r+"'/></clipPath><g clip-path='url(#"+id+")'><g transform='translate("+(x-15*k)+","+(y-10*k)+") scale("+k+")'>"+(FLAGS[code]||"<rect width='30' height='20' fill='#999'/>")+"</g></g><circle cx='"+x+"' cy='"+y+"' r='"+r+"' fill='none' stroke='var(--line)' stroke-width='1'/></g>"}
-const flagHTML=(code,r=8)=>"<svg width='"+(2*r+2)+"' height='"+(2*r+2)+"' style='vertical-align:middle'>"+flagSVG(code,r+1,r+1,r)+"</svg>";
+const flagHTML=(code,r=8)=>"<svg width='"+(2*r+2)+"' height='"+(2*r+2)+"' style='vertical-align:middle;display:inline-block;width:"+(2*r+2)+"px;height:"+(2*r+2)+"px'>"+flagSVG(code,r+1,r+1,r)+"</svg>";
 const CMP={};
 function niceRange(lo,hi){if(!(hi>lo)){hi=lo+1}const span=hi-lo,st=Math.pow(10,Math.floor(Math.log10(span/4))),m=[1,2,2.5,5,10].find(q=>span/(q*st)<=5)*st;return[Math.floor(lo/m)*m,Math.ceil(hi/m)*m,m]}
 // spec: {series:[{id,label,flag,v:[...]}], a, b (index range), unit, fmt(v), tipT(k)}
@@ -537,13 +538,13 @@ function cmpRender(id){const C=CMP[id],sv=document.getElementById(id);if(!sv)ret
  if(C.zero&&lo>0)lo=0;const[y0,y1,step]=niceRange(lo,hi);C.y0=y0;C.y1=y1;
  const n=C.b-C.a,x=k=>L+(W-L-R)*(k-C.a)/Math.max(1,n),y=v=>T+(H-T-B)*(1-(v-y0)/(y1-y0));C.x=x;C.y=y;C.L=L;C.R=R;C.W=W;
  let s="";for(let g=y0;g<=y1+1e-9;g+=step){s+="<line class='ax' x1='"+L+"' x2='"+(W-R)+"' y1='"+y(g)+"' y2='"+y(g)+"' "+(Math.abs(g)<1e-9?"":"stroke-dasharray='2 3'")+"/><text class='tl' x='"+(L-6)+"' y='"+(y(g)+3)+"' text-anchor='end'>"+C.fmt(g)+"</text>"}
- for(let k=C.a;k<=C.b;k+=6)s+="<text class='tl' x='"+x(k)+"' y='"+(H-6)+"' text-anchor='middle'>"+hl(k)+"</text>";
+ for(let k=C.a;k<=C.b;k+=(C.xs||6))s+="<text class='tl' x='"+x(k)+"' y='"+(H-6)+"' text-anchor='middle'>"+(C.xl?C.xl(k):hl(k))+"</text>";
  const ord=C.series.map((se,i)=>i).sort((p,q)=>(p===C.hl||!!(C.sel&&C.sel.has(C.series[p].id)))-(q===C.hl||!!(C.sel&&C.sel.has(C.series[q].id))));
- ord.forEach(i=>{const se=C.series[i],on=i===C.hl||(C.hl==null&&C.sel&&C.sel.has(se.id));s+="<path d='"+pathOf(se.v,x,y,C.a,C.b)+"' fill='none' stroke='"+(on?"var(--acc)":"var(--mut)")+"' stroke-width='"+(on?2.6:1.4)+"' stroke-opacity='"+(on||C.hl==null?.9:.35)+"' stroke-linejoin='round'/>"});
+ ord.forEach(i=>{const se=C.series[i],on=i===C.hl||(C.hl==null&&C.sel&&C.sel.has(se.id));s+="<path d='"+pathOf(se.v,x,y,C.a,C.b)+"' fill='none' stroke='"+(se.col?se.col:on?"var(--acc)":"var(--mut)")+"' stroke-width='"+(on?2.6:se.col?2:1.4)+"' stroke-opacity='"+(on||C.hl==null?.9:.35)+"' stroke-linejoin='round'"+(se.dash?" stroke-dasharray='5 4'":"")+"/>"+(C.dots?se.v.map((q,k)=>q==null||k<C.a||k>C.b?"":"<circle r='2.4' cx='"+x(k).toFixed(1)+"' cy='"+y(q).toFixed(1)+"' fill='"+(se.col||"var(--mut)")+"' fill-opacity='"+(on||C.hl==null?.9:.35)+"'/>").join(""):"")});
  // flags at line ends, nudged apart vertically
  const ends=C.series.map((se,i)=>{let k=C.b;while(k>C.a&&se.v[k]==null)k--;return se.v[k]==null?null:{i,k,yy:y(se.v[k])}}).filter(Boolean).sort((p,q)=>p.yy-q.yy);
  for(let j=1;j<ends.length;j++)ends[j].yy=Math.max(ends[j].yy,ends[j-1].yy+15);const over=ends.length?ends[ends.length-1].yy-(H-B):0;if(over>0)ends.forEach(e=>e.yy-=over);
- ends.forEach(e=>{const se=C.series[e.i],xe=x(e.k)+10;s+="<line x1='"+x(e.k)+"' x2='"+(xe-7)+"' y1='"+y(se.v[e.k])+"' y2='"+e.yy+"' stroke='var(--line)'/>"+flagSVG(se.flag,xe,e.yy,6.5)+"<text x='"+(xe+9)+"' y='"+(e.yy+4)+"' font-size='11' fill='"+(e.i===C.hl?"var(--ink)":"var(--mut)")+"' font-weight='"+(e.i===C.hl?600:400)+"'>"+se.label+"</text>"});
+ ends.forEach(e=>{const se=C.series[e.i],xe=x(e.k)+10;s+="<line x1='"+x(e.k)+"' x2='"+(xe-7)+"' y1='"+y(se.v[e.k])+"' y2='"+e.yy+"' stroke='var(--line)'/>"+(se.flag?flagSVG(se.flag,xe,e.yy,6.5):"<circle cx='"+xe+"' cy='"+e.yy+"' r='4' fill='"+(se.col||"var(--mut)")+"'/>")+"<text x='"+(xe+9)+"' y='"+(e.yy+4)+"' font-size='11' fill='"+(e.i===C.hl?"var(--ink)":"var(--mut)")+"' font-weight='"+(e.i===C.hl?600:400)+"'>"+se.label+"</text>"});
  if(C.hk!=null)s+="<line class='xh' x1='"+x(C.hk)+"' x2='"+x(C.hk)+"' y1='"+T+"' y2='"+(H-B)+"'/>";
  sv.innerHTML=s}
 function cmpHover(e,sv){const C=CMP[sv.id];if(!C||!C.x)return;const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*C.W/r.width,py=(e.clientY-r.top)*C.W/r.width;
@@ -552,7 +553,7 @@ function cmpHover(e,sv){const C=CMP[sv.id];if(!C||!C.x)return;const r=sv.getBoun
  if(px>C.W-C.R){const lab=[...sv.querySelectorAll("text")].find(t=>{const b=t.getBBox();return py>=b.y-4&&py<=b.y+b.height+4&&px>=b.x-20});if(lab){const i=C.series.findIndex(se=>se.label===lab.textContent);if(i>=0)best=i}}
  if(best!==C.hl||k!==C.hk){C.hl=best;C.hk=k;cmpRender(sv.id)}
  const rows=C.series.map(se=>[se.label,se.v[k]]).filter(q=>q[1]!=null).sort((p,q)=>q[1]-p[1]);
- dtip(e,dl(k)+"\n"+rows.map(([l,v])=>l+"  "+C.fmt(v)).join("\n"))}
+ dtip(e,(C.tl?C.tl(k):dl(k))+"\n"+rows.map(([l,v])=>l+"  "+C.fmt(v)).join("\n"))}
 function cmpLeave(sv){const C=CMP[sv.id];if(C){C.hl=null;C.hk=null;cmpRender(sv.id)}$("dtip").style.display="none"}
 // ---- price heatmap: every bidding zone (rows, sorted by mean) x hour (columns) ----
 // One warm sequential hue for prices >= 0 (light -> dark), a separate cool hue for negative prices.
@@ -560,23 +561,31 @@ const HMPOS=[[253,238,220],[250,201,148],[240,145,82],[214,88,38],[160,48,20],[9
 const lerpC=(R,t)=>{t=Math.max(0,Math.min(1,t))*(R.length-1);const i=Math.min(R.length-2,Math.floor(t)),f=t-i;return"rgb("+[0,1,2].map(k=>Math.round(R[i][k]+(R[i+1][k]-R[i][k])*f)).join(",")+")"};
 const HM={};
 function hmColor(v,top,low){return v<0?lerpC(HMNEG,low<0?v/low:1):lerpC(HMPOS,v/top)}
-function hmRender(id){const C=HM[id],sv=document.getElementById(id);if(!sv)return;const W=sv.clientWidth||700,L=122,R=58,T=4,rh=14,B=22;
- const rows=C.zones.map(z=>{const v=MK.prices[z].slice(C.a,C.b+1),ok=v.filter(x=>x!=null);return{z,v,m:ok.length?ok.reduce((a,b)=>a+b,0)/ok.length:null}}).filter(r=>r.m!=null).sort((p,q)=>q.m-p.m);
+// TBn: mean of the n highest hourly prices minus mean of the n lowest (BESS arbitrage indication); needs 20+ priced hours
+function tbn(v,n){const o=v.filter(x=>x!=null).sort((a,b)=>a-b);if(o.length<20)return null;const m=a=>a.reduce((p,q)=>p+q,0)/a.length;return m(o.slice(-n))-m(o.slice(0,n))}
+const HMTB=[122,166],HMTW=42;
+function hmRender(id){const C=HM[id],sv=document.getElementById(id);if(!sv)return;const W=sv.clientWidth||700,L=214,R=58,T=4,rh=14,B=22,sk=C.sort||"m";
+ const rows=C.zones.map(z=>{const v=MK.prices[z].slice(C.a,C.b+1),ok=v.filter(x=>x!=null);return{z,v,m:ok.length?ok.reduce((a,b)=>a+b,0)/ok.length:null,tb2:tbn(v,2),tb4:tbn(v,4)}}).filter(r=>r.m!=null).sort((p,q)=>(q[sk]??-1e9)-(p[sk]??-1e9));
+ const tbmax=Math.max(1,...rows.map(r=>r.tb4||0));C.tbmax=tbmax;
  const all=rows.flatMap(r=>r.v.filter(x=>x!=null)).sort((a,b)=>a-b);if(!all.length){sv.innerHTML="<text class='tl' x='"+W/2+"' y='20' text-anchor='middle'>No prices for this period yet</text>";sv.style.height="30px";return}
  const top=Math.max(50,all[Math.floor(all.length*.97)]),low=Math.min(0,all[0]),n=C.b-C.a+1,cw=(W-L-R)/n,H=T+rows.length*rh+B;C.rows=rows;C.top=top;C.low=low;C.L=L;C.R=R;C.T=T;C.rh=rh;C.cw=cw;C.W=W;
  sv.setAttribute("viewBox","0 0 "+W+" "+H);sv.style.height=H+"px";let s="";
  rows.forEach((r,i)=>{const y=T+i*rh,on=C.sel&&C.sel.has(r.z);if(on)s+="<rect x='0' y='"+y+"' width='"+(W-R+40)+"' height='"+rh+"' fill='var(--acc)' opacity='.13'/>";s+=flagSVG(ZONEFLAG[r.z]||"",8,y+rh/2,5)+"<text x='18' y='"+(y+rh-3.5)+"' font-size='11' fill='var(--ink)' font-weight='"+(on?700:400)+"'>"+r.z+"</text>";
+  [["tb2",HMTB[0]],["tb4",HMTB[1]]].forEach(([q,x0])=>{const t=r[q];if(t==null)return;s+="<rect x='"+x0+"' y='"+(y+2)+"' width='"+(HMTW-4)*Math.min(1,t/tbmax)+"' height='"+(rh-4)+"' fill='var(--m-sol)' opacity='.45' rx='1'/><text x='"+(x0+HMTW-6)+"' y='"+(y+rh-3.5)+"' font-size='11' text-anchor='end' fill='var(--ink)'"+(sk===q?" font-weight='700'":"")+">"+Math.round(t)+"</text>"});
   r.v.forEach((v,k)=>{if(v!=null)s+="<rect x='"+(L+k*cw).toFixed(1)+"' y='"+(y+.5)+"' width='"+Math.max(.5,cw-1).toFixed(1)+"' height='"+(rh-1)+"' fill='"+hmColor(v,top,low)+"'/>"});
   s+="<text x='"+(W-R+6)+"' y='"+(y+rh-3.5)+"' font-size='11' fill='var(--mut)'>"+Math.round(r.m)+"</text>"});
  for(let k=0;k<n;k+=6)s+="<text class='tl' x='"+(L+k*cw+cw/2)+"' y='"+(H-6)+"' text-anchor='middle'>"+hl(C.a+k)+"</text>";
- s+="<text class='tl' x='"+(W-R+6)+"' y='"+(H-6)+"'>mean</text>";
+ s+="<text class='tl' x='"+(W-R+6)+"' y='"+(H-6)+"'"+(sk==="m"?" font-weight='700'":"")+">mean</text><text class='tl' x='"+(HMTB[0]+HMTW-6)+"' y='"+(H-6)+"' text-anchor='end'"+(sk==="tb2"?" font-weight='700'":"")+">TB2</text><text class='tl' x='"+(HMTB[1]+HMTW-6)+"' y='"+(H-6)+"' text-anchor='end'"+(sk==="tb4"?" font-weight='700'":"")+">TB4</text>";
  if(C.hk!=null&&C.hr!=null)s+="<rect x='"+(L+(C.hk-C.a)*cw)+"' y='"+(T+C.hr*rh)+"' width='"+cw+"' height='"+rh+"' fill='none' stroke='var(--ink)' stroke-width='1.5'/>";
  sv.innerHTML=s;const lg=document.getElementById(id+"L");
  if(lg)lg.innerHTML="<span style='display:inline-block;width:110px;height:10px;vertical-align:middle;border-radius:2px;background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></span> 0 – "+Math.round(top)+"+ €/MWh"+(low<0?" &nbsp;<span style='display:inline-block;width:40px;height:10px;vertical-align:middle;border-radius:2px;background:linear-gradient(90deg,rgb("+HMNEG[0].join(",")+"),rgb("+HMNEG[1].join(",")+"))'></span> negative (down to "+Math.round(low)+")":"")}
 function hmHover(e,sv){const C=HM[sv.id];if(!C||!C.rows)return;const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*C.W/r.width,py=(e.clientY-r.top)*C.W/r.width;
- const k=Math.floor((px-C.L)/C.cw),i=Math.floor((py-C.T)/C.rh);if(k<0||k>C.b-C.a||i<0||i>=C.rows.length){$("dtip").style.display="none";return}
+ const k=Math.floor((px-C.L)/C.cw),i=Math.floor((py-C.T)/C.rh);
+ if(i>=0&&i<C.rows.length&&px>=HMTB[0]&&px<HMTB[1]+HMTW){const row=C.rows[i],o=row.v.filter(x=>x!=null).sort((a,b)=>a-b),m=a=>a.length?Math.round(a.reduce((p,q)=>p+q,0)/a.length):"–";if(C.hk!=null){C.hk=C.hr=null;hmRender(sv.id)}
+  dtip(e,row.z+" · BESS spread over the "+(o.length)+" h shown\nTB2 "+(row.tb2==null?"–":Math.round(row.tb2))+" €/MWh = top 2 h avg "+m(o.slice(-2))+" − bottom 2 h avg "+m(o.slice(0,2))+"\nTB4 "+(row.tb4==null?"–":Math.round(row.tb4))+" €/MWh = top 4 h avg "+m(o.slice(-4))+" − bottom 4 h avg "+m(o.slice(0,4)));return}
+ if(k<0||k>C.b-C.a||i<0||i>=C.rows.length){$("dtip").style.display="none";return}
  if(C.hk!==C.a+k||C.hr!==i){C.hk=C.a+k;C.hr=i;hmRender(sv.id)}const row=C.rows[i],v=row.v[k];
- const rank=C.rows.map(q=>q.v[k]).filter(x=>x!=null).sort((a,b)=>b-a);dtip(e,row.z+" · "+dl(C.a+k)+"\n"+(v==null?"no price":Math.round(v)+" €/MWh · rank "+(rank.indexOf(v)+1)+" of "+rank.length)+"\nmean over the period "+Math.round(row.m)+" €/MWh")}
+ const rank=C.rows.map(q=>q.v[k]).filter(x=>x!=null).sort((a,b)=>b-a);dtip(e,row.z+" · "+dl(C.a+k)+"\n"+(v==null?"no price":Math.round(v)+" €/MWh · rank "+(rank.indexOf(v)+1)+" of "+rank.length)+"\nmean over the period "+Math.round(row.m)+" €/MWh"+(row.tb2!=null?" · TB2 "+Math.round(row.tb2)+" · TB4 "+Math.round(row.tb4):""))}
 document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.closest("svg.hm");if(sv)hmHover(e,sv)});
 document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.closest("svg.hm");if(sv&&!sv.contains(e.relatedTarget)){const C=HM[sv.id];if(C){C.hk=C.hr=null;hmRender(sv.id)}$("dtip").style.display="none"}});
 document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv)cmpHover(e,sv)});
@@ -613,12 +622,8 @@ function market(){series();const el=$("mkt");TIPS=[];
  const SZ=selZones();if(SZ&&!SZ.size)h+="<div class='feednote'>No day-ahead price data for "+S.c+" in this source yet; showing Europe.</div>";else if(SZ)h+="<div class='feednote'>"+S.c+"'s bidding zones are highlighted"+([...SZ].some(z=>MK.prices[z])?"":" (none of them has an openly licensed price)")+". Pick World or Europe in the selector to clear.</div>";
  h+="<div class='card' style='cursor:default'><h3>Day-ahead prices by zone<span class='seg'><button data-pr='past' class='"+(S.prng==="past"?"on":"")+"'>Last 24 h</button><button data-pr='next' "+(tAv?"":"disabled title='Published around midday'")+" class='"+(S.prng==="next"?"on":"")+"'>Tomorrow</button></span></h3><svg class='cmp' id='cmpPrice'></svg><div class='mut' style='font-size:12px'>Hourly averages of the 15-minute day-ahead auction, €/MWh. Hover to rank all zones for one hour; the line under the cursor is highlighted.</div></div>";
  const hz=Object.keys(MK.prices);
- h+="<div class='card' style='cursor:default'><h3>All bidding zones · "+(S.prng==="next"?"tomorrow":"last 24 h")+"<span class='mut' style='font-size:12px;font-weight:400'>"+hz.length+" zones, highest average first</span></h3><svg class='hm' id='hmPrice'></svg><div class='mut' style='font-size:12px' id='hmPriceL'></div><div class='mut' style='font-size:12px'>Hourly day-ahead price per zone; the colour scale tops out at the 97th percentile so a few spikes don't wash out the rest. Hover a cell for its value and rank in that hour. Same Last 24 h / Tomorrow switch as above.</div></div>";
- h+="<h2>Offshore capture price by bidding zone <span class='mut' style='font:13px system-ui'>· last 24 h modelled, next 24 h once tomorrow's auction is published (dashed); same €/MWh scale</span></h2><div class='grid'>";
- zones.forEach(z=>{const fs=F.filter(f=>f.zone===z),pr=MK.prices[z],L=capStats(fs,pr,0,N0),N=capStats(fs,pr,N0+1,NT-1),rate=L.cap!=null&&L.base>0?L.cap/L.base:null;
-  const i=TIPS.push(k=>(ZN[z]||z)+" · "+dl(k)+(k>N0?" (forecast)":"")+" · "+pm(pr[k])+" · offshore "+fmt(modSum(fs,k)))-1;
-  h+="<div class='card' data-z='"+z+"'><h3>"+(ZN[z]||z)+"<span>"+pm(pr[N0])+" now</span></h3><div class='v mut'>Last 24 h: baseload "+pm(L.base)+" · capture "+pm(L.cap)+(rate!=null?" (<b style='color:var(--ink)'>"+(100*rate).toFixed(0)+"%</b>)":"")+"<br>Revenue lost to wakes "+(fs.some(f=>f.lay)?eur(L.wc):"–")+" · "+fs.length+" farm"+(fs.length>1?"s":"")+", "+fmt(fs.reduce((a,f)=>a+f.inst,0))+"<br>Next 24 h: "+(N.np?"baseload "+pm(N.base)+" · capture "+pm(N.cap)+(N.np<24?" ("+N.np+" h priced)":""):"tomorrow's prices not published yet")+"</div><svg class='mk' data-t='"+i+"' data-n='"+NT+"' data-z='"+z+"' data-lo='"+lo+"' data-hi='"+hi+"'></svg></div>"});
- h+="</div>";
+ S.hms=S.hms||"m";h+="<div class='card' style='cursor:default'><h3>All bidding zones · "+(S.prng==="next"?"tomorrow":"last 24 h")+"<span class='seg'><span class='mut' style='font-size:12px;font-weight:400;margin-right:6px'>"+hz.length+" zones · sort by</span><button data-hs='m' class='"+(S.hms==="m"?"on":"")+"'>Mean</button><button data-hs='tb2' class='"+(S.hms==="tb2"?"on":"")+"'>TB2</button><button data-hs='tb4' class='"+(S.hms==="tb4"?"on":"")+"'>TB4</button></span></h3><svg class='hm' id='hmPrice'></svg><div class='mut' style='font-size:12px' id='hmPriceL'></div><div class='mut' style='font-size:12px'><b>TB2 / TB4</b> (€/MWh): mean of the 2 / 4 most expensive hours minus mean of the 2 / 4 cheapest in the 24 h shown, a first indication of what a 1-hour / 2-hour battery could capture from one cycle a day (before losses; trading the 15-minute auction gives a bit more than hourly averages). Hourly day-ahead price per zone; the colour scale tops out at the 97th percentile so a few spikes don't wash out the rest. Hover a cell for its value and rank in that hour.</div></div>";
+ h+=capSection();
  const act=MK.actual_offshore||{},cs=Object.keys(act).filter(c=>HN[c]&&(!S.c||CCN[c]===S.c)).sort((a,b)=>sum(CCN[b])-sum(CCN[a]));
  if(cs.length){h+="<h2>Model check: modelled vs actual offshore output <span class='mut' style='font:13px system-ui'>· last 24 h; actual is the whole national fleet, the model only covers farms in the dataset; countries where the dataset has most of the fleet</span></h2><div class='grid'>";
   cs.forEach(c=>{const fs=F.filter(f=>f.c===CCN[c]),a=act[c],mod=[...Array(NP)].map((_,k)=>modSum(fs,k));let sm=0,sa=0;
@@ -626,27 +631,67 @@ function market(){series();const el=$("mkt");TIPS=[];
    const hv=Math.max(1,...mod.filter(v=>v!=null),...a.filter(v=>v!=null)),i=TIPS.push(k=>CCN[c]+" · "+dl(k)+" · modelled "+fmt(mod[k])+" · actual "+fmt(a[k]))-1;
    h+="<div class='card'><h3>"+CCN[c]+"<span>"+(sa>0?(sm>=sa?"+":"")+(100*(sm/sa-1)).toFixed(0)+"% vs actual":"–")+"</span></h3><div class='v mut'><span style='color:var(--acc)'>━</span> modelled avg "+fmt(sm/NP)+" · <span style='color:var(--ink)'>━</span> actual avg "+fmt(sa/NP)+"<br>Model: "+fs.length+" farms, "+fmt(fs.reduce((q,f)=>q+f.inst,0))+" installed in the dataset</div><svg class='mk' data-t='"+i+"' data-n='"+NP+"' data-c='"+c+"' data-hi='"+hv+"'></svg></div>"});
   h+="</div>"}
- h+="<h2>History: offshore capture rate by month <span class='mut' style='font:13px system-ui'>· from actual national offshore output and day-ahead prices, not the model</span></h2><div id='mhist' class='grid'></div><div class='tw'><table id='mtab'></table></div>";
  el.innerHTML=h;
- CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:Math.max(290,pz.length*15+50),sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1};hmRender("hmPrice");
+ CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:Math.max(290,pz.length*15+50),sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,sort:S.hms};hmRender("hmPrice");capDraw();
  el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
-  if(sv.dataset.z)sv.innerHTML=tsSVG(W,Hh,NT,[{v:MK.prices[sv.dataset.z],cls:"pr"}],+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1));
-  else{const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
+  {const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
    sv.innerHTML=tsSVG(W,Hh,NP,[{v:act[c],cls:"act"},{v:mod,cls:""}],0,+sv.dataset.hi,null,fmt(+sv.dataset.hi))+axl(W,Hh,"−24 h","","now")}});
- histDraw()}
-function histDraw(){const A=MHIST&&MHIST.areas,box=$("mhist");
- if(!A||!Object.keys(A).length){box.innerHTML="<div class='mut'>Building up: the pipeline adds a few months per hourly run, so two years take about a day.</div>";$("mtab").innerHTML="";return}
- let lo=100,hi=100;Object.values(A).forEach(a=>a.months.forEach(r=>{const q=100*r.capture/r.baseload;if(r.baseload>0&&isFinite(q)){lo=Math.min(lo,q);hi=Math.max(hi,q)}}));lo=Math.floor(Math.min(lo,80)/10)*10;hi=Math.ceil(Math.max(hi,100)/10)*10;
- box.innerHTML=Object.entries(A).map(([c,a])=>{const ms=a.months,last=ms[ms.length-1],r=last&&last.baseload>0?100*last.capture/last.baseload:null,t=ms.slice(-12),e=t.reduce((s,m)=>s+m.gwh,0),rv=t.reduce((s,m)=>s+m.gwh*m.capture,0),b=t.reduce((s,m)=>s+m.baseload,0)/Math.max(1,t.length);
-  const i=TIPS.push(k=>{const m=ms[k];return m&&(HN[c]||c)+" · "+m.m+" · baseload "+pm(m.baseload)+" · capture "+pm(m.capture)+(m.baseload>0?" ("+(100*m.capture/m.baseload).toFixed(0)+"%)":"")+" · "+Math.round(m.gwh).toLocaleString()+" GWh"+(m.neg_share?" · "+(100*m.neg_share).toFixed(1)+"% of output at negative prices":"")})-1;
-  return"<div class='card'><h3>"+(HN[c]||c)+"<span>"+(r!=null?r.toFixed(0)+"% in "+last.m:"–")+"</span></h3><div class='v mut'>Last "+t.length+" months: capture "+pm(e>0?rv/e:null)+" vs baseload "+pm(b)+"</div><svg class='mh' data-t='"+i+"' data-n='"+ms.length+"' data-c='"+c+"'></svg></div>"}).join("");
- box.querySelectorAll("svg.mh").forEach(sv=>{const W=sv.clientWidth||220,Hh=70,ms=A[sv.dataset.c].months,n=Math.max(2,ms.length);sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
-  const v=ms.map(m=>m.baseload>0?100*m.capture/m.baseload:null),x=i=>3+(W-6)*i/(n-1),y=q=>Hh-2-(Hh-6)*(q-lo)/(hi-lo);
-  sv.innerHTML=tsSVG(W,Hh,n,[{v,cls:""}],lo,hi,null,hi+"%")+"<line class='ax' stroke-dasharray='2 3' x1='3' x2='"+(W-3)+"' y1='"+y(100)+"' y2='"+y(100)+"'/><text class='tl' x='"+(W-3)+"' y='"+(y(100)-3)+"' text-anchor='end'>100% = baseload</text>"+v.map((q,i)=>q==null?"":"<circle class='dot' r='3' cx='"+x(i)+"' cy='"+y(q)+"'/>").join("")+axl(W,Hh,ms[0]?ms[0].m:"","",ms.length?ms[ms.length-1].m:"")});
- const rows=[];Object.entries(A).forEach(([c,a])=>a.months.forEach(m=>rows.push([c,m])));rows.sort((p,q)=>q[1].m.localeCompare(p[1].m)||p[0].localeCompare(q[0]));
- $("mtab").innerHTML="<thead><tr><th>Month</th><th>Area</th><th>Baseload</th><th>Capture</th><th>Capture rate</th><th>Offshore output</th><th>Output at negative prices</th></tr></thead><tbody>"+rows.slice(0,60).map(([c,m])=>"<tr><td>"+m.m+"</td><td>"+(HN[c]||c)+"</td><td>"+pm(m.baseload)+"</td><td>"+pm(m.capture)+"</td><td>"+(m.baseload>0?(100*m.capture/m.baseload).toFixed(1)+"%":"–")+"</td><td>"+Math.round(m.gwh).toLocaleString()+" GWh</td><td>"+(m.neg_share==null?"–":(100*m.neg_share).toFixed(1)+"%")+"</td></tr>").join("")+"</tbody>"}
+ }
 $("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=TIPS[+sv.dataset.t](k);if(t)dtip(e,t);else $("dtip").style.display="none"};
 $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
+
+/* ---------- capture prices per technology (ENTSO-E, web/data/capture.json) ---------- */
+const CAP={d:null,loading:false};
+function capLoad(){if(CAP.d||CAP.loading)return;CAP.loading=true;fetch("data/capture.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){CAP.d=j;if(S.tab==="mkt")market()}}).catch(()=>{})}
+// id, label, colour key, dashed (to tell apart two techs sharing a colour), shown in the line chart
+const CAPT=[["solar","Solar","sol",0,1],["wind_onshore","Wind onshore","won",0,1],["wind_offshore","Wind offshore","woff",0,1],["nuclear","Nuclear","nuc",0,1],["fossil_gas","Gas","gas",0,1],
+ ["fossil_hard_coal","Hard coal","coal",0,1],["fossil_brown_coal_lignite","Lignite","coal",1,1],["hydro_run_of_river","Hydro run-of-river","hyd",0,1],["hydro_water_reservoir","Hydro reservoir","hyd",1,1],
+ ["hydro_pumped_storage","Pumped storage (generation)","hyd",0,0],["biomass","Biomass","oth",0,1],["fossil_oil","Oil","oth",0,0],["waste","Waste","oth",0,0],["geothermal","Geothermal","oth",0,0],
+ ["fossil_coal_derived_gas","Coal-derived gas","coal",0,0],["others","Other","oth",0,0]];
+const MON=m=>{const[y,mo]=m.split("-");return["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mo-1]+" "+y.slice(2)};
+const curMonth=()=>new Date().toISOString().slice(0,7);
+// output-weighted capture over a set of months: {cap, gwh, base, rate, neg}
+function capAgg(Z,ms,id){let e=0,r=0,bh=0,bs=0,ng=0;ms.forEach(m=>{const c=Z[m];if(!c)return;if(c.b!=null&&c.h){bs+=c.b*c.h;bh+=c.h}const t=c.t&&c.t[id];if(t&&t[1]>0){e+=t[1];r+=t[0]*t[1];ng+=(t[2]||0)*t[1]}});
+ const base=bh?bs/bh:null,cap=e>0?r/e:null;return{cap,gwh:e,base,rate:cap!=null&&base>0?cap/base:null,neg:e>0?ng/e:null}}
+function capCountry(){if(!S.c||S.c==="Europe"||isReg(S.c)||GROUPS[S.c])return null;const z=selZones();return z?[...z]:null}
+// last-24-h capture per technology from the System data, for countries with one price zone
+function cap24(z){const c=Object.keys(SYS).find(k=>SYS[k].zones&&SYS[k].zones.length===1&&SYS[k].zones[0]===z);const d=c&&SYS[c];if(!d||!d.series||d.lag_h||!MK.prices[z])return{};
+ const out={};Object.entries(d.series).forEach(([id,v])=>{let e=0,r=0;v.forEach((g,h)=>{const p=MK.prices[z][h];if(g!=null&&g>0&&p!=null&&h<=N0){e+=g;r+=g*p}});if(e>0)out[id]=r/e});return out}
+const r0=v=>v==null||!isFinite(v)?"–":Math.round(v);
+function capSection(){capLoad();const D=CAP.d,cz=capCountry();
+ const head="<div class='mut' style='font-size:12px;margin:-4px 0 8px'>Capture price = output-weighted day-ahead price: what a MWh from that technology earned on average in the day-ahead market. Actual generation per production type in each bidding zone and day-ahead prices from the <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>, hourly averages.</div>";
+ if(!D)return"<h2>Capture prices</h2>"+head+"<div class='feednote'>Loading… (if this stays, the monthly data hasn't been built yet: a background job fills two years for every zone over its first runs).</div>";
+ const ms=D.months||[];
+ if(cz){const zs=cz.filter(z=>D.zones[z]);if(!zs.length)return"<h2>Capture prices · "+S.c+"</h2>"+head+"<div class='feednote'>No ENTSO-E capture data for "+S.c+"'s bidding zones yet.</div>";
+  return"<h2>Capture prices by technology · "+S.c+" <span class='mut' style='font:13px system-ui'>· monthly; pick Europe or a group to compare all markets</span></h2>"+head+zs.map((z,i)=>{const Z=D.zones[z],cm=curMonth(),full=ms.filter(m=>m<cm&&Z[m]),l12=full.slice(-12),lm=full[full.length-1],c24=cap24(z),cur=Z[cm];
+   const B=capAgg(Z,l12,"_"),tb=k=>{const v=l12.map(m=>Z[m][k]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+   const techs=CAPT.filter(([id])=>l12.some(m=>Z[m].t&&Z[m].t[id])||(cur&&cur.t&&cur.t[id]));
+   const rows=techs.map(([id,n,ck])=>{const A=capAgg(Z,l12,id),L=lm?capAgg(Z,[lm],id):{},C=cur?capAgg(Z,[cm],id):{};return"<tr><td><i style='background:var(--m-"+ck+")'></i>"+n+"</td><td>"+r0(c24[id])+"</td><td>"+r0(C.cap)+"</td><td>"+r0(L.cap)+"</td><td><b>"+r0(A.cap)+"</b></td><td>"+(A.rate!=null?Math.round(100*A.rate)+"%":"–")+"</td><td>"+(A.gwh?(A.gwh>=1000?(A.gwh/1000).toFixed(1)+" TWh":Math.round(A.gwh)+" GWh"):"–")+"</td><td>"+(A.neg!=null?(100*A.neg).toFixed(1)+"%":"–")+"</td></tr>"}).join("");
+   return"<div class='card' style='cursor:default'><h3>"+flagHTML(ZONEFLAG[z]||"",7)+" "+(ZN[z]||z)+"<span>baseload "+pm(B.base)+" · TB2 "+r0(tb("tb2"))+" · TB4 "+r0(tb("tb4"))+" €/MWh <span class='mut' style='font-weight:400'>(12-month avg of daily spreads)</span></span></h3>"+
+    "<svg class='cmp' id='capZ"+i+"' data-z='"+z+"'></svg><div class='mut' style='font-size:12px'>Monthly capture price per technology, €/MWh; <span style='color:var(--ink)'>┅</span> baseload (mean day-ahead price). Dashed coloured lines: lignite, hydro reservoir. Hover for values.</div>"+
+    "<table class='mixtab'><thead><tr><th>Technology</th><th>Last 24 h</th><th>"+MON(cm)+" so far</th><th>"+(lm?MON(lm):"Last month")+"</th><th>Last 12 months</th><th>vs baseload</th><th>Output (12 m)</th><th>Output at negative prices</th></tr></thead><tbody>"+rows+
+    "<tr><td class='mut'>Baseload</td><td>"+(MK.prices[z]?r0(capStats([],MK.prices[z],0,N0).base):"–")+"</td><td>"+r0(cur&&cur.b)+"</td><td>"+r0(lm&&Z[lm].b)+"</td><td><b>"+r0(B.base)+"</b></td><td>100%</td><td></td><td>"+(l12.length?l12.reduce((a,m)=>a+(Z[m].neg||0),0)+" h":"")+"</td></tr></tbody></table>"+
+    "<div class='mut' style='font-size:12px'>€/MWh. Last 24 h from the live System data (single-zone countries only). Last 12 months = the 12 latest complete months"+(l12.length<12?" ("+l12.length+" available so far)":"")+", weighted by output.</div></div>"}).join("")}
+ // all markets: one technology, months as columns
+ S.capt=S.capt||"solar";S.capm=S.capm||"eur";const T=CAPT.find(t=>t[0]===S.capt),sz=selZones(),cm=curMonth();
+ const zs=Object.keys(D.zones).filter(z=>(!sz||!sz.size||sz.has(z))&&ms.some(m=>D.zones[z][m]&&D.zones[z][m].t&&D.zones[z][m].t[S.capt]));
+ const val=(z,m)=>{const c=D.zones[z][m],t=c&&c.t&&c.t[S.capt];if(!t)return null;return S.capm==="eur"?t[0]:c.b>0?100*t[0]/c.b:null};
+ const l12=ms.filter(m=>m<cm).slice(-12);
+ const avg=z=>{const A=capAgg(D.zones[z],l12,S.capt);return S.capm==="eur"?A.cap:A.rate!=null?100*A.rate:null};
+ const rows=zs.map(z=>({z,a:avg(z)})).sort((p,q)=>(q.a??-1e9)-(p.a??-1e9));
+ const all=rows.flatMap(r=>ms.map(m=>val(r.z,m))).filter(v=>v!=null).sort((a,b)=>a-b),top=all.length?all[Math.floor(all.length*.97)]:1,low=all.length?all[0]:0;
+ const col=v=>{if(v==null)return"";let t;if(S.capm==="pct"){t=(v-Math.max(0,low))/Math.max(1,top-Math.max(0,low));return"background:"+lerpC(HMPOS,t)+";color:"+(t>.6?"#fff":"#222")}
+  const tp=Math.max(50,top);return"background:"+hmColor(v,tp,Math.min(0,low))+";color:"+((v>=0&&v/tp>.6)||(v<0&&low<0&&v/low>.6)?"#fff":"#222")};
+ let h="<h2>Monthly capture prices · all markets <span class='mut' style='font:13px system-ui'>· pick a country for every technology in that market</span></h2>"+head;
+ h+="<div class='card' style='cursor:default'><h3>"+T[1]+" capture "+(S.capm==="eur"?"price, €/MWh":"rate, % of baseload")+"<span class='seg'><button data-ct='solar' class='"+(S.capt==="solar"?"on":"")+"'>Solar</button><button data-ct='wind_onshore' class='"+(S.capt==="wind_onshore"?"on":"")+"'>Wind onshore</button><button data-ct='wind_offshore' class='"+(S.capt==="wind_offshore"?"on":"")+"'>Wind offshore</button>&nbsp;<button data-cm='eur' class='"+(S.capm==="eur"?"on":"")+"'>€/MWh</button><button data-cm='pct' class='"+(S.capm==="pct"?"on":"")+"'>% of baseload</button></span></h3>";
+ if(!rows.length)h+="<div class='mut'>No zone with "+T[1].toLowerCase()+" output in this selection.</div>";
+ else h+="<div class='tw' style='max-height:none'><table class='captab'><thead><tr><th style='text-align:left'>Zone</th>"+ms.map(m=>"<th>"+MON(m).replace(" ","<br>")+"</th>").join("")+"<th>12 m</th></tr></thead><tbody>"+rows.map(r=>"<tr data-cf='"+(ZONEFLAG[r.z]||"")+"'><td class='z'>"+flagHTML(ZONEFLAG[r.z]||"",6)+" "+r.z+"</td>"+ms.map(m=>{const v=val(r.z,m),c=D.zones[r.z][m],t=c&&c.t&&c.t[S.capt];return"<td style='"+col(v)+"' title='"+r.z+" · "+MON(m)+(m===cm?" (so far)":"")+(t?" · capture "+t[0].toFixed(1)+" €/MWh · baseload "+(c.b!=null?c.b.toFixed(1):"–")+" €/MWh · "+(c.b>0?Math.round(100*t[0]/c.b)+"%":"–")+" · "+Math.round(t[1]).toLocaleString()+" GWh · "+(100*(t[2]||0)).toFixed(1)+"% of output at negative prices":"")+"'>"+(v==null?"":Math.round(v))+"</td>"}).join("")+"<td class='av'>"+r0(r.a)+"</td></tr>").join("")+"</tbody></table></div>";
+ h+="<div class='mut' style='font-size:12px'>"+(S.capm==="eur"?"Capture price":"Capture price as a share of the month's baseload (mean day-ahead) price")+" per bidding zone and month"+(ms.includes(cm)?"; the last month is so far":"")+". 12 m = output-weighted over the 12 latest complete months"+(l12.length<12?" ("+l12.length+" so far)":"")+"; zones sorted by it. Hover a cell for details; click a zone for all its technologies."+(D.complete?"":" Older months are still being filled in.")+"</div></div>";
+ return h}
+function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.querySelectorAll("#mkt svg.cmp[data-z]").forEach(sv=>{const Z=D.zones[sv.dataset.z];if(!Z)return;
+ const ser=CAPT.filter(t=>t[4]&&ms.some(m=>Z[m]&&Z[m].t&&Z[m].t[t[0]])).map(([id,n,ck,dash])=>({id,label:n,col:"var(--m-"+ck+")",dash,v:ms.map(m=>Z[m]&&Z[m].t&&Z[m].t[id]?Z[m].t[id][0]:null)}));
+ ser.push({id:"_b",label:"Baseload",col:"var(--ink)",dash:1,v:ms.map(m=>Z[m]?Z[m].b:null)});
+ CMP[sv.id]={series:ser,a:0,b:ms.length-1,fmt:v=>Math.round(v)+"",H:280,right:150,xs:Math.max(1,Math.round(ms.length/8)),xl:k=>MON(ms[k]),tl:k=>MON(ms[k])+(ms[k]===curMonth()?" (so far)":"")+" · €/MWh",dots:1};cmpRender(sv.id)})}
 
 /* ---------- System tab: generation mix, load, prices, cross-border flows (Energy-Charts) ---------- */
 const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland",cz:"Czechia",sk:"Slovakia",hu:"Hungary",ro:"Romania",bg:"Bulgaria",si:"Slovenia",hr:"Croatia",rs:"Serbia",gr:"Greece",ba:"Bosnia and Herzegovina",me:"Montenegro",mk:"North Macedonia",ee:"Estonia",lv:"Latvia",lt:"Lithuania",fi:"Finland",es:"Spain",pt:"Portugal",it:"Italy"};
@@ -716,14 +761,12 @@ function system(){const el=$("sys");STIPS=[];
  if(!S.sys||!all.some(d=>d.c===S.sys))S.sys=all[0]&&all[0].c;
  const D=all.find(d=>d.c===S.sys);
  let h=(S.c&&S.c!=="Europe"&&!csel&&!grp?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. CEE / SEE, Baltics, Italy, Iberia and Finland: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (actual generation per production type, actual load, physical flows). Last 24 h, hourly averages. Flows: positive = import.</div>";
- h+=gieOverview();
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
  h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
  const offc=all.filter(d=>SYS[d.c].series.wind_offshore&&SYS[d.c].series.wind_offshore.some(v=>v>0));S.offm=S.offm||"gen";
  if(offc.length)h+="<div class='card' style='cursor:default'><h3>Offshore wind share<span class='seg'><button data-om='gen' class='"+(S.offm==="gen"?"on":"")+"'>of generation</button><button data-om='load' class='"+(S.offm==="load"?"on":"")+"'>of consumption</button></span></h3><svg class='cmp' id='cmpOff'></svg><div class='mut' style='font-size:12px'>Offshore wind output as a share of national public net generation, or of load (consumption), last 24 h, hourly.</div></div>";
  if(D){const lh=D.last,g=D.gen[lh]||1;
   h+="<h2>"+(SYSN[D.c]||D.c)+" <span class='mut' style='font:13px system-ui'>· last 24 h</span></h2>";
-  h+=gieCard(D.c.toUpperCase(),SYSN[D.c]||D.c)+gasCard(D.c.toUpperCase());
   const i1=STIPS.push(k=>(SYSN[D.c]||D.c)+" · "+dl(k)+" · generation "+fmt(D.gen[k])+(D.load?" · load "+v1(D.load[k]):"")+" · "+MIXC.filter(([c])=>D.mix[c][k]>0).map(([c,n])=>n+" "+fmt(D.mix[c][k])).join(", "))-1;
   h+="<div class='syswrap'><div class='card wide'><h3>Generation mix and load<span>"+fmt(D.gen[lh])+" generation"+(D.load?" · "+v1(D.load[lh])+" load":"")+"</span></h3><svg class='sx' data-t='"+i1+"' data-n='"+NP+"' data-k='mix'></svg>"+"<div class='mut' style='font-size:12px;display:flex;justify-content:space-between'><span>−24 h</span><span>now</span></div>";
   h+="<table class='mixtab'><thead><tr><th>Source</th><th>Now</th><th>Share now</th><th>24 h avg</th><th>24 h energy</th></tr></thead><tbody>"+MIXC.filter(([k])=>D.mix[k].some(v=>v>0)).map(([k,n])=>{const a=D.mix[k].slice(0,lh+1),av=a.reduce((p,q)=>p+q,0)/a.length;return"<tr><td><i style='background:var(--m-"+k+")'></i>"+n+"</td><td>"+fmt(D.mix[k][lh])+"</td><td>"+(100*D.mix[k][lh]/g).toFixed(1)+"%</td><td>"+fmt(av)+"</td><td>"+(a.reduce((p,q)=>p+q,0)/1000).toFixed(1)+" GWh</td></tr>"}).join("")+"</tbody></table></div>";
@@ -736,6 +779,8 @@ function system(){const el=$("sys");STIPS=[];
    const i3=STIPS.push(k=>dl(k)+" · net "+(D.net[k]==null?"–":(D.net[k]>=0?"import ":"export ")+fmt(Math.abs(D.net[k])))+" · "+D.nb.map(nb=>(D.fn[nb]||nb)+" "+(D.fl[nb][k]==null?"–":(D.fl[nb][k]>0?"+":"")+Math.round(D.fl[nb][k]))).join(", "))-1;
    h+="<div class='card'><h3>Cross-border physical flows<span>"+(D.net[lh]>=0?"net import ":"net export ")+fmt(Math.abs(D.net[lh]))+"</span></h3><div class='flows'>"+now.map(([k,v])=>"<div class='fr'><span class='fl'>"+(D.fn[k]||k)+"</span><span class='fb'><b style='"+(v>=0?"left:50%;width:"+(50*v/mxf)+"%;background:var(--imp)":"right:50%;width:"+(50*-v/mxf)+"%;background:var(--exp)")+"'></b></span><span class='fv'>"+(v>0?"+":"")+fmt(v).replace(" MW","")+" MW</span></div>").join("")+"</div><div class='mut' style='font-size:12px;margin:6px 0 2px'><span style='color:var(--imp)'>■</span> import · <span style='color:var(--exp)'>■</span> export · at "+hl(lh)+". Net import, last 24 h:</div><svg class='sx' data-t='"+i3+"' data-n='"+NP+"' data-k='net'></svg></div>"}
   h+="</div>"}
+ const gh=(D?gieCard(D.c.toUpperCase(),SYSN[D.c]||D.c)+gasCard(D.c.toUpperCase()):"")+gieOverview();
+ if(gh)h+="<h2>Gas <span class='mut' style='font:13px system-ui'>· storage, LNG and supply"+(D?" for "+(SYSN[D.c]||D.c)+", then the EU":"")+"</span></h2>"+gh;
  el.innerHTML=h;
  if(offc.length){CMP.cmpOff={series:offc.map(d=>{const w=SYS[d.c].series.wind_offshore;return{id:d.c,label:SYSN[d.c]||d.c,flag:d.c,v:w.map((v,hh)=>{const den=S.offm==="gen"?d.gen[hh]:(d.load&&d.load[hh]);return v==null||!den?null:100*v/den})}}),a:0,b:Math.max(...offc.map(d=>d.last)),fmt:v=>Math.round(v)+"%",zero:true,H:260,right:110};cmpRender("cmpOff")}
  el.querySelectorAll("svg.sx").forEach(sv=>{const W=sv.clientWidth||400,k=sv.dataset.k,Hh=k==="mix"?180:70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+(k==="mix"?0:12)));sv.style.height=(Hh+(k==="mix"?0:12))+"px";
@@ -744,7 +789,10 @@ function system(){const el=$("sys");STIPS=[];
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
 $("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
-$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;market()}});
+$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;market();return}
+ const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;market();return}
+ const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;market();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;market();return}
+ const tr=e.target.closest("tr[data-cf]");if(tr){const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===tr.dataset.cf&&COUNTRIES.includes(n));if(nm)go(nm,null)}});
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 

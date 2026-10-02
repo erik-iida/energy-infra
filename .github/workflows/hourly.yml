@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]       # redeploy straight away when code changes
   workflow_run:            # and when a data job has committed new data (bot commits don't trigger push events)
-    workflows: [gas, grid, osm-world, bathymetry, global-turbines, extra-turbines]
+    workflows: [gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture]
     types: [completed]
 
 # never run two at once, so a delayed run can't double the API calls

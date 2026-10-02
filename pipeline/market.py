@@ -347,6 +347,9 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
             cee = {z for c in ("cz", "sk", "hu", "ro", "bg", "si", "hr", "rs", "gr", "me", "ee", "lv", "lt") for z in entsoe.COUNTRIES[c][2]}
             market["core_zones"] = sorted(set(market["core_zones"]) | (cee & set(market["prices"])))
             market["source"] += "; ENTSO-E Transparency Platform"
+            ufx = entsoe.fx_table().get("UAH", {})
+            if ufx.get("rate"):
+                market["fx"] = {"UAH": {"rate": ufx["rate"], "date": ufx.get("date"), "source": ufx.get("source")}}
             market["diag"]["entsoe"] = {"calls": ec.calls, "errors": ec.errors[-15:], "prices": sorted(ep), "system": sorted(es)}
             print(f"entsoe: {ec.calls} calls, {len(ec.errors)} errors, prices {len(ep)} zones, system {sorted(es)}")
         except Exception as ex:  # never block the feed

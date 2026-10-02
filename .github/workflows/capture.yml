@@ -38,5 +38,6 @@ jobs:
           git add data/raw/capture/cells.json 2>/dev/null || true
           git add data/raw/capture/capture_log.txt 2>/dev/null || true
           git add web/data/capture.json 2>/dev/null || true
+          git add data/fx.json 2>/dev/null || true
           git commit -m "Capture prices per technology (ENTSO-E)" || echo "no changes"
           for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done

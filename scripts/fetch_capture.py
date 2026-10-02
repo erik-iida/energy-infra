@@ -86,9 +86,10 @@ def cell(zone: str, m: str) -> dict:
     a, b = month_bounds(m)
     cl = entsoe.Client()
     price: dict[int, float] = {}
+    cur = "EUR"
     for _ts, _ns, hv in entsoe.series(cl.get(documentType="A44", in_Domain=eic, out_Domain=eic,
                                          periodStart=fmt(a), periodEnd=fmt(b)), "price.amount"):
-        hv = entsoe.to_eur(_ts, _ns, hv, cl.errors)  # UA-IPS publishes in UAH
+        cur = entsoe.currency(_ts, _ns)  # stored as published (UA-IPS: UAH); converted to EUR when written out
         for h, v in hv.items():
             if a <= h < b:
                 price[h] = v if h not in price else (price[h] + v) / 2
@@ -103,7 +104,7 @@ def cell(zone: str, m: str) -> dict:
         for h, v in hv.items():
             if a <= h < b:
                 d[h] = d.get(h, 0) + max(0.0, v)
-    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls, "fx": 1}
+    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls, "cur": cur}
     if cl.errors:
         out["err"] = cl.errors[-2:]
     if not price:
@@ -130,6 +131,7 @@ def main() -> None:
         log("ENTSOE_TOKEN not set")
         return
     t0 = time.time()
+    fx = entsoe.refresh_fx(log)
     st = json.loads(STATE.read_text()) if STATE.exists() else {}
     cells = st.setdefault("cells", {})
     ms = months(MONTHS)
@@ -139,7 +141,7 @@ def main() -> None:
     for m in ms:
         for z in zones:
             c = cells.get(f"{z}|{m}")
-            if c is None or (z == "UA-IPS" and not c.get("fx")):  # fetched before UAH -> EUR conversion
+            if c is None:
                 todo.append((z, m))
             elif m in ms[:2] and c.get("day") != today.isoformat():
                 todo.append((z, m))
@@ -186,7 +188,15 @@ def main() -> None:
         for m in pub_months:
             c = cells.get(f"{z}|{m}")
             if c and not c.get("none"):
-                row[m] = {k: c[k] for k in ("b", "h", "neg", "tb2", "tb4", "t") if k in c}
+                cur = c.get("cur") or entsoe.ZONE_CURRENCY.get(z, "EUR")
+                r = entsoe.eur_rate(cur)
+                if r is None:  # no stored rate: leave the zone out rather than publish another currency
+                    continue
+                row[m] = {k: c[k] for k in ("h", "neg") if k in c}
+                for k in ("b", "tb2", "tb4"):
+                    if c.get(k) is not None:
+                        row[m][k] = round(c[k] / r, 2)
+                row[m]["t"] = {k: [round(v[0] / r, 2), *v[1:]] for k, v in c.get("t", {}).items()}
         if row:
             out_z[z] = row
     names = {}
@@ -197,7 +207,8 @@ def main() -> None:
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "source": "ENTSO-E Transparency Platform: actual generation per production type (per bidding zone) and "
                   "day-ahead prices, hourly averages",
-        "complete": left == 0, "months": pub_months, "names": names, "zones": out_z,
+        "complete": left == 0, "months": pub_months,
+        "fx": {k: {"rate": v.get("rate"), "date": v.get("date"), "source": v.get("source")} for k, v in fx.items()}, "names": names, "zones": out_z,
     }, separators=(",", ":")), encoding="utf-8")
     log(f"wrote {OUT.relative_to(ROOT)}: {len(out_z)} zones, {len(pub_months)} months, {OUT.stat().st_size / 1e3:.0f} kB")
 

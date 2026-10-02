@@ -151,9 +151,41 @@ def series(root: ET.Element | None, value_tag: str):
 
 # ---------------------------------------------------------------- currencies
 # Day-ahead prices are mostly in EUR; Ukraine (UA-IPS) publishes in UAH. Non-EUR prices are converted with the
-# National Bank of Ukraine's official daily rate (UAH per EUR); without a rate the series is dropped, never shown raw.
-NBU = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=EUR&date={}&json"
-_FX: dict[str, float | None] = {}
+# LATEST official rate (National Bank of Ukraine, UAH per EUR) kept in data/fx.json: refresh_fx() (run by the
+# capture workflow, which commits the file) updates it once a day and keeps a dated history; everything else only
+# reads it. Without a stored rate the series is dropped, never shown in the wrong currency.
+FX_FILE = config.ROOT / "data" / "fx.json"
+NBU_LATEST = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=EUR&json"
+ZONE_CURRENCY = {"UA-IPS": "UAH"}  # for cells stored before the currency was recorded
+
+
+def fx_table() -> dict:
+    try:
+        return json.loads(FX_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def refresh_fx(log=print) -> dict:
+    """Fetch the latest NBU UAH/EUR rate once a day and store it (with history) in data/fx.json."""
+    fx = fx_table()
+    u = fx.setdefault("UAH", {"source": "National Bank of Ukraine official rate", "unit": "UAH per EUR", "history": {}})
+    if u.get("checked") == datetime.now(timezone.utc).date().isoformat():
+        return fx
+    import requests
+    try:
+        r = requests.get(NBU_LATEST, timeout=30, headers={"User-Agent": "energy-infra-monitor"})
+        row = r.json()[0]
+        rate, d = float(row["rate"]), datetime.strptime(row["exchangedate"], "%d.%m.%Y").date().isoformat()
+        u["rate"], u["date"] = rate, d
+        u["history"][d] = rate
+        u["checked"] = datetime.now(timezone.utc).date().isoformat()
+        log(f"fx: UAH/EUR {rate} on {d}")
+    except Exception as ex:
+        log(f"fx: NBU fetch failed {ex!r}"[:200] + (f"; keeping {u.get('rate')} from {u.get('date')}" if u.get("rate") else ""))
+    FX_FILE.parent.mkdir(parents=True, exist_ok=True)
+    FX_FILE.write_text(json.dumps(fx, indent=1, sort_keys=True), encoding="utf-8")
+    return fx
 
 
 def currency(ts: ET.Element, ns: str) -> str:
@@ -161,40 +193,22 @@ def currency(ts: ET.Element, ns: str) -> str:
     return (el.text or "EUR").strip() if el is not None else "EUR"
 
 
-def eur_rate(cur: str, t: float) -> float | None:
-    """Units of `cur` per 1 EUR on the (UTC) day of t; 1.0 for EUR, None if unknown."""
+def eur_rate(cur: str) -> float | None:
+    """Latest stored units of `cur` per 1 EUR; 1.0 for EUR, None if no rate is stored."""
     if cur == "EUR":
         return 1.0
-    day = datetime.fromtimestamp(t, timezone.utc).strftime("%Y%m%d")
-    key = f"{cur}|{day}"
-    if key not in _FX:
-        rate = None
-        if cur == "UAH":
-            import requests
-            for _ in range(2):
-                try:
-                    r = requests.get(NBU.format(day), timeout=30)
-                    rate = float(r.json()[0]["rate"])
-                    break
-                except Exception:
-                    time.sleep(2)
-        _FX[key] = rate
-    return _FX[key]
+    return fx_table().get(cur, {}).get("rate")
 
 
 def to_eur(ts: ET.Element, ns: str, hv: dict[int, float], errors: list[str] | None = None) -> dict[int, float]:
-    """Convert one price TimeSeries (already hourly) to EUR/MWh; hours without a rate are left out."""
+    """Convert one price TimeSeries (already hourly) to EUR/MWh at the latest stored rate; {} if none."""
     cur = currency(ts, ns)
-    if cur == "EUR":
-        return hv
-    out = {}
-    for h, v in hv.items():
-        r = eur_rate(cur, h)
-        if r:
-            out[h] = v / r
-    if errors is not None and len(out) < len(hv):
-        errors.append(f"no {cur}/EUR rate for {len(hv) - len(out)} h")
-    return out
+    r = eur_rate(cur)
+    if r is None:
+        if errors is not None:
+            errors.append(f"no stored {cur}/EUR rate: series dropped")
+        return {}
+    return hv if r == 1.0 else {h: v / r for h, v in hv.items()}
 
 
 def _fmt(t: float) -> str:
@@ -215,10 +229,10 @@ def prices(cl: Client, zones: list[str], hours: list[int]) -> dict[str, list]:
     """Day-ahead prices per zone over the feed window; cached per zone, refetched when hours are missing."""
     cache = _load_cache()
     pc = cache.setdefault("prices", {})
-    if cache.get("fx") != 1:  # cached before currency conversion: UA-IPS was in UAH, refetch it
+    if cache.get("fx") != 2:  # cached before the stored-rate conversion: refetch UA-IPS
         pc.pop("UA-IPS", None)
         cache.get("pt", {}).pop("UA-IPS", None)
-        cache["fx"] = 1
+        cache["fx"] = 2
     tomorrow_due = datetime.now(timezone.utc).hour >= 11
     for z in zones:
         eic = ZONE_EIC.get(z)

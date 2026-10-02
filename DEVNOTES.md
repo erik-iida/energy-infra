@@ -176,6 +176,40 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   Market highlights the group's zones, System shows the group's countries.
 - Next: A73 per-unit generation for large plants on the map (needs plant positions: powerplantmatching).
 
+## Late Oct 2-3 2026: GridEconomics
+- Renamed "GridEconomics" (page title, heading, README); repo and URL stay energy-infra
+  (https://erik-iida.github.io/energy-infra/ - the bare erik-iida.github.io has no site).
+- web/index.html is the only page source (one file: CSS + HTML + JS). Edit it directly; check the script with
+  `node --check` on the extracted <script> and test with playwright against `python -m http.server` in web/.
+  The committed web/data/feed.json is stale (the hourly workflow deploys a fresh one without committing it):
+  for local tests inject a `market` block into a copy, never commit it.
+- Map projection is Web Mercator (V.s = px per degree of longitude, sl() = px per degree of latitude at the
+  centre for zoom thresholds); north/south panning is clamped to the world edge (clampV). Hit-testing uses
+  CSS-pixel paths with an identity transform (works at any display scaling).
+- Map price overlay: bidding zones from web/data/zones.json (scripts/build_zones.py: entsoe-py MIT geometries +
+  Natural Earth for IE(SEM), ME, MK, BA, UA-IPS, AL) coloured by day-ahead price now / 24 h avg / tomorrow /
+  TB2 / TB4; opens on "Now"; low prices fade to transparent; click a zone -> System tab for that country.
+  Price controls live in the legend; legend headings switch whole layers.
+- Browser wake model defaults to TurbOPark (Nygaard 2022), a port of PyWake's Nygaard_2022 (TurboGaussian,
+  A=0.04, ground mirror, Gaussian rotor overlap, squared sum); matches PyWake within ~0.2 % in wind speed.
+  The models panel shows PyWake output and PyWake calc time per model (feed farms[id].ms, .nt).
+- Capture prices: scripts/fetch_capture.py + capture workflow (every 3 h) -> web/data/capture.json: per bidding
+  zone and month, ENTSO-E A75 generation per production type + A44 prices -> output-weighted capture price per
+  technology, baseload, negative hours, daily TB2/TB4 (CET days). State in data/raw/capture/cells.json.
+  Market tab: all-markets monthly heatmap (solar / wind on / wind off), per-country technology tables + chart.
+- Ukraine (UA-IPS) prices are published in UAH: converted at the latest NBU rate stored with history in
+  data/fx.json (refreshed daily by the capture workflow; cells kept in UAH, converted when published).
+- TB2/TB4 (mean of the 2/4 highest minus 2/4 lowest hourly prices) shown next to the price heatmap.
+- All tables in Market and System sort by header (unit-aware). Technology colours: nuclear red, coal & lignite
+  black, gas grey, oil brown, onshore wind green, offshore wind dark blue, hydro purple, biomass & waste dark
+  green, solar yellow.
+- System tab: electricity before gas; "Compare <technology> across countries" (% of generation / consumption /
+  MW); country flags.
+- Hub-height wind: ECMWF IFS HRES 100 m (Open-Meteo ECMWF endpoint) scaled with a neutral log law,
+  z0 = 0.0002 m (see the to-do below).
+- Pending: Balancing Services token (BALANCING_TOKEN secret) for imbalance / aFRR / mFRR; power-plant layer
+  (powerplantmatching positions + ENTSO-E A73 per-unit output, CEE/SEE first).
+
 ## Known gaps / next ideas
 - TO DO: stability-aware hub-height wind. Today pipeline/run.py `hub_wind` scales the ECMWF IFS 100 m wind with a
   neutral log law (z0 = 0.0002 m, offshore) for every farm. Plan: also fetch 10 m wind (Open-Meteo ECMWF endpoint
@@ -202,4 +236,3 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 ## Working from a browser-only session
 The code runs on GitHub, not locally. Clone the repo, edit, push to `main`; the workflow runs the pipeline
 and redeploys the site in ~3 minutes. Check the run in the Actions tab.
-- Renamed "GridEconomics" (page title and heading; the repo and site URL stay energy-infra).

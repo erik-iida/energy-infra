@@ -245,7 +245,10 @@ def global_farms(add_type) -> list[dict]:
 
 def make_farm(fid: int, p: dict) -> dict:
     """site.json farm from a prototype: local layout in metres, hull outline, installed MW."""
-    pts = p["pts"]
+    pts = []  # drop points within 50 m of one already kept (double-mapped turbines break PyWake)
+    for q in p["pts"]:
+        if all(((q[0] - r[0]) * 111320 * cos(radians(q[1]))) ** 2 + ((q[1] - r[1]) * 110574) ** 2 > 50 ** 2 for r in pts):
+            pts.append(q)
     lon0, lat0 = sum(q[0] for q in pts) / len(pts), sum(q[1] for q in pts) / len(pts)
     kx, ky = 111320 * cos(radians(lat0)), 110574
     geom = MultiPoint(pts).convex_hull.buffer(300 / ky)

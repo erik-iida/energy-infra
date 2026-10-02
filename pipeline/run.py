@@ -82,7 +82,11 @@ def main(argv=None) -> None:
         ok = np.isfinite(ws)
         P = {m: np.full(len(times), np.nan) for m in models}
         if ok.any():
-            pw = wake.farm_power(f, site["types"], ws[ok], wd[ok]) if lay else wake.estimate_no_layout(f, ws[ok])
+            try:
+                pw = wake.farm_power(f, site["types"], ws[ok], wd[ok]) if lay else wake.estimate_no_layout(f, ws[ok])
+            except Exception as ex:  # one bad layout must never stop the feed
+                print(f"warning: {f['n']}: {ex!r}"[:200])
+                pw = wake.estimate_no_layout({**f, "cap": f.get("inst", f.get("cap", 0))}, ws[ok])
             for m in models:
                 P[m][ok] = pw[m]
         results[str(f["id"])] = (ws, wd, P)

@@ -1,76 +1,57 @@
-token set: True, length 36
---- A75 gen RO in: HTTP 200, 971 bytes, text/xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Acknowledgement_MarketDocument
-	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
-	<mRID>333167a9-a346-4</mRID>
-	<createdDateTime>2026-10-02T11:00:17Z</createdDateTime>
-	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
-	<received_MarketDocument.createdDateTime>2026-10-02T11:00:17Z</received_MarketDocument.createdDateTime>
-	<Reason>
-		<code>999</code>
-		<text>No matching data found for Data item AGGREGATED_GENERATION_PER_TYPE_R3 [16.1.B&amp;C] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/202
---- A65 load RO: HTTP 200, 951 bytes, text/xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Acknowledgement_MarketDocument
-	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
-	<mRID>0357df61-23c4-4</mRID>
-	<createdDateTime>2026-10-02T11:00:41Z</createdDateTime>
-	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
-	<received_MarketDocument.createdDateTime>2026-10-02T11:00:41Z</received_MarketDocument.createdDateTime>
-	<Reason>
-		<code>999</code>
-		<text>No matching data found for Data item ACTUAL_TOTAL_LOAD_R3 [6.1.A] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/2026-10-02T11:00:00Z.</
---- A73 unit RO: HTTP 200, 968 bytes, text/xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Acknowledgement_MarketDocument
-	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
-	<mRID>e90b3c21-d30c-4</mRID>
-	<createdDateTime>2026-10-02T11:00:56Z</createdDateTime>
-	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
-	<received_MarketDocument.createdDateTime>2026-10-02T11:00:56Z</received_MarketDocument.createdDateTime>
-	<Reason>
-		<code>999</code>
-		<text>No matching data found for Data item ACTUAL_GENERATION_OUTPUT_PER_UNIT_R3 [16.1.A] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/2026-1
---- A75 gen RO day-before: HTTP 200, 89972 bytes, text/xml
+token set: True
+=== last 24 h: HTTP 200, 7290 chars
 <?xml version="1.0" encoding="utf-8"?>
-<GL_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0">
-  <mRID>b1569317e30d466192c856d294dbc119</mRID>
-  <revisionNumber>1</revisionNumber>
-  <type>A75</type>
-  <process.processType>A16</process.processType>
-  <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-  <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-  <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-  <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T11:01:10Z</createdDateTime>
-  <time_Period.timeInterval>
-    <start>2026-09-29T11:00Z</start>
-    <end>2026-09-30T11:00Z</end>
-  </time_Period.timeInterval>
-      <TimeSeries>
-        <mRID>1</mRID>
-
---- A44 price IE: HTTP 200, 963 bytes, text/xml
-<?xml version="1.0" encoding="UTF-8"?>
-<Acknowledgement_MarketDocument
-	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
-	<mRID>2640b1b0-fe52-4</mRID>
-	<createdDateTime>2026-10-02T11:01:19Z</createdDateTime>
-	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
-	<received_MarketDocument.createdDateTime>2026-10-02T11:01:19Z</received_MarketDocument.createdDateTime>
-	<Reason>
-		<code>999</code>
-		<text>No matching data found for Data item ENERGY_PRICES [12.1.D] (10Y1001A1001A59C, 10Y1001A1001A59C) and interval 2026-10-01T11:00:00Z/2026-10-02T
+  <Publication_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3">
+    <mRID>7eedc3c63b9448abb927da8d8df3c4d9</mRID>
+    <revisionNumber>1</revisionNumber>
+    <type>A44</type>
+    <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+    <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+    <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+    <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
+    <createdDateTime>2026-10-02T20:58:50Z</createdDateTi
+  TS 0: {'mRID': '1', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-09-30T21:00Z', '2026-10-01T21:00Z', 'PT60M')] n=19 min 10.0 max 9458.0 mean 4969.8
+  TS 1: {'mRID': '2', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-10-01T21:00Z', '2026-10-02T21:00Z', 'PT60M')] n=17 min 10.0 max 12540.1 mean 6119.8
+=== Aug 2026: HTTP 200, 117639 chars
+<?xml version="1.0" encoding="utf-8"?>
+  <Publication_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3">
+    <mRID>97c38c63963d48b380107c36f5a859cb</mRID>
+    <revisionNumber>1</revisionNumber>
+    <type>A44</type>
+    <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+    <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+    <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+    <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
+    <createdDateTime>2026-10-02T20:58:53Z</createdDateTi
+  TS 0: {'mRID': '1', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-07-31T21:00Z', '2026-08-01T21:00Z', 'PT60M')] n=23 min 15.0 max 14975.19 mean 5844.1
+  TS 1: {'mRID': '2', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-01T21:00Z', '2026-08-02T21:00Z', 'PT60M')] n=22 min 10.0 max 14975.76 mean 5960.9
+  TS 2: {'mRID': '3', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-02T21:00Z', '2026-08-03T21:00Z', 'PT60M')] n=20 min 1499.0 max 15000.0 mean 7696.4
+  TS 3: {'mRID': '4', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-03T21:00Z', '2026-08-04T21:00Z', 'PT60M')] n=22 min 3080.0 max 15000.0 mean 8530.2
+  TS 4: {'mRID': '5', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-04T21:00Z', '2026-08-05T21:00Z', 'PT60M')] n=22 min 3079.0 max 15000.0 mean 7870.7
+  TS 5: {'mRID': '6', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-05T21:00Z', '2026-08-06T21:00Z', 'PT60M')] n=23 min 3650.0 max 15000.0 mean 9440.1
+  TS 6: {'mRID': '7', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-06T21:00Z', '2026-08-07T21:00Z', 'PT60M')] n=24 min 4330.0 max 12303.0 mean 8018.9
+  TS 7: {'mRID': '8', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-07T21:00Z', '2026-08-08T21:00Z', 'PT60M')] n=24 min 1340.0 max 10377.0 mean 6709.0
+  TS 8: {'mRID': '9', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-08T21:00Z', '2026-08-09T21:00Z', 'PT60M')] n=24 min 43.0 max 10300.0 mean 5037.7
+  TS 9: {'mRID': '10', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-09T21:00Z', '2026-08-10T21:00Z', 'PT60M')] n=24 min 2450.0 max 14971.4 mean 7375.4
+  TS 10: {'mRID': '11', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-10T21:00Z', '2026-08-11T21:00Z', 'PT60M')] n=24 min 2369.0 max 14978.91 mean 7976.0
+  TS 11: {'mRID': '12', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-11T21:00Z', '2026-08-12T21:00Z', 'PT60M')] n=20 min 487.0 max 10800.0 mean 6188.7
+  TS 12: {'mRID': '13', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-12T21:00Z', '2026-08-13T21:00Z', 'PT60M')] n=23 min 486.0 max 12307.1 mean 6555.5
+  TS 13: {'mRID': '14', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-13T21:00Z', '2026-08-14T21:00Z', 'PT60M')] n=23 min 2888.0 max 14973.65 mean 8162.4
+  TS 14: {'mRID': '15', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-14T21:00Z', '2026-08-15T21:00Z', 'PT60M')] n=24 min 249.0 max 14975.29 mean 6140.8
+  TS 15: {'mRID': '16', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-15T21:00Z', '2026-08-16T21:00Z', 'PT60M')] n=22 min 10.0 max 11231.0 mean 5893.2
+  TS 16: {'mRID': '17', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-16T21:00Z', '2026-08-17T21:00Z', 'PT60M')] n=24 min 2007.0 max 14971.1 mean 8562.0
+  TS 17: {'mRID': '18', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-17T21:00Z', '2026-08-18T21:00Z', 'PT60M')] n=23 min 4599.0 max 12200.0 mean 7822.8
+  TS 18: {'mRID': '19', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-18T21:00Z', '2026-08-19T21:00Z', 'PT60M')] n=22 min 5938.0 max 12800.0 mean 8919.4
+  TS 19: {'mRID': '20', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-19T21:00Z', '2026-08-20T21:00Z', 'PT60M')] n=22 min 1285.9 max 14974.93 mean 7192.8
+  TS 20: {'mRID': '21', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-20T21:00Z', '2026-08-21T21:00Z', 'PT60M')] n=22 min 100.0 max 12266.0 mean 5370.7
+  TS 21: {'mRID': '22', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-21T21:00Z', '2026-08-22T21:00Z', 'PT60M')] n=19 min 10.0 max 10942.0 mean 5933.4
+  TS 22: {'mRID': '23', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-22T21:00Z', '2026-08-23T21:00Z', 'PT60M')] n=16 min 10.0 max 7700.0 mean 3467.9
+  TS 23: {'mRID': '24', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-23T21:00Z', '2026-08-24T21:00Z', 'PT60M')] n=18 min 10.0 max 11370.0 mean 4094.8
+  TS 24: {'mRID': '25', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-24T21:00Z', '2026-08-25T21:00Z', 'PT60M')] n=18 min 10.0 max 8000.0 mean 3599.9
+  TS 25: {'mRID': '26', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-25T21:00Z', '2026-08-26T21:00Z', 'PT60M')] n=23 min 100.0 max 7813.0 mean 3526.9
+  TS 26: {'mRID': '27', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-26T21:00Z', '2026-08-27T21:00Z', 'PT60M')] n=22 min 10.0 max 8000.0 mean 3203.9
+  TS 27: {'mRID': '28', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-27T21:00Z', '2026-08-28T21:00Z', 'PT60M')] n=13 min 10.0 max 7500.0 mean 2745.2
+  TS 28: {'mRID': '29', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-28T21:00Z', '2026-08-29T21:00Z', 'PT60M')] n=15 min 10.0 max 8500.0 mean 2682.7
+  TS 29: {'mRID': '30', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-29T21:00Z', '2026-08-30T21:00Z', 'PT60M')] n=17 min 10.0 max 10274.0 mean 5448.8
+  TS 30: {'mRID': '31', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-30T21:00Z', '2026-08-31T21:00Z', 'PT60M')] n=19 min 10.0 max 12464.0 mean 4535.9
+  TS 31: {'mRID': '32', 'auction.type': 'A01', 'businessType': 'A62', 'contract_MarketAgreement.type': 'A01', 'classificationSequence_AttributeInstanceComponent.position': None, 'currency_Unit.name': 'UAH', 'price_Measure_Unit.name': 'MWH', 'curveType': 'A03'} periods [('2026-08-31T21:00Z', '2026-09-01T21:00Z', 'PT60M')] n=20 min 10.0 max 12888.0 mean 6499.4

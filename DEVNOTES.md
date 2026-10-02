@@ -177,6 +177,12 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Next: A73 per-unit generation for large plants on the map (needs plant positions: powerplantmatching).
 
 ## Known gaps / next ideas
+- TO DO: stability-aware hub-height wind. Today pipeline/run.py `hub_wind` scales the ECMWF IFS 100 m wind with a
+  neutral log law (z0 = 0.0002 m, offshore) for every farm. Plan: also fetch 10 m wind (Open-Meteo ECMWF endpoint
+  has both), fit the hourly shear from the 10/100 m ratio (power-law alpha or log-law with an effective z0) and
+  use it above 100 m, so stable offshore conditions (strong shear, spring/summer) aren't underestimated; cap alpha
+  to a sane range. Give onshore farms (f["on"]) their own roughness (~0.03-0.1 m) instead of the offshore z0.
+  Check against hub-height measurements where available (e.g. FINO, met-mast data).
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).
   scripts/fetch_osm_turbines.py fills gaps from OpenStreetMap into data/raw/extra_turbines.csv (run where

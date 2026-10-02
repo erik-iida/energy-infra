@@ -1,0 +1,3 @@
+1080 (zone, month) cells to fetch
+fetched 1080 cells with 2160 calls in 1781 s; 0 left for the next run
+wrote web/data/capture.json: 44 zones, 24 months, 358 kB

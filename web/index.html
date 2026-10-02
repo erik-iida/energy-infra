@@ -83,9 +83,9 @@ main{align-items:start}
 aside>*{flex-shrink:0}
 @media(max-width:800px){#stage{height:70vh}}
 #sys{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
-:root{--m-nuc:#d42c2c;--m-coal:#93501c;--m-gas:#ee7d1e;--m-hyd:#38a6e8;--m-oth:#439632;--m-woff:#1f52a8;--m-won:#5b93e6;--m-sol:#dcac00;--imp:#2a78d6;--exp:#e34948}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#9a4f2a;--m-gas:#d4721a;--m-hyd:#2a92cc;--m-oth:#3f8f33;--m-woff:#2d5bb0;--m-won:#6592d8;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}}
-:root[data-theme="dark"]{--m-nuc:#e5484d;--m-coal:#9a4f2a;--m-gas:#d4721a;--m-hyd:#2a92cc;--m-oth:#3f8f33;--m-woff:#2d5bb0;--m-won:#6592d8;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}
+:root{--m-nuc:#d42c2c;--m-coal:#1c1c1c;--m-gas:#8f8f8f;--m-oil:#8b5a2b;--m-hyd:#7a4fc4;--m-bio:#1e5e2e;--m-oth:#d2b48c;--m-woff:#0c2264;--m-won:#3aa648;--m-sol:#dcac00;--imp:#2a78d6;--exp:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}}
+:root[data-theme="dark"]{--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}
 .mixbar{position:relative;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bg)}.mixbar span{position:absolute;top:0;bottom:0}
 .mixleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}.mixleg i,.mixtab i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .syswrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.card.wide{grid-column:1/-1;cursor:default}.syswrap .card{cursor:default}
@@ -94,12 +94,17 @@ aside>*{flex-shrink:0}
 .flows{display:flex;flex-direction:column;gap:3px;margin-top:6px}.fr{display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;font-size:12px}.fl{color:var(--ink)}.fv{text-align:right;color:var(--mut)}
 .fb{position:relative;height:12px;background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}.fb b{position:absolute;top:1px;bottom:1px;border-radius:2px}
 svg.sx{display:block;width:100%;overflow:visible}
+#mow{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}#mow>*{pointer-events:auto}
+#mosel{background:var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.25)}#mosel .mol{padding:7px 10px;font-size:13px;font-weight:600;color:var(--ink);border-right:1px solid var(--line);align-self:center}
+#mobar{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,.2)}#mobar:empty{display:none}#mobar i{display:inline-block;width:140px;height:9px;border-radius:2px}
+.seg.big button{padding:7px 13px;font-size:13.5px;font-family:inherit}#mosel,#mosel button,#mobar{font-family:system-ui,sans-serif}
+table.sortable th{cursor:pointer;user-select:none}table.sortable th:hover{color:var(--ink)}table.sortable th[data-s=a]::after{content:" ▲";font-size:9px}table.sortable th[data-s=d]::after{content:" ▼";font-size:9px}
 .seg{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{width:auto;border:0;border-radius:0;padding:3px 10px;font-size:12px;background:var(--panel);color:var(--mut)}.seg button.on{background:var(--acc);color:var(--panel)}.seg button:disabled{opacity:.45;cursor:default}
 svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
-<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the world view" aria-label="Back to the world view">⌂</button></div><div id="tip"></div><div id="note"></div>
+<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the Europe view" aria-label="Back to the Europe view">⌂</button></div><div id="mow"><div class="seg big" id="mosel"><span class="mol">Prices</span><button data-mo="off">Off</button><button data-mo="now">Now</button><button data-mo="avg">24 h avg</button><button data-mo="next">Tomorrow</button><button data-mo="tb2">TB2</button><button data-mo="tb4">TB4</button></div><div id="mobar"></div></div><div id="tip"></div><div id="note"></div>
 <div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gasleg" style="display:none">Gas<button class="lk" data-k="gip"><i class="gk gd" style="border-radius:50%"></i>pipeline point</button><button class="lk" data-k="glng"><i class="gk gd" style="transform:rotate(45deg)"></i>LNG</button><button class="lk" data-k="gprod"><i class="gk gd"></i>production</button></span><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
@@ -206,7 +211,7 @@ function cur(f){const m=$("M").value,[U,D]=curWind(f),k=+$("K").value,key=m+U+"|
 const now=c=>F.filter(f=>!c||inC(f,c)).reduce((a,f)=>a+cur(f).pw,0);
 
 /* ---------- map: pan / zoom with level of detail ---------- */
-const EU=[-11,40.5,27,62.5],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
+const EU=[-11,40.5,27,62.5],HOME=[-14,34,44,71],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
 F.forEach(f=>{let e=0;const add=(x,y)=>{e=Math.max(e,Math.abs(x),Math.abs(y))};if(f.xy)for(let i=0;i<f.xy.length;i+=2)add(f.xy[i],f.xy[i+1]);(f.o||[]).forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])});let t=0;if(f.xy)for(let i=0;i<f.xy.length;i+=2)t=Math.max(t,Math.abs(f.xy[i]),Math.abs(f.xy[i+1]));f.tex=f.xy?Math.max(t,300):Math.max(e,400);f.ext=Math.max(e,400);f.kx=111320*Math.cos(f.lat*Math.PI/180)});
 const cosR=()=>Math.cos(V.lat*Math.PI/180),pxm=()=>V.s/110574;
 const P=(lon,lat)=>[W0/2+(lon-V.lon)*cosR()*V.s,H0/2-(lat-V.lat)*V.s];
@@ -388,11 +393,40 @@ function bathyWant(W,H){if(!$("BY").checked)return;bathyLoad();if(BG.meta&&!bath
 function bathyDraw(){if(!$("BY").checked)return;const al=(+css("--bathy-a")||.75)*(BM()==="simple"?1:BM()==="sat"?.45:.55);cx.imageSmoothingEnabled=true;
  if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
  const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
+// ---- market overlay: bidding zones coloured by day-ahead price or BESS spread (web/data/zones.json) ----
+const MZ={d:null,loading:false,paths:[]};let MO="avg";try{MO=localStorage.getItem("wm-mo")||"avg"}catch(e){}
+const MOL={now:"Day-ahead price now",avg:"Day-ahead price, last 24 h average",next:"Day-ahead price, tomorrow's average",tb2:"TB2 spread, last 24 h",tb4:"TB4 spread, last 24 h"};
+function mzLoad(){if(MZ.d||MZ.loading)return;MZ.loading=true;fetch("data/zones.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;MZ.d=j.zones;
+ Object.values(MZ.d).forEach(z=>{let a=[1e9,1e9,-1e9,-1e9];z.p.forEach(r=>{for(let i=0;i<r.length;i+=2){a[0]=Math.min(a[0],r[i]);a[1]=Math.min(a[1],r[i+1]);a[2]=Math.max(a[2],r[i]);a[3]=Math.max(a[3],r[i+1])}});z.b=a});repaint()}).catch(()=>{})}
+const avgOf=a=>{const o=a.filter(x=>x!=null);return o.length?o.reduce((p,q)=>p+q,0)/o.length:null};
+function moVal(z,mode){const p=MK&&MK.prices&&MK.prices[z];if(!p)return null;mode=mode||MO;
+ if(mode==="now")return p[N0];if(mode==="avg")return avgOf(p.slice(0,N0+1));if(mode==="next")return avgOf(p.slice(N0+1,NT));
+ return tbn(p.slice(0,N0+1),mode==="tb2"?2:4)}
+function moScale(){if(!MZ.d)return null;const v=Object.keys(MZ.d).map(z=>moVal(z)).filter(x=>x!=null).sort((a,b)=>a-b);if(!v.length)return null;
+ const top=v[Math.floor((v.length-1)*.97)],lo=v[0]<0?0:Math.floor(v[0]/10)*10;return{top:Math.max(lo+10,top),lo,low:Math.min(0,v[0]),min:v[0],max:v[v.length-1]}}
+const moCol=(v,sc)=>v<0?lerpC(HMNEG,sc.low<0?v/sc.low:1):lerpC(HMPOS,(v-sc.lo)/(sc.top-sc.lo));
+function moBar(sc){const b=$("mobar");if(MO==="off"||!sc||S.tab!=="map"){b.innerHTML="";return}
+ b.innerHTML="<span>"+MOL[MO]+"</span>"+(sc.low<0?"<i style='width:36px;background:linear-gradient(90deg,rgb("+HMNEG[1].join(",")+"),rgb("+HMNEG[0].join(",")+"))'></i>"+Math.round(sc.low):"")+"<span>"+Math.round(sc.lo)+"</span><i style='background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></i><span>"+Math.round(sc.top)+"+ €/MWh</span>"}
+function moDraw(){MZ.paths=[];if(MO==="off"||!MK){moBar(null);return}mzLoad();if(!MZ.d)return;const sc=moScale();moBar(sc);if(!sc){$("mobar").innerHTML="<span>"+MOL[MO]+": not published yet</span>";return}const v=viewBox(),lab=[];
+ cx.save();cx.lineJoin="round";
+ for(const[z,Z_]of Object.entries(MZ.d)){const b=Z_.b;if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;const val=moVal(z);
+  const p=new Path2D();for(const r of Z_.p){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}
+  MZ.paths.push([p,z]);const on=S.mzh===z;
+  if(val!=null){cx.globalAlpha=on?.8:BM()==="simple"?.72:.6;cx.fillStyle=moCol(val,sc);cx.fill(p)}
+  else{cx.globalAlpha=.35;cx.fillStyle=css("--panel");cx.fill(p)}
+  cx.globalAlpha=on?1:.85;cx.strokeStyle=on?css("--ink"):"rgba(255,255,255,.85)";cx.lineWidth=on?2:.8;cx.stroke(p);
+  const[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);if(x1-x0>34&&y1-y0>16){const[cxp,cyp]=P(Z_.c[0],Z_.c[1]);lab.push([cxp,cyp,z,val,x1-x0])}}
+ cx.globalAlpha=1;cx.textAlign="center";cx.lineWidth=3;cx.strokeStyle="rgba(0,0,0,.6)";cx.fillStyle="#fff";
+ lab.forEach(([x,y,z,val,w])=>{const t=val==null?"–":Math.round(val)+"";cx.font="700 12px sans-serif";cx.strokeText(t,x,y+4);cx.fillText(t,x,y+4);
+  if(w>70){cx.font="10px sans-serif";cx.strokeText(z,x,y-9);cx.fillText(z,x,y-9)}});
+ cx.restore()}
+function moTip(z){const p=MK.prices[z],f=v=>v==null?"–":Math.round(v);return z+" · now "+f(moVal(z,"now"))+" · 24 h avg "+f(moVal(z,"avg"))+(p&&p.slice(N0+1).some(x=>x!=null)?" · tomorrow "+f(moVal(z,"next")):"")+" €/MWh · TB2 "+f(moVal(z,"tb2"))+" · TB4 "+f(moVal(z,"tb4"))+(p?"":" · no openly licensed price")}
+function moSet(m){MO=m;try{localStorage.setItem("wm-mo",m)}catch(e){}document.querySelectorAll("#mosel button").forEach(b=>b.classList.toggle("on",b.dataset.mo===MO));repaint()}
 function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
  // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
 const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
 const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2||onTile(r[i])||onTile(r[i+1])){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}return p};
- if(BM()==="simple"){cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath())}if($("HS").checked)tilesDraw("hs",isDark()?.55:.8);gridDraw();gasDraw();
+ if(BM()==="simple"){cx.fillStyle=css("--land");cx.strokeStyle=css("--line");cx.lineWidth=1;const land=pth(landInView());cx.fill(land);seamCover();cx.stroke(coastPath())}if($("HS").checked)tilesDraw("hs",isDark()?.55:.8);moDraw();gridDraw();gasDraw();
  const far=V.s<40,SC={uc:["--uc",[6,4]],cs:["--cs",[6,4]],pl:["--pl",[2,3]]};
  if($("Z").checked)Z.forEach((z,i)=>{if(HID.has(z.s))return;const p=pth(z.r),[col,d]=SC[z.s];S.zp.push([p,i]);cx.fillStyle=css(col);cx.globalAlpha=i===S.zh?.3:far?.07:.1;cx.fill(p);cx.globalAlpha=far?.7:1;cx.setLineDash(d);cx.strokeStyle=css(col);cx.lineWidth=i===S.zh?2.2:far?.8:1.3;cx.stroke(p);cx.setLineDash([]);cx.globalAlpha=1});
  const vis=[];F.forEach((f,i)=>{if(i!==S.farm&&HID.has(f.on?"on":"off"))return;const[x,y]=P(f.lon,f.lat),R=f.tex*pxm(),m=Math.max(f.ext*pxm(),20)+40;if(x>-m&&x<W+m&&y>-m&&y<H+m)vis.push([i,x,y,R])});
@@ -435,7 +469,7 @@ function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$
    $("cmp").innerHTML=h}
   else{$("mwsub").textContent="of "+fmt(f.inst)+" · estimated";$("sub").textContent="Site "+f.a+" km²";$("cmp").innerHTML="";const n=$("note");n.style.display="block";n.textContent="There are no turbine positions for this farm in the dataset, so there's no wake field. Output is the free-stream power curve with an assumed 10% wake loss."}
   $("list").innerHTML=F.map((g,i)=>g.c!==f.c?"":"<button data-i='"+i+"' class='"+(i===S.farm?"on ":"")+(g.lay?"":"est")+"'><span>"+g.n+"</span><span class='mut'>"+fmt(cur(g).pw)+"</span></button>").join("")}}
-function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):WORLD()));sidebar()}else draw()}
+function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):HOME,0));sidebar()}else draw()}
 
 /* ---------- Compare tab ---------- */
 S.fm=MODELS.turbopark?"turbopark":"jensen";
@@ -623,7 +657,7 @@ function market(){series();const el=$("mkt");TIPS=[];
  h+="<div class='card' style='cursor:default'><h3>Day-ahead prices by zone<span class='seg'><button data-pr='past' class='"+(S.prng==="past"?"on":"")+"'>Last 24 h</button><button data-pr='next' "+(tAv?"":"disabled title='Published around midday'")+" class='"+(S.prng==="next"?"on":"")+"'>Tomorrow</button></span></h3><svg class='cmp' id='cmpPrice'></svg><div class='mut' style='font-size:12px'>Hourly averages of the 15-minute day-ahead auction, €/MWh. Hover to rank all zones for one hour; the line under the cursor is highlighted.</div></div>";
  const hz=Object.keys(MK.prices);
  S.hms=S.hms||"m";h+="<div class='card' style='cursor:default'><h3>All bidding zones · "+(S.prng==="next"?"tomorrow":"last 24 h")+"<span class='seg'><span class='mut' style='font-size:12px;font-weight:400;margin-right:6px'>"+hz.length+" zones · sort by</span><button data-hs='m' class='"+(S.hms==="m"?"on":"")+"'>Mean</button><button data-hs='tb2' class='"+(S.hms==="tb2"?"on":"")+"'>TB2</button><button data-hs='tb4' class='"+(S.hms==="tb4"?"on":"")+"'>TB4</button></span></h3><svg class='hm' id='hmPrice'></svg><div class='mut' style='font-size:12px' id='hmPriceL'></div><div class='mut' style='font-size:12px'><b>TB2 / TB4</b> (€/MWh): mean of the 2 / 4 most expensive hours minus mean of the 2 / 4 cheapest in the 24 h shown, a first indication of what a 1-hour / 2-hour battery could capture from one cycle a day (before losses; trading the 15-minute auction gives a bit more than hourly averages). Hourly day-ahead price per zone; the colour scale tops out at the 97th percentile so a few spikes don't wash out the rest. Hover a cell for its value and rank in that hour.</div></div>";
- h+=capSection();
+ h+="<div id='capbox'>"+capSection()+"</div>";
  const act=MK.actual_offshore||{},cs=Object.keys(act).filter(c=>HN[c]&&(!S.c||CCN[c]===S.c)).sort((a,b)=>sum(CCN[b])-sum(CCN[a]));
  if(cs.length){h+="<h2>Model check: modelled vs actual offshore output <span class='mut' style='font:13px system-ui'>· last 24 h; actual is the whole national fleet, the model only covers farms in the dataset; countries where the dataset has most of the fleet</span></h2><div class='grid'>";
   cs.forEach(c=>{const fs=F.filter(f=>f.c===CCN[c]),a=act[c],mod=[...Array(NP)].map((_,k)=>modSum(fs,k));let sm=0,sa=0;
@@ -632,7 +666,7 @@ function market(){series();const el=$("mkt");TIPS=[];
    h+="<div class='card'><h3>"+CCN[c]+"<span>"+(sa>0?(sm>=sa?"+":"")+(100*(sm/sa-1)).toFixed(0)+"% vs actual":"–")+"</span></h3><div class='v mut'><span style='color:var(--acc)'>━</span> modelled avg "+fmt(sm/NP)+" · <span style='color:var(--ink)'>━</span> actual avg "+fmt(sa/NP)+"<br>Model: "+fs.length+" farms, "+fmt(fs.reduce((q,f)=>q+f.inst,0))+" installed in the dataset</div><svg class='mk' data-t='"+i+"' data-n='"+NP+"' data-c='"+c+"' data-hi='"+hv+"'></svg></div>"});
   h+="</div>"}
  el.innerHTML=h;
- CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:Math.max(290,pz.length*15+50),sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,sort:S.hms};hmRender("hmPrice");capDraw();
+ CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:Math.max(290,pz.length*15+50),sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,sort:S.hms};hmRender("hmPrice");capDraw();sortApply($("mkt"));
  el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
   {const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
    sv.innerHTML=tsSVG(W,Hh,NP,[{v:act[c],cls:"act"},{v:mod,cls:""}],0,+sv.dataset.hi,null,fmt(+sv.dataset.hi))+axl(W,Hh,"−24 h","","now")}});
@@ -646,7 +680,7 @@ function capLoad(){if(CAP.d||CAP.loading)return;CAP.loading=true;fetch("data/cap
 // id, label, colour key, dashed (to tell apart two techs sharing a colour), shown in the line chart
 const CAPT=[["solar","Solar","sol",0,1],["wind_onshore","Wind onshore","won",0,1],["wind_offshore","Wind offshore","woff",0,1],["nuclear","Nuclear","nuc",0,1],["fossil_gas","Gas","gas",0,1],
  ["fossil_hard_coal","Hard coal","coal",0,1],["fossil_brown_coal_lignite","Lignite","coal",1,1],["hydro_run_of_river","Hydro run-of-river","hyd",0,1],["hydro_water_reservoir","Hydro reservoir","hyd",1,1],
- ["hydro_pumped_storage","Pumped storage (generation)","hyd",0,0],["biomass","Biomass","oth",0,1],["fossil_oil","Oil","oth",0,0],["waste","Waste","oth",0,0],["geothermal","Geothermal","oth",0,0],
+ ["hydro_pumped_storage","Pumped storage (generation)","hyd",0,0],["biomass","Biomass","bio",0,1],["fossil_oil","Oil","oil",0,0],["waste","Waste","bio",1,0],["geothermal","Geothermal","oth",0,0],
  ["fossil_coal_derived_gas","Coal-derived gas","coal",0,0],["others","Other","oth",0,0]];
 const MON=m=>{const[y,mo]=m.split("-");return["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][+mo-1]+" "+y.slice(2)};
 const curMonth=()=>new Date().toISOString().slice(0,7);
@@ -660,18 +694,18 @@ function cap24(z){const c=Object.keys(SYS).find(k=>SYS[k].zones&&SYS[k].zones.le
 const r0=v=>v==null||!isFinite(v)?"–":Math.round(v);
 const fxNote=fx=>fx&&fx.UAH&&fx.UAH.rate?" Ukraine (UA-IPS) is published in UAH and converted at the latest National Bank of Ukraine rate, "+fx.UAH.rate.toFixed(2)+" UAH/EUR ("+fx.UAH.date+").":"";
 function capSection(){capLoad();const D=CAP.d,cz=capCountry();
- const head="<div class='mut' style='font-size:12px;margin:-4px 0 8px'>Capture price = output-weighted day-ahead price: what a MWh from that technology earned on average in the day-ahead market. Actual generation per production type in each bidding zone and day-ahead prices from the <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>, hourly averages."+fxNote(D&&D.fx)+"</div>";
+ const head="<div class='mut' style='font-size:12px;margin:2px 0 8px'>Capture price = output-weighted day-ahead price: what a MWh from that technology earned on average in the day-ahead market. Actual generation per production type in each bidding zone and day-ahead prices from the <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>, hourly averages."+fxNote(D&&D.fx)+"</div>";
  if(!D)return"<h2>Capture prices</h2>"+head+"<div class='feednote'>Loading… (if this stays, the monthly data hasn't been built yet: a background job fills two years for every zone over its first runs).</div>";
  const ms=D.months||[];
  if(cz){const zs=cz.filter(z=>D.zones[z]);if(!zs.length)return"<h2>Capture prices · "+S.c+"</h2>"+head+"<div class='feednote'>No ENTSO-E capture data for "+S.c+"'s bidding zones yet.</div>";
   return"<h2>Capture prices by technology · "+S.c+" <span class='mut' style='font:13px system-ui'>· monthly; pick Europe or a group to compare all markets</span></h2>"+head+zs.map((z,i)=>{const Z=D.zones[z],cm=curMonth(),full=ms.filter(m=>m<cm&&Z[m]),l12=full.slice(-12),lm=full[full.length-1],c24=cap24(z),cur=Z[cm];
    const B=capAgg(Z,l12,"_"),tb=k=>{const v=l12.map(m=>Z[m][k]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
    const techs=CAPT.filter(([id])=>l12.some(m=>Z[m].t&&Z[m].t[id])||(cur&&cur.t&&cur.t[id]));
-   const rows=techs.map(([id,n,ck])=>{const A=capAgg(Z,l12,id),L=lm?capAgg(Z,[lm],id):{},C=cur?capAgg(Z,[cm],id):{};return"<tr><td><i style='background:var(--m-"+ck+")'></i>"+n+"</td><td>"+r0(c24[id])+"</td><td>"+r0(C.cap)+"</td><td>"+r0(L.cap)+"</td><td><b>"+r0(A.cap)+"</b></td><td>"+(A.rate!=null?Math.round(100*A.rate)+"%":"–")+"</td><td>"+(A.gwh?(A.gwh>=1000?(A.gwh/1000).toFixed(1)+" TWh":Math.round(A.gwh)+" GWh"):"–")+"</td><td>"+(A.neg!=null?(100*A.neg).toFixed(1)+"%":"–")+"</td></tr>"}).join("");
+   const rows=techs.map(([id,n,ck])=>{const A=capAgg(Z,l12,id),L=lm?capAgg(Z,[lm],id):{},C=cur?capAgg(Z,[cm],id):{};return"<tr><td><i style='background:var(--m-"+ck+")'></i>"+n+"</td><td>"+r0(c24[id])+"</td><td>"+r0(C.cap)+"</td><td>"+r0(L.cap)+"</td><td><b>"+r0(A.cap)+"</b></td><td>"+(A.rate!=null?Math.round(100*A.rate)+"%":"–")+"</td><td data-v='"+(A.gwh||"")+"'>"+(A.gwh?(A.gwh>=1000?(A.gwh/1000).toFixed(1)+" TWh":Math.round(A.gwh)+" GWh"):"–")+"</td><td>"+(A.neg!=null?(100*A.neg).toFixed(1)+"%":"–")+"</td></tr>"}).join("");
    return"<div class='card' style='cursor:default'><h3>"+flagHTML(ZONEFLAG[z]||"",7)+" "+(ZN[z]||z)+"<span>baseload "+pm(B.base)+" · TB2 "+r0(tb("tb2"))+" · TB4 "+r0(tb("tb4"))+" €/MWh <span class='mut' style='font-weight:400'>(12-month avg of daily spreads)</span></span></h3>"+
     "<svg class='cmp' id='capZ"+i+"' data-z='"+z+"'></svg><div class='mut' style='font-size:12px'>Monthly capture price per technology, €/MWh; <span style='color:var(--ink)'>┅</span> baseload (mean day-ahead price). Dashed coloured lines: lignite, hydro reservoir. Hover for values.</div>"+
-    "<table class='mixtab'><thead><tr><th>Technology</th><th>Last 24 h</th><th>"+MON(cm)+" so far</th><th>"+(lm?MON(lm):"Last month")+"</th><th>Last 12 months</th><th>vs baseload</th><th>Output (12 m)</th><th>Output at negative prices</th></tr></thead><tbody>"+rows+
-    "<tr><td class='mut'>Baseload</td><td>"+(MK.prices[z]?r0(capStats([],MK.prices[z],0,N0).base):"–")+"</td><td>"+r0(cur&&cur.b)+"</td><td>"+r0(lm&&Z[lm].b)+"</td><td><b>"+r0(B.base)+"</b></td><td>100%</td><td></td><td>"+(l12.length?l12.reduce((a,m)=>a+(Z[m].neg||0),0)+" h":"")+"</td></tr></tbody></table>"+
+    "<table class='mixtab sortable' id='capT"+i+"'><thead><tr><th data-t='txt'>Technology</th><th>Last 24 h</th><th>"+MON(cm)+" so far</th><th>"+(lm?MON(lm):"Last month")+"</th><th>Last 12 months</th><th>vs baseload</th><th>Output (12 m)</th><th>Output at negative prices</th></tr></thead><tbody>"+rows+
+    "<tr class='pin'><td class='mut'>Baseload</td><td>"+(MK.prices[z]?r0(capStats([],MK.prices[z],0,N0).base):"–")+"</td><td>"+r0(cur&&cur.b)+"</td><td>"+r0(lm&&Z[lm].b)+"</td><td><b>"+r0(B.base)+"</b></td><td>100%</td><td></td><td>"+(l12.length?l12.reduce((a,m)=>a+(Z[m].neg||0),0)+" h":"")+"</td></tr></tbody></table>"+
     "<div class='mut' style='font-size:12px'>€/MWh. Last 24 h from the live System data (single-zone countries only). Last 12 months = the 12 latest complete months"+(l12.length<12?" ("+l12.length+" available so far)":"")+", weighted by output.</div></div>"}).join("")}
  // all markets: one technology, months as columns
  S.capt=S.capt||"solar";S.capm=S.capm||"eur";const T=CAPT.find(t=>t[0]===S.capt),sz=selZones(),cm=curMonth();
@@ -684,11 +718,23 @@ function capSection(){capLoad();const D=CAP.d,cz=capCountry();
  const col=v=>{if(v==null)return"";let t;if(S.capm==="pct"){t=(v-Math.max(0,low))/Math.max(1,top-Math.max(0,low));return"background:"+lerpC(HMPOS,t)+";color:"+(t>.6?"#fff":"#222")}
   const tp=Math.max(50,top);return"background:"+hmColor(v,tp,Math.min(0,low))+";color:"+((v>=0&&v/tp>.6)||(v<0&&low<0&&v/low>.6)?"#fff":"#222")};
  let h="<h2>Monthly capture prices · all markets <span class='mut' style='font:13px system-ui'>· pick a country for every technology in that market</span></h2>"+head;
- h+="<div class='card' style='cursor:default'><h3>"+T[1]+" capture "+(S.capm==="eur"?"price, €/MWh":"rate, % of baseload")+"<span class='seg'><button data-ct='solar' class='"+(S.capt==="solar"?"on":"")+"'>Solar</button><button data-ct='wind_onshore' class='"+(S.capt==="wind_onshore"?"on":"")+"'>Wind onshore</button><button data-ct='wind_offshore' class='"+(S.capt==="wind_offshore"?"on":"")+"'>Wind offshore</button>&nbsp;<button data-cm='eur' class='"+(S.capm==="eur"?"on":"")+"'>€/MWh</button><button data-cm='pct' class='"+(S.capm==="pct"?"on":"")+"'>% of baseload</button></span></h3>";
+ h+="<div class='card' style='cursor:default'><h3>"+T[1]+" capture "+(S.capm==="eur"?"price, €/MWh":"rate, % of baseload")+"<span class='seg big'><button data-ct='solar' class='"+(S.capt==="solar"?"on":"")+"'>Solar</button><button data-ct='wind_onshore' class='"+(S.capt==="wind_onshore"?"on":"")+"'>Wind onshore</button><button data-ct='wind_offshore' class='"+(S.capt==="wind_offshore"?"on":"")+"'>Wind offshore</button>&nbsp;<button data-cm='eur' class='"+(S.capm==="eur"?"on":"")+"'>€/MWh</button><button data-cm='pct' class='"+(S.capm==="pct"?"on":"")+"'>% of baseload</button></span></h3>";
  if(!rows.length)h+="<div class='mut'>No zone with "+T[1].toLowerCase()+" output in this selection.</div>";
- else h+="<div class='tw' style='max-height:none'><table class='captab'><thead><tr><th style='text-align:left'>Zone</th>"+ms.map(m=>"<th>"+MON(m).replace(" ","<br>")+"</th>").join("")+"<th>12 m</th></tr></thead><tbody>"+rows.map(r=>"<tr data-cf='"+(ZONEFLAG[r.z]||"")+"'><td class='z'>"+flagHTML(ZONEFLAG[r.z]||"",6)+" "+r.z+"</td>"+ms.map(m=>{const v=val(r.z,m),c=D.zones[r.z][m],t=c&&c.t&&c.t[S.capt];return"<td style='"+col(v)+"' title='"+r.z+" · "+MON(m)+(m===cm?" (so far)":"")+(t?" · capture "+t[0].toFixed(1)+" €/MWh · baseload "+(c.b!=null?c.b.toFixed(1):"–")+" €/MWh · "+(c.b>0?Math.round(100*t[0]/c.b)+"%":"–")+" · "+Math.round(t[1]).toLocaleString()+" GWh · "+(100*(t[2]||0)).toFixed(1)+"% of output at negative prices":"")+"'>"+(v==null?"":Math.round(v))+"</td>"}).join("")+"<td class='av'>"+r0(r.a)+"</td></tr>").join("")+"</tbody></table></div>";
- h+="<div class='mut' style='font-size:12px'>"+(S.capm==="eur"?"Capture price":"Capture price as a share of the month's baseload (mean day-ahead) price")+" per bidding zone and month"+(ms.includes(cm)?"; the last month is so far":"")+". 12 m = output-weighted over the 12 latest complete months"+(l12.length<12?" ("+l12.length+" so far)":"")+"; zones sorted by it. Hover a cell for details; click a zone for all its technologies."+(D.complete?"":" Older months are still being filled in.")+"</div></div>";
+ else h+="<div class='tw' style='max-height:none'><table class='captab sortable' id='capAll'><thead><tr><th style='text-align:left' data-t='txt'>Zone</th>"+ms.map(m=>"<th>"+MON(m).replace(" ","<br>")+"</th>").join("")+"<th>12 m</th></tr></thead><tbody>"+rows.map(r=>"<tr data-cf='"+(ZONEFLAG[r.z]||"")+"'><td class='z'>"+flagHTML(ZONEFLAG[r.z]||"",6)+" "+r.z+"</td>"+ms.map(m=>{const v=val(r.z,m),c=D.zones[r.z][m],t=c&&c.t&&c.t[S.capt];return"<td style='"+col(v)+"' title='"+r.z+" · "+MON(m)+(m===cm?" (so far)":"")+(t?" · capture "+t[0].toFixed(1)+" €/MWh · baseload "+(c.b!=null?c.b.toFixed(1):"–")+" €/MWh · "+(c.b>0?Math.round(100*t[0]/c.b)+"%":"–")+" · "+Math.round(t[1]).toLocaleString()+" GWh · "+(100*(t[2]||0)).toFixed(1)+"% of output at negative prices":"")+"' data-v='"+(v==null?"":v.toFixed(2))+"'>"+(v==null?"":Math.round(v))+"</td>"}).join("")+"<td class='av' data-v='"+(r.a==null?"":r.a.toFixed(2))+"'>"+r0(r.a)+"</td></tr>").join("")+"</tbody></table></div>";
+ h+="<div class='mut' style='font-size:12px'>"+(S.capm==="eur"?"Capture price":"Capture price as a share of the month's baseload (mean day-ahead) price")+" per bidding zone and month"+(ms.includes(cm)?"; the last month is so far":"")+". 12 m = output-weighted over the 12 latest complete months"+(l12.length<12?" ("+l12.length+" so far)":"")+"; zones sorted by it. Hover a cell for details; click a zone for all its technologies; click a column header to sort."+(D.complete?"":" Older months are still being filled in.")+"</div></div>";
  return h}
+function keepScroll(fn){const y=window.scrollY,els=[...document.querySelectorAll("#mkt,#main,main,.wrap")].map(e=>[e,e.scrollTop]);fn();els.forEach(([e,t])=>e.scrollTop=t);window.scrollTo(0,y)}
+function capRefresh(){const b=$("capbox");if(!b){market();return}keepScroll(()=>{b.innerHTML=capSection();capDraw();sortApply(b)})}
+// sortable tables: click a header; numbers sort high-to-low first, text A-Z; rows with class 'pin' stay last
+S.tsort=S.tsort||{};
+function sortTab(t,col,dir){const tb=t.tBodies[0];if(!tb)return;const all=[...tb.rows],rows=all.filter(r=>!r.classList.contains("pin")),pin=all.filter(r=>r.classList.contains("pin"));
+ const num=r=>{const c=r.cells[col];if(!c)return null;const v=c.dataset.v!=null?c.dataset.v:c.textContent.trim();if(v===""||v==="–")return null;const n=parseFloat(String(v).replace(/[^0-9.\-]/g,""));return isNaN(n)?null:n};
+ const txt=t.tHead.rows[0].cells[col]&&t.tHead.rows[0].cells[col].dataset.t==="txt";
+ rows.sort((a,b)=>{if(txt)return dir*a.cells[col].textContent.trim().localeCompare(b.cells[col].textContent.trim());const x=num(a),y=num(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return-1;return dir*(x-y)});
+ rows.concat(pin).forEach(r=>tb.appendChild(r));[...t.tHead.rows[0].cells].forEach((th,i)=>th.dataset.s=i===col?(dir>0?"a":"d"):"")}
+function sortApply(root){(root||document).querySelectorAll("table.sortable[id]").forEach(t=>{const q=S.tsort[t.id];if(q)sortTab(t,q.col,q.dir)})}
+document.addEventListener("click",e=>{const th=e.target.closest("table.sortable th");if(!th)return;const t=th.closest("table"),col=th.cellIndex,q=S.tsort[t.id],txt=th.dataset.t==="txt";
+ const dir=q&&q.col===col?-q.dir:(txt?1:-1);S.tsort[t.id]={col,dir};sortTab(t,col,dir)});
 function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.querySelectorAll("#mkt svg.cmp[data-z]").forEach(sv=>{const Z=D.zones[sv.dataset.z];if(!Z)return;
  const ser=CAPT.filter(t=>t[4]&&ms.some(m=>Z[m]&&Z[m].t&&Z[m].t[t[0]])).map(([id,n,ck,dash])=>({id,label:n,col:"var(--m-"+ck+")",dash,v:ms.map(m=>Z[m]&&Z[m].t&&Z[m].t[id]?Z[m].t[id][0]:null)}));
  ser.push({id:"_b",label:"Baseload",col:"var(--ink)",dash:1,v:ms.map(m=>Z[m]?Z[m].b:null)});
@@ -697,9 +743,9 @@ function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.que
 /* ---------- System tab: generation mix, load, prices, cross-border flows (Energy-Charts) ---------- */
 const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland",cz:"Czechia",sk:"Slovakia",hu:"Hungary",ro:"Romania",bg:"Bulgaria",si:"Slovenia",hr:"Croatia",rs:"Serbia",gr:"Greece",ba:"Bosnia and Herzegovina",me:"Montenegro",mk:"North Macedonia",ee:"Estonia",lv:"Latvia",lt:"Lithuania",fi:"Finland",es:"Spain",pt:"Portugal",it:"Italy"};
 // stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
-const MIXC=[["nuc","Nuclear",["nuclear"]],["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],["gas","Gas",["fossil_gas"]],
- ["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]],
- ["coal","Coal",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["oth","Biomass & other",["biomass","geothermal","waste","others","fossil_oil"]]];
+const MIXC=[["nuc","Nuclear",["nuclear"]],["coal","Coal & lignite",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],
+ ["bio","Biomass & waste",["biomass","waste"]],["gas","Gas",["fossil_gas"]],["oil","Oil",["fossil_oil"]],["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]],
+ ["oth","Other",["geothermal","others"]]];
 const NOTGEN=new Set(["load","residual_load","cross_border_electricity_trading","hydro_pumped_storage_consumption"]);
 const RENEW=["hydro_run_of_river","hydro_water_reservoir","biomass","geothermal","wind_offshore","wind_onshore","solar"];
 let STIPS=[];S.sys=null;
@@ -790,9 +836,9 @@ function system(){const el=$("sys");STIPS=[];
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
 $("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
-$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;market();return}
- const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;market();return}
- const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;market();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;market();return}
+$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;keepScroll(market);return}
+ const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;HM.hmPrice.sort=S.hms;hs.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===hs));hmRender("hmPrice");return}
+ const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;capRefresh();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;capRefresh();return}
  const tr=e.target.closest("tr[data-cf]");if(tr){const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===tr.dataset.cf&&COUNTRIES.includes(n));if(nm)go(nm,null)}});
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
@@ -822,7 +868,8 @@ $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
  const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);
  if(b<0)for(const[p,i]of S.fp)if(cx.isPointInPath(p,x*d,y*d)){b=i;break}
- let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;cx.restore();return[b,zh,x,y]}
+ let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;
+ let mz=null;if(b<0&&zh<0)for(const[p,z]of MZ.paths)if(cx.isPointInPath(p,x*d,y*d)){mz=z;break}cx.restore();S.mzhit=mz;return[b,zh,x,y]}
 function selectFarm(i){S.farm=i;S.c=F[i].c;S.hover=-1;$("tip").style.display="none";flyTo(fit(farmBox(F[i]),.12));sidebar()}
 const ptr=new Map();let drag=null;cv.style.touchAction="none";
 cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);cancelAnimationFrame(anim);
@@ -836,13 +883,16 @@ cv.onpointermove=e=>{if(ptr.has(e.pointerId))ptr.set(e.pointerId,[e.clientX,e.cl
  const gi=b<0?gasHit(x,y):-1;if(gi>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";t.textContent=gasTip(gi);return}
  if(b>=0||zh>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";
   if(b>=0){const f=F[b],[U,D]=curWind(f),r=cur(f);t.textContent=f.n+" ("+f.c+") · "+fmt(r.pw)+" of "+fmt(f.inst)+" · CF "+(100*r.pw/Math.max(1,f.inst)).toFixed(0)+"%"+(f.lay?"":" (est.)")+" · "+U.toFixed(1)+" m/s from "+D+"°"}
-  else{const z=Z[zh];t.textContent=z.n+" ("+z.c+") · "+z.st+(z.mw>=5?" · "+fmt(z.mw):"")+" · "+z.a+" km²"}}else t.style.display="none"};
+  else{const z=Z[zh];t.textContent=z.n+" ("+z.c+") · "+z.st+(z.mw>=5?" · "+fmt(z.mw):"")+" · "+z.a+" km²"}}
+ else if(S.mzhit){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";t.textContent=moTip(S.mzhit)}else t.style.display="none";
+ if(S.mzhit!==S.mzh){S.mzh=S.mzhit;repaint()}};
 cv.onpointerup=cv.onpointercancel=e=>{ptr.delete(e.pointerId);cv.style.cursor="grab";
  if(drag&&drag.moved<5&&ptr.size===0&&e.type==="pointerup"){const[b]=hit(e);if(b>=0)selectFarm(b)}
  if(ptr.size===0)drag=null;else if(ptr.size===1){const[p]=[...ptr.values()];drag={x:p[0],y:p[1],lon:V.lon,lat:V.lat,moved:99}}};
 cv.onwheel=e=>{e.preventDefault();cancelAnimationFrame(anim);zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0016))};
 cv.ondblclick=e=>{zoomAt(e.offsetX,e.offsetY,2)};
-cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0){S.hover=-1;S.zh=-1;repaint()}};
+cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0||S.mzh){S.hover=-1;S.zh=-1;S.mzh=null;repaint()}};
+$("mosel").onclick=e=>{const b=e.target.closest("button[data-mo]");if(b)moSet(b.dataset.mo)};
 $("zin").onclick=()=>zoomAt(W0/2,H0/2,1.6);$("zout").onclick=()=>zoomAt(W0/2,H0/2,1/1.6);$("zhome").onclick=()=>go(null,null);
 
 document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
@@ -858,7 +908,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Generation, load, flows and day-ahead prices for zones not openly licensed in Energy-Charts (incl. CEE / SEE): <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
-addEventListener("resize",draw);size();Object.assign(V,fit(WORLD()));draw();
+addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));moSet(MO);draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json",{cache:"no-cache"})).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}

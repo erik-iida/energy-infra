@@ -1,0 +1,12 @@
+{
+ "UAH": {
+  "checked": "2026-10-02",
+  "date": "2026-10-05",
+  "history": {
+   "2026-10-05": 50.5333
+  },
+  "rate": 50.5333,
+  "source": "National Bank of Ukraine official rate",
+  "unit": "UAH per EUR"
+ }
+}

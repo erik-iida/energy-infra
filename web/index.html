@@ -664,7 +664,7 @@ function sysData(c){const d=SYS[c];if(!d||!d.series)return null;const se=d.serie
  const ren=[...Array(NP)].map((_,h)=>RENEW.reduce((a,i)=>a+Math.max(0,(se[i]&&se[i][h])||0),0));
  let last=NP-1;while(last>0&&gen[last]===0)last--;
  const fl=d.flows||{},net=fl.sum||null,nb=Object.keys(fl).filter(k=>k!=="sum");
- return{c,mix,gen,load,ren,last,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[]}}
+ return{c,mix,gen,load,ren,last,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[],lag:d.lag_h||0}}
 const v1=v=>v==null||!isFinite(v)?"–":fmt(v);
 function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<n;h++)mx=Math.max(mx,D.gen[h],D.load?D.load[h]||0:0);mx=Math.ceil(mx/1000)*1000;
  const y=v=>H-2-(H-6)*v/mx;let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+fmt(mx)+"</text>";
@@ -677,7 +677,7 @@ function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<
 function sysCard(D){const h=D.last,g=D.gen[h]||1,pz=D.zones.map(z=>MK.prices[z]&&MK.prices[z][N0]).filter(v=>v!=null);
  let bar="",xo=0;MIXC.forEach(([k])=>{const w=100*D.mix[k][h]/g;if(w>0.3){bar+="<span style='left:"+xo+"%;width:calc("+w+"% - 2px);background:var(--m-"+k+")'></span>";xo+=w}});
  const ni=D.net&&D.net[h];
- return"<div class='card"+(D.c===S.sys?" on":"")+"' data-s='"+D.c+"'><h3>"+(SYSN[D.c]||D.c)+"<span>"+(pz.length?pz.map(v=>v.toFixed(0)).join(" / ")+" €/MWh":"price n/a")+"</span></h3><div class='v mut'>Load "+v1(D.load&&D.load[h])+" · renewables "+(100*D.ren[h]/g).toFixed(0)+"% of generation<br>"+(ni==null?"flows n/a":ni>=0?"Importing "+fmt(ni):"Exporting "+fmt(-ni))+" · at "+hl(h)+"</div><div class='mixbar'>"+bar+"</div></div>"}
+ return"<div class='card"+(D.c===S.sys?" on":"")+"' data-s='"+D.c+"'><h3>"+(SYSN[D.c]||D.c)+"<span>"+(pz.length?pz.map(v=>v.toFixed(0)).join(" / ")+" €/MWh":"price n/a")+"</span></h3><div class='v mut'>Load "+v1(D.load&&D.load[h])+" · renewables "+(100*D.ren[h]/g).toFixed(0)+"% of generation<br>"+(ni==null?"flows n/a":ni>=0?"Importing "+fmt(ni):"Exporting "+fmt(-ni))+" · "+(D.lag?"<b>data "+(D.lag+NP-1-h)+" h old</b> (TSO reports late)":"at "+hl(h))+"</div><div class='mixbar'>"+bar+"</div></div>"}
 // ---- GIE: storage fill (AGSI+) and LNG send-out (ALSI), web/data/gie.json ----
 const GIE={d:null,loading:false};
 function gieLoad(){if(GIE.d||GIE.loading)return;GIE.loading=true;fetch("data/gie.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GIE.d=j;if(S.tab==="sys")system()}}).catch(()=>{})}

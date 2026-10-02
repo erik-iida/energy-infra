@@ -193,14 +193,15 @@ def prices(cl: Client, zones: list[str], hours: list[int]) -> dict[str, list]:
 
 def system(cl: Client, hours: list[int]) -> dict[str, dict]:
     """Generation by technology, load and net physical flows per country (past 24 h)."""
-    past = hours[:24]
-    a, b = _fmt(past[0]), _fmt(past[-1] + 3600)
+    past0 = hours[:24]
+    a, b = _fmt(past0[0] - 24 * 3600), _fmt(past0[-1] + 3600)  # 48 h window: some TSOs (e.g. Romania) publish late
     cache = _load_cache()
     sc = cache.setdefault("system", {})
     out = {}
     for cc, (name, eic, zones, nbs) in COUNTRIES.items():
+        past = past0
         prev = sc.get(cc)
-        if prev and prev.get("t", 0) > time.time() - 50 * 60 and prev.get("h0") == past[0]:
+        if prev and prev.get("t", 0) > time.time() - 50 * 60 and prev.get("h0") == past0[0]:
             out[cc] = prev["d"]
             continue
         ser: dict[str, dict[int, float]] = {}
@@ -218,6 +219,12 @@ def system(cl: Client, hours: list[int]) -> dict[str, dict]:
                 d[h] = v
         if not ser:
             continue
+        gen_hours = [h for k, d in ser.items() if k != "load" for h in d]
+        lag = 0
+        if gen_hours and max(gen_hours) < past0[-1] - 3 * 3600:  # data ends early: show the latest 24 h available
+            last = max(gen_hours)
+            past = [last - 3600 * (23 - i) for i in range(24)]
+            lag = int((past0[-1] - last) // 3600)
         res = {k: [None if h not in d else round(d[h], 1) for h in past] for k, d in ser.items()}
         names = {k: next((n for p, (kk, n) in PSR.items() if kk == k), k) for k in res}
         names["load"] = "Load"
@@ -243,6 +250,8 @@ def system(cl: Client, hours: list[int]) -> dict[str, dict]:
             flows, fnames = prev["d"].get("flows", {}), prev["d"].get("flow_names", {})
         out[cc] = {"series": res, "names": names, "flows": flows, "flow_names": fnames, "zones": zones, "name": name,
                    "src": "entsoe"}
-        sc[cc] = {"t": time.time(), "tf": time.time() if do_flows else (prev or {}).get("tf", 0), "h0": past[0], "d": out[cc]}
+        if lag:
+            out[cc]["lag_h"] = lag
+        sc[cc] = {"t": time.time(), "tf": time.time() if do_flows else (prev or {}).get("tf", 0), "h0": past0[0], "d": out[cc]}
     _save_cache(cache)
     return out

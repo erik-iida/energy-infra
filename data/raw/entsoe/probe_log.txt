@@ -1,129 +1,50 @@
 token set: True, length 36
---- A44 price PL: HTTP 200, 56544 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-  <Publication_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3">
-    <mRID>9a7d898091c545d889c4b3fcfa06f723</mRID>
-    <revisionNumber>1</revisionNumber>
-    <type>A44</type>
-    <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-    <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-    <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-    <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-    <createdDateTime>2026-10-02T10:31:32Z</createdDateTime>
-    <period.timeInterval>
-      <start>2026-09-30T22:00Z</start>
-      <end>2026-10-02T22:00Z</end>
-    </period.timeInterval>
-      <TimeSeries>
-        <mRID>1</mRID>
-        <auction.type>A01</auction.type>
-        <businessType>A62</businessType>
-        <in_Domain.mRID codingScheme="A01">10YPL-AREA-----S</in_Domain.mRID>
-        <out_Domain.mRID codingScheme="A01">10YPL-AREA-----S</out_Domain.mRID>
-        <contract_MarketAgreement.type>A01</contract_MarketAgreement.type>
-        <currency_Unit.name>EUR</currency_Unit.name>
-        <price_Measure_Unit.name>MWH</price_Measure_Unit.name>
-        <curveType>A03</curveType>
-          <Period>
-            <timeInterval>
-              <start>2026-09-30T22:00Z</start>
-              <end>2026-10-01T22:00Z</end>
-            </timeInterval>
-            <resolution>PT15M</resolution>
-              <Point>
-                <position>1</position>
-                  <price.amount>149.82</price.amount>
-              </Point>
-              <Point>
-                <position>2</position>
-                  <price.amount>142.6</price.amount>
-    
---- A44 price EE: HTTP 200, 27857 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-  <Publication_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:3">
-    <mRID>1a99148ad84d40ca82a3fd0f43368053</mRID>
-    <revisionNumber>1</revisionNumber>
-    <type>A44</type>
-    <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-    <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-    <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-    <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-    <createdDateTime>2026-10-02T10:31:43Z</createdDateTime>
-    <period.timeInterval>
-      <start>2026-09-30T22:00Z</start>
-      <end>2026-10-02T22:00Z</end>
-    </period.timeInterval>
-      <TimeSeries>
-        <mRID>1</mRID>
-        <auction.type>A01</auction.type>
-        <businessType>A62</businessType>
-        <in_Domain.mRID codingScheme="A01">10Y1001A1001A39I</in_Domain.mRID>
-        <out_Domain.mRID codingScheme="A01">10Y1001A1001A39I</out_Domain.mRID>
-        <contract_MarketAgreement.type>A01</contract_MarketAgreement.type>
-        <currency_Unit.name>EUR</currency_Unit.name>
-        <price_Measure_Unit.name>MWH</price_Measure_Unit.name>
-        <curveType>A03</curveType>
-          <Period>
-            <timeInterval>
-              <start>2026-09-30T22:00Z</start>
-              <end>2026-10-01T22:00Z</end>
-            </timeInterval>
-            <resolution>PT15M</resolution>
-              <Point>
-                <position>1</position>
-                  <price.amount>56.93</price.amount>
-              </Point>
-              <Point>
-                <position>2</position>
-                  <price.amount>46.36</price.amount>
-     
---- A65 load PL: HTTP 200, 13071 bytes, text/xml
+--- A75 gen RO in: HTTP 200, 971 bytes, text/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Acknowledgement_MarketDocument
+	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
+	<mRID>333167a9-a346-4</mRID>
+	<createdDateTime>2026-10-02T11:00:17Z</createdDateTime>
+	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
+	<received_MarketDocument.createdDateTime>2026-10-02T11:00:17Z</received_MarketDocument.createdDateTime>
+	<Reason>
+		<code>999</code>
+		<text>No matching data found for Data item AGGREGATED_GENERATION_PER_TYPE_R3 [16.1.B&amp;C] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/202
+--- A65 load RO: HTTP 200, 951 bytes, text/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Acknowledgement_MarketDocument
+	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
+	<mRID>0357df61-23c4-4</mRID>
+	<createdDateTime>2026-10-02T11:00:41Z</createdDateTime>
+	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
+	<received_MarketDocument.createdDateTime>2026-10-02T11:00:41Z</received_MarketDocument.createdDateTime>
+	<Reason>
+		<code>999</code>
+		<text>No matching data found for Data item ACTUAL_TOTAL_LOAD_R3 [6.1.A] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/2026-10-02T11:00:00Z.</
+--- A73 unit RO: HTTP 200, 968 bytes, text/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Acknowledgement_MarketDocument
+	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
+	<mRID>e90b3c21-d30c-4</mRID>
+	<createdDateTime>2026-10-02T11:00:56Z</createdDateTime>
+	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
+	<received_MarketDocument.createdDateTime>2026-10-02T11:00:56Z</received_MarketDocument.createdDateTime>
+	<Reason>
+		<code>999</code>
+		<text>No matching data found for Data item ACTUAL_GENERATION_OUTPUT_PER_UNIT_R3 [16.1.A] (10YRO-TEL------P) and interval 2026-10-01T11:00:00Z/2026-1
+--- A75 gen RO day-before: HTTP 200, 89972 bytes, text/xml
 <?xml version="1.0" encoding="utf-8"?>
 <GL_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0">
-  <mRID>881f6bfa4c364bcc924aa63056a24091</mRID>
-  <revisionNumber>1</revisionNumber>
-  <type>A65</type>
-  <process.processType>A16</process.processType>
-  <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-  <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-  <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-  <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T10:31:50Z</createdDateTime>
-  <time_Period.timeInterval>
-    <start>2026-10-01T10:00Z</start>
-    <end>2026-10-02T09:30Z</end>
-  </time_Period.timeInterval>
-    <TimeSeries>
-      <mRID>1</mRID>
-      <businessType>A04</businessType>
-      <objectAggregation>A01</objectAggregation>
-      <outBiddingZone_Domain.mRID codingScheme="A01">10YPL-AREA-----S</outBiddingZone_Domain.mRID>
-      <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
-      <curveType>A03</curveType>
-        <Period>
-          <timeInterval>
-            <start>2026-10-01T10:00Z</start>
-            <end>2026-10-02T09:30Z</end>
-          </timeInterval>
-          <resolution>PT15M</resolution>
-            <Point>
-              <position>1</position>
-              <quantity>19285.096</quantity>
-            </Point>
-            <Point>
-              <position>2</position>
-              <quantity>19358.403</quantity>
-            </Point>
-            <Point>
-              <position>3</position>
-              <quantity>19498.411</quantity>
-            </Point>
-            <Point>
-              <position>4</positi
---- A75 gen PL: HTTP 200, 171368 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-<GL_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0">
-  <mRID>ada05966ece94b929064baa76134e5ff</mRID>
+  <mRID>b1569317e30d466192c856d294dbc119</mRID>
   <revisionNumber>1</revisionNumber>
   <type>A75</type>
   <process.processType>A16</process.processType>
@@ -131,155 +52,25 @@ token set: True, length 36
   <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
   <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
   <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T10:31:53Z</createdDateTime>
+  <createdDateTime>2026-10-02T11:01:10Z</createdDateTime>
   <time_Period.timeInterval>
-    <start>2026-10-01T10:00Z</start>
-    <end>2026-10-02T09:45Z</end>
+    <start>2026-09-29T11:00Z</start>
+    <end>2026-09-30T11:00Z</end>
   </time_Period.timeInterval>
       <TimeSeries>
         <mRID>1</mRID>
-        <businessType>A01</businessType>
-        <objectAggregation>A08</objectAggregation>
-          <outBiddingZone_Domain.mRID codingScheme="A01">10YPL-AREA-----S</outBiddingZone_Domain.mRID>
-        <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
-        <curveType>A03</curveType>
-        <MktPSRType>
-          <psrType>B10</psrType>
-        </MktPSRType>
-          <Period>
-            <timeInterval>
-              <start>2026-10-01T10:00Z</start>
-              <end>2026-10-02T09:45Z</end>
-            </timeInterval>
-            <resolution>PT15M</resolution>
-              <Point>
-                <position>1</position>
-                <quantity>917.371</quantity>
-              </Point>
-              <Point>
-                <position>2</position>
-                <quantity>913.381</quantity>
-              </Point>
-              <Point>
-                <position>3</position>
---- A11 flow PL->DE: HTTP 200, 13079 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-<Publication_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-3:publicationdocument:7:0">
-  <mRID>72be3db4192f434f94dc9ad59368bb8e</mRID>
-  <revisionNumber>1</revisionNumber>
-  <type>A11</type>
-  <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-  <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-  <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-  <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T10:32:00Z</createdDateTime>
-  <period.timeInterval>
-    <start>2026-10-01T10:00Z</start>
-    <end>2026-10-02T10:00Z</end>
-  </period.timeInterval>
-    <TimeSeries>
-      <mRID>1</mRID>
-      <businessType>A66</businessType>
-      <in_Domain.mRID codingScheme="A01">10Y1001A1001A82H</in_Domain.mRID>
-      <out_Domain.mRID codingScheme="A01">10YPL-AREA-----S</out_Domain.mRID>
-      <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
-      <curveType>A03</curveType>
-        <Period>
-          <timeInterval>
-            <start>2026-10-01T10:00Z</start>
-            <end>2026-10-02T10:00Z</end>
-          </timeInterval>
-          <resolution>PT15M</resolution>
-            <Point>
-              <position>1</position>
-              <quantity>581.079</quantity>
-            </Point>
-            <Point>
-              <position>2</position>
-              <quantity>555.774</quantity>
-            </Point>
-            <Point>
-              <position>3</position>
-              <quantity>648.234</quantity>
-            </Point>
-            <Point>
-              <position>4</position>
-              <quantity>697.203</quantity>
-        
---- A73 unit gen PL: HTTP 200, 955225 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-<GL_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0">
-  <mRID>4119a780e8e04365bc32790b177e2e53</mRID>
-  <revisionNumber>1</revisionNumber>
-  <type>A73</type>
-  <process.processType>A16</process.processType>
-  <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-  <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-  <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-  <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T10:32:09Z</createdDateTime>
-  <time_Period.timeInterval>
-    <start>2026-10-01T10:00Z</start>
-    <end>2026-10-02T09:45Z</end>
-  </time_Period.timeInterval>
-              <TimeSeries>
-                <mRID>1</mRID>
-                <businessType>A01</businessType>
-                <objectAggregation>A06</objectAggregation>
-                    <inBiddingZone_Domain.mRID codingScheme="A01">10YPL-AREA-----S</inBiddingZone_Domain.mRID>
-                <registeredResource.mRID codingScheme="A01">19W000000000016F</registeredResource.mRID>
-                <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
-                <curveType>A03</curveType>
-                <MktPSRType>
-                  <psrType>B02</psrType>
-                  <PowerSystemResources>
-                    <mRID codingScheme="A01">19W000000000020O</mRID>
-                    <name>BeÅchatÃ³w B02</name>
-                  </PowerSystemResources>
-                </MktPSRType>
-                    <Period>
-                      <timeInterval>
-                        <start>2026-10-01T10:00Z</start>
-                  
---- A68 installed PL: HTTP 200, 10691 bytes, text/xml
-<?xml version="1.0" encoding="utf-8"?>
-<GL_MarketDocument xmlns="urn:iec62325.351:tc57wg16:451-6:generationloaddocument:3:0">
-  <mRID>68867684e7bc456ba5d7a4194c0abb1d</mRID>
-  <revisionNumber>1</revisionNumber>
-  <type>A68</type>
-  <process.processType>A33</process.processType>
-  <sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
-  <sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
-  <receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
-  <receiver_MarketParticipant.marketRole.type>A33</receiver_MarketParticipant.marketRole.type>
-  <createdDateTime>2026-10-02T10:32:18Z</createdDateTime>
-  <time_Period.timeInterval>
-    <start>2025-12-31T23:00Z</start>
-    <end>2026-12-31T23:00Z</end>
-  </time_Period.timeInterval>
-      <TimeSeries>
-        <mRID>1</mRID>
-        <businessType>A37</businessType>
-        <objectAggregation>A08</objectAggregation>
-        <inBiddingZone_Domain.mRID codingScheme="A01">10YPL-AREA-----S</inBiddingZone_Domain.mRID>
-        <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
-        <curveType>A03</curveType>
-        <MktPSRType>
-          <psrType>B01</psrType>
-        </MktPSRType>
-            <Period>
-              <timeInterval>
-                <start>2025-12-31T23:00Z</start>
-                <end>2026-12-31T23:00Z</end>
-              </timeInterval>
-              <resolution>P1Y</resolution>
-                  <Point>
-                    <position>1</position>
-                    <quantity>698.294</quantity>
-                  </Point>
-            </Period>
-      </TimeSeries>
-      <TimeSeries>
-        <mRID>2</mRID>
-        <businessType>A37</businessType>
-        <objectAggregation>A08</objectAggr
+
+--- A44 price IE: HTTP 200, 963 bytes, text/xml
+<?xml version="1.0" encoding="UTF-8"?>
+<Acknowledgement_MarketDocument
+	xmlns="urn:iec62325.351:tc57wg16:451-1:acknowledgementdocument:7:0">
+	<mRID>2640b1b0-fe52-4</mRID>
+	<createdDateTime>2026-10-02T11:01:19Z</createdDateTime>
+	<sender_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</sender_MarketParticipant.mRID>
+	<sender_MarketParticipant.marketRole.type>A32</sender_MarketParticipant.marketRole.type>
+	<receiver_MarketParticipant.mRID codingScheme="A01">10X1001A1001A450</receiver_MarketParticipant.mRID>
+	<receiver_MarketParticipant.marketRole.type>A39</receiver_MarketParticipant.marketRole.type>
+	<received_MarketDocument.createdDateTime>2026-10-02T11:01:19Z</received_MarketDocument.createdDateTime>
+	<Reason>
+		<code>999</code>
+		<text>No matching data found for Data item ENERGY_PRICES [12.1.D] (10Y1001A1001A59C, 10Y1001A1001A59C) and interval 2026-10-01T11:00:00Z/2026-10-02T

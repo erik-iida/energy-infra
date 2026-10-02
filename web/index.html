@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Energy Infra Monitor</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>GridEconomics</title>
 <style>
 :root{--bg:#eef3f4;--panel:#fff;--ink:#10252d;--mut:#5b7078;--sea:#cfe3ea;--land:#e6e2d5;--line:#b8c9cf;--acc:#0b6e8a;--uc:#b4531c;--cs:#7a5bb0;--pl:#6d7f86;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1a20;--panel:#12262e;--ink:#e3eef1;--mut:#8aa3ac;--sea:#0f2b36;--land:#23353a;--line:#2b4650;--acc:#5fc4e0;--uc:#f0935c;--cs:#b39cf0;--pl:#8fa4ab}}
@@ -83,9 +83,9 @@ main{align-items:start}
 aside>*{flex-shrink:0}
 @media(max-width:800px){#stage{height:70vh}}
 #sys{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
-:root{--m-nuc:#d42c2c;--m-coal:#1c1c1c;--m-gas:#8f8f8f;--m-oil:#8b5a2b;--m-hyd:#7a4fc4;--m-bio:#1e5e2e;--m-oth:#d2b48c;--m-woff:#0c2264;--m-won:#3aa648;--m-sol:#dcac00;--imp:#2a78d6;--exp:#e34948}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}}
-:root[data-theme="dark"]{--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#b88b10;--imp:#3987e5;--exp:#e66767}
+:root{--m-nuc:#d42c2c;--m-coal:#1c1c1c;--m-gas:#8f8f8f;--m-oil:#8b5a2b;--m-hyd:#7a4fc4;--m-bio:#1e5e2e;--m-oth:#d2b48c;--m-woff:#0c2264;--m-won:#3aa648;--m-sol:#f7cf00;--imp:#2a78d6;--exp:#e34948}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#e9c400;--imp:#3987e5;--exp:#e66767}}
+:root[data-theme="dark"]{--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#e9c400;--imp:#3987e5;--exp:#e66767}
 .mixbar{position:relative;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bg)}.mixbar span{position:absolute;top:0;bottom:0}
 .mixleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut)}.mixleg i,.mixtab i{display:inline-block;width:12px;height:10px;border-radius:2px;margin-right:5px;vertical-align:middle}
 .syswrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px}.card.wide{grid-column:1/-1;cursor:default}.syswrap .card{cursor:default}
@@ -94,9 +94,12 @@ aside>*{flex-shrink:0}
 .flows{display:flex;flex-direction:column;gap:3px;margin-top:6px}.fr{display:grid;grid-template-columns:110px 1fr 80px;gap:8px;align-items:center;font-size:12px}.fl{color:var(--ink)}.fv{text-align:right;color:var(--mut)}
 .fb{position:relative;height:12px;background:linear-gradient(var(--line),var(--line)) center/1px 100% no-repeat}.fb b{position:absolute;top:1px;bottom:1px;border-radius:2px}
 svg.sx{display:block;width:100%;overflow:visible}
+#leg .lc{all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;font-weight:700;font-size:12px;margin-top:5px;border-radius:3px;padding:1px 3px;margin-left:-3px}#leg .lc::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--acc);border:1px solid var(--acc)}
+#leg .lc.off::before{background:transparent;border-color:var(--mut)}#leg .lc.off{color:var(--mut)}#leg .lc.off+.lrow{display:none}#leg .lc:hover{background:var(--line)}#leg .lrow{display:flex;flex-direction:column;gap:2px;padding-left:15px}#leg #gleg.lrow{flex-direction:row;flex-wrap:wrap}#leg #gleg .lk{margin:0 4px 0 0}
+#leg #mosel{margin:2px 0}#leg #mosel button{padding:2px 7px;font-size:11.5px;font-family:inherit}#leg #mobar{border:0;padding:0;box-shadow:none;background:none}
 #mow{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}#mow>*{pointer-events:auto}
 #mosel{background:var(--panel);box-shadow:0 1px 4px rgba(0,0,0,.25)}#mosel .mol{padding:7px 10px;font-size:13px;font-weight:600;color:var(--ink);border-right:1px solid var(--line);align-self:center}
-#mobar{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,.2)}#mobar:empty{display:none}#mobar i{display:inline-block;width:140px;height:9px;border-radius:2px}
+#mobar{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--mut);display:flex;align-items:center;gap:6px;box-shadow:0 1px 4px rgba(0,0,0,.2)}#mobar:empty{display:none}#mobar i{display:inline-block;width:110px;height:9px;border-radius:2px;vertical-align:middle;margin:0 4px}
 .seg.big button{padding:7px 13px;font-size:13.5px;font-family:inherit}#mosel,#mosel button,#mobar{font-family:system-ui,sans-serif}
 table.sortable th{cursor:pointer;user-select:none}table.sortable th:hover{color:var(--ink)}table.sortable th[data-s=a]::after{content:" ▲";font-size:9px}table.sortable th[data-s=d]::after{content:" ▼";font-size:9px}
 .seg{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{width:auto;border:0;border-radius:0;padding:3px 10px;font-size:12px;background:var(--panel);color:var(--mut)}.seg button.on{background:var(--acc);color:var(--panel)}.seg button:disabled{opacity:.45;cursor:default}
@@ -104,26 +107,23 @@ svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
 <div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button></div>
-<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the Europe view" aria-label="Back to the Europe view">⌂</button></div><div id="mow"><div class="seg big" id="mosel"><span class="mol">Prices</span><button data-mo="off">Off</button><button data-mo="now">Now</button><button data-mo="avg">24 h avg</button><button data-mo="next">Tomorrow</button><button data-mo="tb2">TB2</button><button data-mo="tb4">TB4</button></div><div id="mobar"></div></div><div id="tip"></div><div id="note"></div>
-<div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><span class="lh">Click an entry to show or hide it</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button><span id="gasleg" style="display:none">Gas<button class="lk" data-k="gip"><i class="gk gd" style="border-radius:50%"></i>pipeline point</button><button class="lk" data-k="glng"><i class="gk gd" style="transform:rotate(45deg)"></i>LNG</button><button class="lk" data-k="gprod"><i class="gk gd"></i>production</button></span><span id="gleg" style="display:none">Grid<button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></span><button class="lk" data-k="depth" id="bleg">Depth <i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></button></div></div></div>
+<div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the Europe view" aria-label="Back to the Europe view">⌂</button></div><div id="tip"></div><div id="note"></div>
+<div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span class="lh">Click a heading to switch a layer on or off, an entry to hide it</span><button class="lc" data-c="price">Day-ahead prices</button><div class="lrow"><div class="seg" id="mosel"><button data-mo="now">Now</button><button data-mo="avg">24 h avg</button><button data-mo="next">Tomorrow</button><button data-mo="tb2">TB2</button><button data-mo="tb4">TB4</button></div><div id="mobar"></div></div><button class="lc" data-c="farms">Wind farms</button><div class="lrow"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button></div><button class="lc" data-c="zones">Future zones</button><div class="lrow"><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button></div><button class="lc" data-c="gas">Gas</button><div class="lrow" id="gasleg"><button class="lk" data-k="gip"><i class="gk gd" style="border-radius:50%"></i>pipeline point</button><button class="lk" data-k="glng"><i class="gk gd" style="transform:rotate(45deg)"></i>LNG</button><button class="lk" data-k="gprod"><i class="gk gd"></i>production</button></div><button class="lc" data-c="grid">High-voltage grid</button><div class="lrow" id="gleg"><button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></div><button class="lc" data-c="depth">Depth</button><div class="lrow"><span><i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span><div id="bys"><label for="BD" style="font-size:11px">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"></div></div></div></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
 <h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="dtip"></div></div>
 <aside>
-<div class="keep"><h1>Energy infra monitor</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
+<div class="keep"><h1>GridEconomics</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" class="keep" aria-label="Region or country"></select>
 <div><div class="big" id="mw">–</div><div class="mut" id="mwsub"></div></div>
 <div id="mapctl"><label id="live"><input type="checkbox" id="LV"> Use forecast wind for now</label>
 <div id="wif"><label>What-if wind speed <span id="uv"></span></label><input id="U" type="range" min="3" max="25" step="0.5" value="9">
 <label>What-if wind from <span id="dv"></span></label><input id="D" type="range" min="0" max="359" value="270"></div>
-<label>Wake field model (in browser)</label><select id="M"><option value="t" selected>TurbOPark (Nygaard 2022)</option><option value="j">Jensen (NOJ)</option><option value="g">Bastankhah &amp; Porté-Agel 2014</option><option value="n">No wake</option></select>
-<label style="margin-top:8px"><span id="kl">Wake expansion A</span> <span id="kv"></span></label><input id="K" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change it to explore.</div></div>
-<label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="Z" checked> Show future zones</label>
-<label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="BY" checked> Bathymetry (EMODnet)</label>
-<label style="justify-content:flex-start;gap:8px;color:var(--ink)"><input type="checkbox" id="GR" checked> High-voltage grid (OpenStreetMap)</label>
-<div id="bys"><label for="BD">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"><div class="mut" style="font-size:12px">Deeper water shows in the darkest colour.</div></div>
+<label>Wake field model (in browser)</label><select id="M" autocomplete="off"><option value="t" selected>TurbOPark (Nygaard 2022)</option><option value="j">Jensen (NOJ)</option><option value="g">Bastankhah &amp; Porté-Agel 2014</option><option value="n">No wake</option></select>
+<label style="margin-top:8px"><span id="kl">Wake expansion A</span> <span id="kv"></span></label><input id="K" autocomplete="off" type="range" min="0.02" max="0.08" step="any" value="0.04"><div class="mut" style="font-size:12px">Same formulas and defaults as the PyWake runs; change it to explore.</div></div>
+<div hidden><input type="checkbox" id="Z" checked><input type="checkbox" id="BY" checked><input type="checkbox" id="GR" checked></div>
 <div id="cmp"></div>
 <div id="list"></div>
 <div class="mut" id="foot"></div>
@@ -303,7 +303,7 @@ const GCN={DE:"Germany",DK:"Denmark",NL:"Netherlands",BE:"Belgium",FR:"France",P
  SI:"Slovenia",HR:"Croatia",RO:"Romania",BG:"Bulgaria",GR:"Greece",LT:"Lithuania",LV:"Latvia",EE:"Estonia",FI:"Finland",SE:"Sweden",IE:"Ireland",UK:"United Kingdom",LU:"Luxembourg",
  CH:"Switzerland",AL:"Albania (TAP)",UA:"Ukraine",TR:"Türkiye",RS:"Serbia",MD:"Moldova",MK:"North Macedonia",NO:"Norway"};
 const gname=c=>GCN[c]||c;
-function gasLoad(){if(GAS.d||GAS.loading)return;GAS.loading=true;fetch("data/gas.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GAS.d=j;$("gasleg").style.display="";repaint();if(S.tab==="sys")system()}}).catch(()=>{})}
+function gasLoad(){if(GAS.d||GAS.loading)return;GAS.loading=true;fetch("data/gas.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GAS.d=j;repaint();if(S.tab==="sys")system()}}).catch(()=>{})}
 function gasDraw(){gasLoad();GAS.pts=[];if(!GAS.d)return;const v=viewBox(),gc=css("--m-gas"),pn=css("--panel");
  GAS.d.points.forEach((p,i)=>{const key=p.t==="lng"?"glng":p.t==="prod"?"gprod":"gip";if(HID.has(key))return;if(p.lon<v[0]||p.lon>v[2]||p.lat<v[1]||p.lat>v[3])return;
   const val=p.v[p.v.length-1]||0,r=2.5+Math.sqrt(val)/2.3,[x,y]=P(p.lon,p.lat);cx.beginPath();
@@ -320,7 +320,7 @@ const GKEY=["g750","g500","g400","g300","g220","g220","gdc"];
 const gcls=kv=>kv===0?6:GCLS.findIndex(c=>kv>=c[0]);
 function gridLoad(){if(GRID.d||GRID.loading)return;GRID.loading=true;
  fetch("data/grid.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;GRID.d=j.lines;GRID.b=j.lines.map(l=>{const c=l[2];let a=[1e9,1e9,-1e9,-1e9];for(let i=0;i<c.length;i+=2){a[0]=Math.min(a[0],c[i]);a[1]=Math.min(a[1],c[i+1]);a[2]=Math.max(a[2],c[i]);a[3]=Math.max(a[3],c[i+1])}return a});
-  $("gleg").style.display=$("GR").checked?"block":"none";repaint()}).catch(()=>{})}
+  repaint()}).catch(()=>{})}
 function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;const v=viewBox(),far=V.s<12;
  const P2=[...Array(14)].map(()=>new Path2D());
  GRID.d.forEach((l,i)=>{const b=GRID.b[i];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])return;const k=gcls(l[0]);if(far&&k>=4)return;if(HID.has(GKEY[k]))return;
@@ -368,7 +368,9 @@ function heatLegend(W,H){const w=150,x=W-16-w,y=H-150;  // above the basemap swi
 function ringR(f){return(3+Math.sqrt(f.inst)*.28)*Math.min(1.6,Math.max(1,V.s/40))}
 // legend toggles: keys of map objects the viewer has hidden (remembered in this browser)
 const HID=new Set((()=>{try{return JSON.parse(localStorage.getItem("wm-hide")||"[]")}catch(e){return[]}})());
-function legSync(){document.querySelectorAll("#leg .lk").forEach(b=>{const k=b.dataset.k,off=k==="depth"?!$("BY").checked:HID.has(k)||(["uc","cs","pl"].includes(k)&&!$("Z").checked);b.classList.toggle("off",off);b.setAttribute("aria-pressed",String(!off))})}
+const LCAT={farms:["off","on"],zones:["uc","cs","pl"],gas:["gip","glng","gprod"],grid:["g750","g500","g400","g300","g220","gdc"]};
+function catOn(c){return c==="price"?MO!=="off":c==="zones"?$("Z").checked:c==="grid"?$("GR").checked:c==="depth"?$("BY").checked:LCAT[c].some(k=>!HID.has(k))}
+function legSync(){document.querySelectorAll("#leg .lc").forEach(b=>{const on=catOn(b.dataset.c);b.classList.toggle("off",!on);b.setAttribute("aria-pressed",String(on))});document.querySelectorAll("#leg .lk").forEach(b=>{const k=b.dataset.k,off=k==="depth"?!$("BY").checked:HID.has(k)||(["uc","cs","pl"].includes(k)&&!$("Z").checked);b.classList.toggle("off",off);b.setAttribute("aria-pressed",String(!off))})}
 const fcol=f=>css(f.on?"--m-won":"--acc");
 function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.max(1,f.inst))),hot=i===S.hover||i===S.farm;
  cx.beginPath();cx.arc(x,y,Ro,0,7);cx.fillStyle=css("--panel");cx.globalAlpha=.8;cx.fill();cx.globalAlpha=1;
@@ -408,7 +410,7 @@ function bathyDraw(){if(!$("BY").checked)return;const al=(+css("--bathy-a")||.75
  if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;cx.drawImage(BG.cv,x0,y0,x1-x0,y1-y0)}
  const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;cx.drawImage(B.img,x0,y0,x1-x0,y1-y0)}cx.globalAlpha=1}
 // ---- market overlay: bidding zones coloured by day-ahead price or BESS spread (web/data/zones.json) ----
-const MZ={d:null,loading:false,paths:[]};let MO="avg";try{MO=localStorage.getItem("wm-mo")||"avg"}catch(e){}
+const MZ={d:null,loading:false,paths:[]};let MO="now";  // the site always opens on the current price
 const MOL={now:"Day-ahead price now",avg:"Day-ahead price, last 24 h average",next:"Day-ahead price, tomorrow's average",tb2:"TB2 spread, last 24 h",tb4:"TB4 spread, last 24 h"};
 function mzLoad(){if(MZ.d||MZ.loading)return;MZ.loading=true;fetch("data/zones.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(!j)return;MZ.d=j.zones;
  Object.values(MZ.d).forEach(z=>{let a=[1e9,1e9,-1e9,-1e9];z.p.forEach(r=>{for(let i=0;i<r.length;i+=2){a[0]=Math.min(a[0],r[i]);a[1]=Math.min(a[1],r[i+1]);a[2]=Math.max(a[2],r[i]);a[3]=Math.max(a[3],r[i+1])}});z.b=a});repaint()}).catch(()=>{})}
@@ -419,14 +421,15 @@ function moVal(z,mode){const p=MK&&MK.prices&&MK.prices[z];if(!p)return null;mod
 function moScale(){if(!MZ.d)return null;const v=Object.keys(MZ.d).map(z=>moVal(z)).filter(x=>x!=null).sort((a,b)=>a-b);if(!v.length)return null;
  const top=v[Math.floor((v.length-1)*.97)],lo=v[0]<0?0:Math.floor(v[0]/10)*10;return{top:Math.max(lo+10,top),lo,low:Math.min(0,v[0]),min:v[0],max:v[v.length-1]}}
 const moCol=(v,sc)=>v<0?lerpC(HMNEG,sc.low<0?v/sc.low:1):lerpC(HMPOS,(v-sc.lo)/(sc.top-sc.lo));
-function moBar(sc){const b=$("mobar");if(MO==="off"||!sc||S.tab!=="map"){b.innerHTML="";return}
- b.innerHTML="<span>"+MOL[MO]+"</span>"+(sc.low<0?"<i style='width:36px;background:linear-gradient(90deg,rgb("+HMNEG[1].join(",")+"),rgb("+HMNEG[0].join(",")+"))'></i>"+Math.round(sc.low):"")+"<span>"+Math.round(sc.lo)+"</span><i style='background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></i><span>"+Math.round(sc.top)+"+ €/MWh</span>"}
+function moBar(sc){const b=$("mobar");if(MO==="off"||!sc){b.innerHTML="";return}
+ b.innerHTML="<span>"+MOL[MO]+"</span><br>"+(sc.low<0?"<i style='width:36px;background:linear-gradient(90deg,rgb("+HMNEG[1].join(",")+"),rgb("+HMNEG[0].join(",")+"))'></i>"+Math.round(sc.low):"")+"<span>"+Math.round(sc.lo)+"</span><i style='background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></i><span>"+Math.round(sc.top)+"+ €/MWh</span>"}
 function moDraw(){MZ.paths=[];if(MO==="off"||!MK){moBar(null);return}mzLoad();if(!MZ.d)return;const sc=moScale();moBar(sc);if(!sc){$("mobar").innerHTML="<span>"+MOL[MO]+": not published yet</span>";return}const v=viewBox(),lab=[];
  cx.save();cx.lineJoin="round";
  for(const[z,Z_]of Object.entries(MZ.d)){const b=Z_.b;if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;const val=moVal(z);
   const p=new Path2D();for(const r of Z_.p){let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}p.closePath()}
   MZ.paths.push([p,z]);const on=S.mzh===z;
-  if(val!=null){cx.globalAlpha=on?.8:BM()==="simple"?.72:.6;cx.fillStyle=moCol(val,sc);cx.fill(p)}
+  if(val!=null){const t=val<0?Math.min(1,val/(sc.low||-1)):Math.max(0,Math.min(1,(val-sc.lo)/(sc.top-sc.lo)));  // low prices fade towards transparent
+   cx.globalAlpha=on?.85:(BM()==="simple"?.1:.06)+(BM()==="simple"?.65:.6)*Math.pow(t,.85);cx.fillStyle=moCol(val,sc);cx.fill(p)}
   else{cx.globalAlpha=.35;cx.fillStyle=css("--panel");cx.fill(p)}
   cx.globalAlpha=on?1:.85;cx.strokeStyle=on?css("--ink"):"rgba(255,255,255,.85)";cx.lineWidth=on?2:.8;cx.stroke(p);
   const[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);if(x1-x0>34&&y1-y0>16){const[cxp,cyp]=P(Z_.c[0],Z_.c[1]);lab.push([cxp,cyp,z,val,x1-x0])}}
@@ -435,7 +438,7 @@ function moDraw(){MZ.paths=[];if(MO==="off"||!MK){moBar(null);return}mzLoad();if
   if(w>70){cx.font="10px sans-serif";cx.strokeText(z,x,y-9);cx.fillText(z,x,y-9)}});
  cx.restore()}
 function moTip(z){const p=MK.prices[z],f=v=>v==null?"–":Math.round(v);return z+" · now "+f(moVal(z,"now"))+" · 24 h avg "+f(moVal(z,"avg"))+(p&&p.slice(N0+1).some(x=>x!=null)?" · tomorrow "+f(moVal(z,"next")):"")+" €/MWh · TB2 "+f(moVal(z,"tb2"))+" · TB4 "+f(moVal(z,"tb4"))+(p?"":" · no openly licensed price")}
-function moSet(m){MO=m;try{localStorage.setItem("wm-mo",m)}catch(e){}document.querySelectorAll("#mosel button").forEach(b=>b.classList.toggle("on",b.dataset.mo===MO));repaint()}
+function moSet(m){MO=m;if(m!=="off")S.moLast=m;document.querySelectorAll("#mosel button").forEach(b=>b.classList.toggle("on",b.dataset.mo===MO));legSync();repaint()}
 function paint(){if(S.tab!=="map")return;const[W,H]=size();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
  // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
 const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
@@ -792,7 +795,7 @@ function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<
 function sysCard(D){const h=D.last,g=D.gen[h]||1,pz=D.zones.map(z=>MK.prices[z]&&MK.prices[z][N0]).filter(v=>v!=null);
  let bar="",xo=0;MIXC.forEach(([k])=>{const w=100*D.mix[k][h]/g;if(w>0.3){bar+="<span style='left:"+xo+"%;width:calc("+w+"% - 2px);background:var(--m-"+k+")'></span>";xo+=w}});
  const ni=D.net&&D.net[h];
- return"<div class='card"+(D.c===S.sys?" on":"")+"' data-s='"+D.c+"'><h3>"+(SYSN[D.c]||D.c)+"<span>"+(pz.length?pz.map(v=>v.toFixed(0)).join(" / ")+" €/MWh":"price n/a")+"</span></h3><div class='v mut'>Load "+v1(D.load&&D.load[h])+" · renewables "+(100*D.ren[h]/g).toFixed(0)+"% of generation<br>"+(ni==null?"flows n/a":ni>=0?"Importing "+fmt(ni):"Exporting "+fmt(-ni))+" · "+(D.lag?"<b>data "+(D.lag+NP-1-h)+" h old</b> (TSO reports late)":"at "+hl(h))+"</div><div class='mixbar'>"+bar+"</div></div>"}
+ return"<div class='card"+(D.c===S.sys?" on":"")+"' data-s='"+D.c+"'><h3><span style='display:flex;align-items:center;gap:6px'>"+flagHTML(D.c,7)+(SYSN[D.c]||D.c)+"</span><span>"+(pz.length?pz.map(v=>v.toFixed(0)).join(" / ")+" €/MWh":"price n/a")+"</span></h3><div class='v mut'>Load "+v1(D.load&&D.load[h])+" · renewables "+(100*D.ren[h]/g).toFixed(0)+"% of generation<br>"+(ni==null?"flows n/a":ni>=0?"Importing "+fmt(ni):"Exporting "+fmt(-ni))+" · "+(D.lag?"<b>data "+(D.lag+NP-1-h)+" h old</b> (TSO reports late)":"at "+hl(h))+"</div><div class='mixbar'>"+bar+"</div></div>"}
 // ---- GIE: storage fill (AGSI+) and LNG send-out (ALSI), web/data/gie.json ----
 const GIE={d:null,loading:false};
 function gieLoad(){if(GIE.d||GIE.loading)return;GIE.loading=true;fetch("data/gie.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GIE.d=j;if(S.tab==="sys")system()}}).catch(()=>{})}
@@ -833,10 +836,10 @@ function system(){const el=$("sys");STIPS=[];
  let h=(S.c&&S.c!=="Europe"&&!csel&&!grp?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. CEE / SEE, Baltics, Italy, Iberia and Finland: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (actual generation per production type, actual load, physical flows). Last 24 h, hourly averages. Flows: positive = import.</div>";
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
  h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
- const offc=all.filter(d=>SYS[d.c].series.wind_offshore&&SYS[d.c].series.wind_offshore.some(v=>v>0));S.offm=S.offm||"gen";
- if(offc.length)h+="<div class='card' style='cursor:default'><h3>Offshore wind share<span class='seg'><button data-om='gen' class='"+(S.offm==="gen"?"on":"")+"'>of generation</button><button data-om='load' class='"+(S.offm==="load"?"on":"")+"'>of consumption</button></span></h3><svg class='cmp' id='cmpOff'></svg><div class='mut' style='font-size:12px'>Offshore wind output as a share of national public net generation, or of load (consumption), last 24 h, hourly.</div></div>";
+ S.tcT=S.tcT||"woff";S.offm=S.offm||"gen";const TN=Object.fromEntries(MIXC.map(([k,n])=>[k,n])),offc=all.filter(d=>d.mix[S.tcT].some(v=>v>0));
+ h+="<div class='card' style='cursor:default'><h3><span style='display:flex;align-items:center;gap:8px'>Compare <select id='tcT' style='width:auto;padding:3px 6px;font-size:13px'>"+MIXC.map(([k,n])=>"<option value='"+k+"'"+(k===S.tcT?" selected":"")+">"+n+"</option>").join("")+"</select> across countries</span><span class='seg big'><button data-om='gen' class='"+(S.offm==="gen"?"on":"")+"'>% of generation</button><button data-om='load' class='"+(S.offm==="load"?"on":"")+"'>% of consumption</button><button data-om='mw' class='"+(S.offm==="mw"?"on":"")+"'>MW</button></span></h3>"+(offc.length?"<svg class='cmp' id='cmpOff'></svg>":"<div class='mut'>No country in this selection has "+TN[S.tcT].toLowerCase()+" output in the last 24 h.</div>")+"<div class='mut' style='font-size:12px'>"+TN[S.tcT]+" output "+(S.offm==="mw"?"in MW":S.offm==="gen"?"as a share of national generation":"as a share of load (consumption)")+", last 24 h, hourly"+(S.offm==="mw"?"":"")+". Countries follow the selector (pick a group such as CEE / SEE to narrow it). Hover to rank them for one hour.</div></div>";
  if(D){const lh=D.last,g=D.gen[lh]||1;
-  h+="<h2>"+(SYSN[D.c]||D.c)+" <span class='mut' style='font:13px system-ui'>· last 24 h</span></h2>";
+  h+="<h2>"+flagHTML(D.c,9)+" "+(SYSN[D.c]||D.c)+" <span class='mut' style='font:13px system-ui'>· last 24 h</span></h2>";
   const i1=STIPS.push(k=>(SYSN[D.c]||D.c)+" · "+dl(k)+" · generation "+fmt(D.gen[k])+(D.load?" · load "+v1(D.load[k]):"")+" · "+MIXC.filter(([c])=>D.mix[c][k]>0).map(([c,n])=>n+" "+fmt(D.mix[c][k])).join(", "))-1;
   h+="<div class='syswrap'><div class='card wide'><h3>Generation mix and load<span>"+fmt(D.gen[lh])+" generation"+(D.load?" · "+v1(D.load[lh])+" load":"")+"</span></h3><svg class='sx' data-t='"+i1+"' data-n='"+NP+"' data-k='mix'></svg>"+"<div class='mut' style='font-size:12px;display:flex;justify-content:space-between'><span>−24 h</span><span>now</span></div>";
   h+="<table class='mixtab'><thead><tr><th>Source</th><th>Now</th><th>Share now</th><th>24 h avg</th><th>24 h energy</th></tr></thead><tbody>"+MIXC.filter(([k])=>D.mix[k].some(v=>v>0)).map(([k,n])=>{const a=D.mix[k].slice(0,lh+1),av=a.reduce((p,q)=>p+q,0)/a.length;return"<tr><td><i style='background:var(--m-"+k+")'></i>"+n+"</td><td>"+fmt(D.mix[k][lh])+"</td><td>"+(100*D.mix[k][lh]/g).toFixed(1)+"%</td><td>"+fmt(av)+"</td><td>"+(a.reduce((p,q)=>p+q,0)/1000).toFixed(1)+" GWh</td></tr>"}).join("")+"</tbody></table></div>";
@@ -852,13 +855,14 @@ function system(){const el=$("sys");STIPS=[];
  const gh=(D?gieCard(D.c.toUpperCase(),SYSN[D.c]||D.c)+gasCard(D.c.toUpperCase()):"")+gieOverview();
  if(gh)h+="<h2>Gas <span class='mut' style='font:13px system-ui'>· storage, LNG and supply"+(D?" for "+(SYSN[D.c]||D.c)+", then the EU":"")+"</span></h2>"+gh;
  el.innerHTML=h;makeSortable(el);
- if(offc.length){CMP.cmpOff={series:offc.map(d=>{const w=SYS[d.c].series.wind_offshore;return{id:d.c,label:SYSN[d.c]||d.c,flag:d.c,v:w.map((v,hh)=>{const den=S.offm==="gen"?d.gen[hh]:(d.load&&d.load[hh]);return v==null||!den?null:100*v/den})}}),a:0,b:Math.max(...offc.map(d=>d.last)),fmt:v=>Math.round(v)+"%",zero:true,H:260,right:110};cmpRender("cmpOff")}
+ if(offc.length){CMP.cmpOff={series:offc.map(d=>{const w=d.mix[S.tcT];return{id:d.c,label:SYSN[d.c]||d.c,flag:d.c,v:w.map((v,hh)=>{if(hh>d.last)return null;if(S.offm==="mw")return v;const den=S.offm==="gen"?d.gen[hh]:(d.load&&d.load[hh]);return v==null||!den?null:100*v/den})}}),a:0,b:Math.max(...offc.map(d=>d.last)),fmt:S.offm==="mw"?(v=>fmt(v)):(v=>Math.round(v)+"%"),zero:true,H:Math.max(260,offc.length*16+40),right:150};cmpRender("cmpOff")}
  el.querySelectorAll("svg.sx").forEach(sv=>{const W=sv.clientWidth||400,k=sv.dataset.k,Hh=k==="mix"?180:70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+(k==="mix"?0:12)));sv.style.height=(Hh+(k==="mix"?0:12))+"px";
   if(k==="mix")sv.innerHTML=stackSVG(D,W,Hh);
   else if(k==="price"){const zs=D.zones.filter(z=>MK.prices[z]);sv.innerHTML=tsSVG(W,Hh,NT,zs.map((z,j)=>({v:MK.prices[z],cls:j?"act":"pr"})),+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1))}
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
-$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;system();return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
+$("sys").onchange=e=>{if(e.target.id==="tcT"){S.tcT=e.target.value;keepScroll(system)}};
+$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;keepScroll(system);return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
 $("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;keepScroll(market);return}
  const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;HM.hmPrice.sort=S.hms;hs.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===hs));hmRender("hmPrice");return}
  const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;capRefresh();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;capRefresh();return}
@@ -873,7 +877,12 @@ $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==
 ["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;$("kl").textContent=$("M").value==="t"?"Wake expansion A":"Wake decay k";draw()};$("Z").onchange=()=>{legSync();draw()};$("LV").onchange=draw;if(F.some(f=>f.on))$("lon").style.display="";
 function legFold(open){$("legb").hidden=!open;$("legt").setAttribute("aria-expanded",String(open));$("legc").textContent=open?"▾":"▸";try{localStorage.setItem("wm-legend",open?"1":"0")}catch(e){}}
 $("legt").onclick=()=>legFold($("legb").hidden);try{legFold(localStorage.getItem("wm-legend")!=="0")}catch(e){}
-$("leg").onclick=e=>{const b=e.target.closest(".lk");if(!b)return;const k=b.dataset.k;
+$("leg").onclick=e=>{const mb=e.target.closest("#mosel button");if(mb){moSet(mb.dataset.mo);return}
+ const lc=e.target.closest(".lc");if(lc){const c=lc.dataset.c,on=catOn(c);
+  if(c==="price")moSet(on?"off":(S.moLast||"now"));else if(c==="zones"){$("Z").checked=!on;if(!on)LCAT.zones.forEach(k=>HID.delete(k))}else if(c==="grid"){$("GR").checked=!on;if(!on)LCAT.grid.forEach(k=>HID.delete(k));$("GR").onchange()}
+  else if(c==="depth"){$("BY").checked=!on;on?HID.add("depth"):HID.delete("depth");$("BY").onchange()}else LCAT[c].forEach(k=>on?HID.add(k):HID.delete(k));
+  try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}legSync();S.hover=-1;draw();return}
+ const b=e.target.closest(".lk");if(!b)return;const k=b.dataset.k;
  if(k==="depth"){$("BY").checked=!$("BY").checked;$("BY").checked?HID.delete(k):HID.add(k);try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}$("BY").onchange()}
  else{if(["uc","cs","pl"].includes(k)&&!$("Z").checked){$("Z").checked=true;HID.delete(k)}else HID.has(k)?HID.delete(k):HID.add(k);
   try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}}
@@ -885,7 +894,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("bmlist").hidden
 try{$("HS").checked=localStorage.getItem("wm-hs")==="1";bmSet(localStorage.getItem("wm-basemap")||"simple")}catch(e){bmSet("simple")}
 $("HS").onchange=()=>{try{localStorage.setItem("wm-hs",$("HS").checked?"1":"0")}catch(e){}attrib();repaint()};attrib();
 legSync();
-$("GR").onchange=()=>{$("gleg").style.display=$("GR").checked&&GRID.d?"block":"none";repaint()};
+$("GR").onchange=()=>{legSync();repaint()};
 $("BY").onchange=()=>{S.bathyKey="";$("bys").style.display=$("BY").checked?"block":"none";legSync();draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
@@ -893,6 +902,7 @@ function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.client
  if(b<0)for(const[p,i]of S.fp)if(cx.isPointInPath(p,x*d,y*d)){b=i;break}
  let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;
  let mz=null;if(b<0&&zh<0)for(const[p,z]of MZ.paths)if(cx.isPointInPath(p,x*d,y*d)){mz=z;break}cx.restore();S.mzhit=mz;return[b,zh,x,y]}
+function zoneToSystem(z){const c=ZONEFLAG[z];if(!c||!SYS[c])return;S.sys=c;const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===c&&COUNTRIES.includes(n));S.c=nm||null;$("tip").style.display="none";tab("sys");scrollTo(0,0)}
 function selectFarm(i){S.farm=i;S.c=F[i].c;S.hover=-1;$("tip").style.display="none";flyTo(fit(farmBox(F[i]),.12));sidebar()}
 const ptr=new Map();let drag=null;cv.style.touchAction="none";
 cv.onpointerdown=e=>{cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,[e.clientX,e.clientY]);cancelAnimationFrame(anim);
@@ -907,10 +917,10 @@ cv.onpointermove=e=>{if(ptr.has(e.pointerId))ptr.set(e.pointerId,[e.clientX,e.cl
  if(b>=0||zh>=0){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";
   if(b>=0){const f=F[b],[U,D]=curWind(f),r=cur(f);t.textContent=f.n+" ("+f.c+") · "+fmt(r.pw)+" of "+fmt(f.inst)+" · CF "+(100*r.pw/Math.max(1,f.inst)).toFixed(0)+"%"+(f.lay?"":" (est.)")+" · "+U.toFixed(1)+" m/s from "+D+"°"}
   else{const z=Z[zh];t.textContent=z.n+" ("+z.c+") · "+z.st+(z.mw>=5?" · "+fmt(z.mw):"")+" · "+z.a+" km²"}}
- else if(S.mzhit){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";t.textContent=moTip(S.mzhit)}else t.style.display="none";
+ else if(S.mzhit){t.style.display="block";t.style.left=Math.min(x+12,cv.clientWidth-260)+"px";t.style.top=y+12+"px";t.textContent=moTip(S.mzhit)+(SYS[ZONEFLAG[S.mzhit]]?" · click for the System view":"");cv.style.cursor=SYS[ZONEFLAG[S.mzhit]]?"pointer":"grab"}else t.style.display="none";
  if(S.mzhit!==S.mzh){S.mzh=S.mzhit;repaint()}};
 cv.onpointerup=cv.onpointercancel=e=>{ptr.delete(e.pointerId);cv.style.cursor="grab";
- if(drag&&drag.moved<5&&ptr.size===0&&e.type==="pointerup"){const[b]=hit(e);if(b>=0)selectFarm(b)}
+ if(drag&&drag.moved<5&&ptr.size===0&&e.type==="pointerup"){const[b,zh]=hit(e);if(b>=0)selectFarm(b);else if(zh<0&&S.mzhit)zoneToSystem(S.mzhit)}
  if(ptr.size===0)drag=null;else if(ptr.size===1){const[p]=[...ptr.values()];drag={x:p[0],y:p[1],lon:V.lon,lat:V.lat,moved:99}}};
 cv.onwheel=e=>{e.preventDefault();cancelAnimationFrame(anim);zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0016))};
 cv.ondblclick=e=>{zoomAt(e.offsetX,e.offsetY,2)};
@@ -931,7 +941,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Generation, load, flows and day-ahead prices for zones not openly licensed in Energy-Charts (incl. CEE / SEE): <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
-addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));moSet(MO);draw();
+addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));$("M").value="t";$("K").value=K_DEF.t;$("kl").textContent="Wake expansion A";moSet(MO);draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
  if(!site){try{site=await(await fetch("data/site.json",{cache:"no-cache"})).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}

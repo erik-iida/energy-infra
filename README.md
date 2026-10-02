@@ -1,4 +1,4 @@
-# Energy infra monitor
+# GridEconomics
 
 An energy-infrastructure monitor, starting from offshore wind: live, wake-aware output of the world's offshore wind farms: Europe from the EuroWindWakes turbine
 database, China, Taiwan, Vietnam, South Korea and the US from satellite-detected turbine positions (types

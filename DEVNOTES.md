@@ -196,3 +196,4 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 ## Working from a browser-only session
 The code runs on GitHub, not locally. Clone the repo, edit, push to `main`; the workflow runs the pipeline
 and redeploys the site in ~3 minutes. Check the run in the Actions tab.
+- Renamed "GridEconomics" (page title and heading; the repo and site URL stay energy-infra).

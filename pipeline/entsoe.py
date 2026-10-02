@@ -53,7 +53,7 @@ COUNTRIES = {
     "gr": ("Greece", "10YGR-HTSO-----Y", ["GR"], {"bg": "10YCA-BULGARIA-R", "mk": "10YMK-MEPSO----8", "al": "10YAL-KESH-----5", "it": "10Y1001A1001A788"}),
     "ba": ("Bosnia and Herzegovina", "10YBA-JPCC-----D", [], {"hr": "10YHR-HEP------M", "rs": "10YCS-SERBIATSOV", "me": "10YCS-CG-TSO---S"}),
     "me": ("Montenegro", "10YCS-CG-TSO---S", ["ME"], {"rs": "10YCS-SERBIATSOV", "ba": "10YBA-JPCC-----D", "al": "10YAL-KESH-----5", "it": "10Y1001A1001A71M"}),
-    "mk": ("North Macedonia", "10YMK-MEPSO----8", [], {"rs": "10YCS-SERBIATSOV", "bg": "10YCA-BULGARIA-R", "gr": "10YGR-HTSO-----Y"}),
+    "mk": ("North Macedonia", "10YMK-MEPSO----8", ["MK"], {"rs": "10YCS-SERBIATSOV", "bg": "10YCA-BULGARIA-R", "gr": "10YGR-HTSO-----Y"}),
     "ee": ("Estonia", "10Y1001A1001A39I", ["EE"], {"fi": "10YFI-1--------U", "lv": "10YLV-1001A00074"}),
     "lv": ("Latvia", "10YLV-1001A00074", ["LV"], {"ee": "10Y1001A1001A39I", "lt": "10YLT-1001A0008Q"}),
     "lt": ("Lithuania", "10YLT-1001A0008Q", ["LT"], {"lv": "10YLV-1001A00074", "pl": "10YPL-AREA-----S", "se": "10Y1001A1001A47J"}),

@@ -10,24 +10,24 @@ end = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 st = end - timedelta(hours=24)
 f = lambda d: d.strftime("%Y%m%d%H%M")
 PL, DE = "10YPL-AREA-----S", "10Y1001A1001A82H"
+RO = "10YRO-TEL------P"
 tests = {
-    "A44 price PL": dict(documentType="A44", in_Domain=PL, out_Domain=PL),
-    "A44 price EE": dict(documentType="A44", in_Domain="10Y1001A1001A39I", out_Domain="10Y1001A1001A39I"),
-    "A65 load PL": dict(documentType="A65", processType="A16", outBiddingZone_Domain=PL),
-    "A75 gen PL": dict(documentType="A75", processType="A16", in_Domain=PL),
-    "A11 flow PL->DE": dict(documentType="A11", in_Domain=DE, out_Domain=PL),
-    "A73 unit gen PL": dict(documentType="A73", processType="A16", in_Domain=PL),
-    "A68 installed PL": dict(documentType="A68", processType="A33", in_Domain=PL),
+    "A75 gen RO in": dict(documentType="A75", processType="A16", in_Domain=RO),
+    "A65 load RO": dict(documentType="A65", processType="A16", outBiddingZone_Domain=RO),
+    "A73 unit RO": dict(documentType="A73", processType="A16", in_Domain=RO),
+    "A75 gen RO day-before": dict(documentType="A75", processType="A16", in_Domain=RO, _back=48),
+    "A44 price IE": dict(documentType="A44", in_Domain="10Y1001A1001A59C", out_Domain="10Y1001A1001A59C"),
 }
 out = [f"token set: {bool(tok)}, length {len(tok)}"]
 for name, p in tests.items():
-    q = {**p, "securityToken": tok, "periodStart": f(st), "periodEnd": f(end)}
+    back = p.pop("_back", 0)
+    q = {**p, "securityToken": tok, "periodStart": f(st - timedelta(hours=back)), "periodEnd": f(end - timedelta(hours=back))}
     if name.startswith("A68"):
         q.update(periodStart=f(end.replace(month=1, day=1, hour=0)), periodEnd=f(end))
     try:
         r = requests.get("https://web-api.tp.entsoe.eu/api", params=q, timeout=90)
         out.append(f"--- {name}: HTTP {r.status_code}, {len(r.content)} bytes, {r.headers.get('content-type')}")
-        out.append(r.text[:1800].replace(tok, "***"))
+        out.append(r.text[:900].replace(tok, "***"))
     except Exception as ex:
         out.append(f"--- {name}: {ex!r}")
     time.sleep(1)

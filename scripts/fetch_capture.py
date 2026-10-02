@@ -141,7 +141,7 @@ def main() -> None:
     for m in ms:
         for z in zones:
             c = cells.get(f"{z}|{m}")
-            if c is None:
+            if c is None or (z in entsoe.ZONE_CURRENCY and "cur" not in c):  # non-EUR zones: refetch until stored raw
                 todo.append((z, m))
             elif m in ms[:2] and c.get("day") != today.isoformat():
                 todo.append((z, m))
@@ -188,7 +188,9 @@ def main() -> None:
         for m in pub_months:
             c = cells.get(f"{z}|{m}")
             if c and not c.get("none"):
-                cur = c.get("cur") or entsoe.ZONE_CURRENCY.get(z, "EUR")
+                cur = c.get("cur", "EUR")
+                if z in entsoe.ZONE_CURRENCY and "cur" not in c:  # old cell of unknown currency: skip until refetched
+                    continue
                 r = entsoe.eur_rate(cur)
                 if r is None:  # no stored rate: leave the zone out rather than publish another currency
                     continue

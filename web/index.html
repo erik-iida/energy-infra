@@ -898,10 +898,11 @@ $("GR").onchange=()=>{legSync();repaint()};
 $("BY").onchange=()=>{S.bathyKey="";$("bys").style.display=$("BY").checked?"block":"none";legSync();draw()};$("BD").oninput=()=>{bathyColour();repaint()};bathyColour();
 $("FM").onchange=()=>{S.fm=$("FM").value;draw()};
 function hit(e){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let b=-1,bd=1e9;S.pts.forEach(p=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<p[2]+6&&d<bd){bd=d;b=p[3]}});
- const d=devicePixelRatio||1;cx.save();cx.setTransform(1,0,0,1,0,0);
- if(b<0)for(const[p,i]of S.fp)if(cx.isPointInPath(p,x*d,y*d)){b=i;break}
- let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x*d,y*d)&&(zh<0||Z[i].a<Z[zh].a))zh=i;
- let mz=null;if(b<0&&zh<0)for(const[p,z]of MZ.paths)if(cx.isPointInPath(p,x*d,y*d)){mz=z;break}cx.restore();S.mzhit=mz;return[b,zh,x,y]}
+ // paths are built in CSS pixels: test them with an identity transform at the cursor's CSS position (works at any display scaling)
+ cx.save();cx.setTransform(1,0,0,1,0,0);
+ if(b<0)for(const[p,i]of S.fp)if(cx.isPointInPath(p,x,y)){b=i;break}
+ let zh=-1;if(b<0)for(const[p,i]of S.zp)if(cx.isPointInPath(p,x,y)&&(zh<0||Z[i].a<Z[zh].a))zh=i;
+ let mz=null;if(b<0&&zh<0)for(const[p,z]of MZ.paths)if(cx.isPointInPath(p,x,y)){mz=z;break}cx.restore();S.mzhit=mz;return[b,zh,x,y]}
 function zoneToSystem(z){const c=ZONEFLAG[z];if(!c||!SYS[c])return;S.sys=c;const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===c&&COUNTRIES.includes(n));S.c=nm||null;$("tip").style.display="none";tab("sys");scrollTo(0,0)}
 function selectFarm(i){S.farm=i;S.c=F[i].c;S.hover=-1;$("tip").style.display="none";flyTo(fit(farmBox(F[i]),.12));sidebar()}
 const ptr=new Map();let drag=null;cv.style.touchAction="none";

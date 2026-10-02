@@ -6,6 +6,8 @@ an outline use a simple cubic curve on their stated capacity.
 """
 from __future__ import annotations
 
+import time
+
 import numpy as np
 from py_wake.literature.gaussian_models import Bastankhah_PorteAgel_2014, Niayifar_PorteAgel_2016
 from py_wake.literature.noj import Jensen_1983
@@ -72,9 +74,13 @@ def farm_power(f: dict, types: list[dict], ws_hub: np.ndarray, wd: np.ndarray) -
         "niayifar": Niayifar_PorteAgel_2016(site, wt),
         "turbopark": Nygaard_2022(site, wt),
     }
+    ms = {}
     for key, wfm in models.items():
+        t0 = time.perf_counter()
         sim = wfm(x, y, type=tloc, ws=ws_in, wd=wd % 360, time=True)
         out[key] = sim.Power.values.sum(axis=0) / 1e6  # W -> MW, summed over turbines
+        ms[key] = round((time.perf_counter() - t0) * 1000, 1)  # calculation time for all time steps
+    out["_ms"] = ms
     return out
 
 

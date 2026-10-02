@@ -71,6 +71,7 @@ def main(argv=None) -> None:
     models = list(config.WAKE_MODELS) + ["nowake"]
 
     results = {}
+    timing = {}  # farm id -> ({model: ms}, time steps)
     missing = 0
     for f in farms:
         fc = fc_cells.get(cell_key(f["lat"], f["lon"]))
@@ -87,6 +88,8 @@ def main(argv=None) -> None:
             except Exception as ex:  # one bad layout must never stop the feed
                 print(f"warning: {f['n']}: {ex!r}"[:200])
                 pw = wake.estimate_no_layout({**f, "cap": f.get("inst", f.get("cap", 0))}, ws[ok])
+            if "_ms" in pw:
+                timing[str(f["id"])] = (pw.pop("_ms"), int(ok.sum()))
             for m in models:
                 P[m][ok] = pw[m]
         results[str(f["id"])] = (ws, wd, P)
@@ -120,6 +123,8 @@ def main(argv=None) -> None:
             ent["fU"] = r1(ws[np_:])
             ent["fdir"] = [None if not np.isfinite(x) else int(round(float(x))) % 360 for x in wd[np_:]]
             ent["fP"] = {m: r1(P[m][np_:]) for m in models}
+        if fid in timing:
+            ent["ms"], ent["nt"] = timing[fid]
         feed_farms[fid] = ent
 
     feed = {

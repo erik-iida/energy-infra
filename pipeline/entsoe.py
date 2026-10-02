@@ -149,6 +149,54 @@ def series(root: ET.Element | None, value_tag: str):
         yield ts, ns, {h: sum(v) / len(v) for h, v in acc.items()}
 
 
+# ---------------------------------------------------------------- currencies
+# Day-ahead prices are mostly in EUR; Ukraine (UA-IPS) publishes in UAH. Non-EUR prices are converted with the
+# National Bank of Ukraine's official daily rate (UAH per EUR); without a rate the series is dropped, never shown raw.
+NBU = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange?valcode=EUR&date={}&json"
+_FX: dict[str, float | None] = {}
+
+
+def currency(ts: ET.Element, ns: str) -> str:
+    el = ts.find(ns + "currency_Unit.name")
+    return (el.text or "EUR").strip() if el is not None else "EUR"
+
+
+def eur_rate(cur: str, t: float) -> float | None:
+    """Units of `cur` per 1 EUR on the (UTC) day of t; 1.0 for EUR, None if unknown."""
+    if cur == "EUR":
+        return 1.0
+    day = datetime.fromtimestamp(t, timezone.utc).strftime("%Y%m%d")
+    key = f"{cur}|{day}"
+    if key not in _FX:
+        rate = None
+        if cur == "UAH":
+            import requests
+            for _ in range(2):
+                try:
+                    r = requests.get(NBU.format(day), timeout=30)
+                    rate = float(r.json()[0]["rate"])
+                    break
+                except Exception:
+                    time.sleep(2)
+        _FX[key] = rate
+    return _FX[key]
+
+
+def to_eur(ts: ET.Element, ns: str, hv: dict[int, float], errors: list[str] | None = None) -> dict[int, float]:
+    """Convert one price TimeSeries (already hourly) to EUR/MWh; hours without a rate are left out."""
+    cur = currency(ts, ns)
+    if cur == "EUR":
+        return hv
+    out = {}
+    for h, v in hv.items():
+        r = eur_rate(cur, h)
+        if r:
+            out[h] = v / r
+    if errors is not None and len(out) < len(hv):
+        errors.append(f"no {cur}/EUR rate for {len(hv) - len(out)} h")
+    return out
+
+
 def _fmt(t: float) -> str:
     return datetime.fromtimestamp(t, timezone.utc).strftime("%Y%m%d%H%M")
 
@@ -167,6 +215,10 @@ def prices(cl: Client, zones: list[str], hours: list[int]) -> dict[str, list]:
     """Day-ahead prices per zone over the feed window; cached per zone, refetched when hours are missing."""
     cache = _load_cache()
     pc = cache.setdefault("prices", {})
+    if cache.get("fx") != 1:  # cached before currency conversion: UA-IPS was in UAH, refetch it
+        pc.pop("UA-IPS", None)
+        cache.get("pt", {}).pop("UA-IPS", None)
+        cache["fx"] = 1
     tomorrow_due = datetime.now(timezone.utc).hour >= 11
     for z in zones:
         eic = ZONE_EIC.get(z)
@@ -180,6 +232,7 @@ def prices(cl: Client, zones: list[str], hours: list[int]) -> dict[str, list]:
         root = cl.get(documentType="A44", in_Domain=eic, out_Domain=eic, periodStart=_fmt(hours[0]),
                       periodEnd=_fmt(hours[-1] + 3600))
         for ts, ns, hv in series(root, "price.amount"):
+            hv = to_eur(ts, ns, hv, cl.errors)
             # several TimeSeries may exist (e.g. 60- and 15-minute products): average them per hour
             for h, v in hv.items():
                 have[str(h)] = round(v, 2)

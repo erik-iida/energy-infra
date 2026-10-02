@@ -86,8 +86,9 @@ def cell(zone: str, m: str) -> dict:
     a, b = month_bounds(m)
     cl = entsoe.Client()
     price: dict[int, float] = {}
-    for _, _, hv in entsoe.series(cl.get(documentType="A44", in_Domain=eic, out_Domain=eic,
+    for _ts, _ns, hv in entsoe.series(cl.get(documentType="A44", in_Domain=eic, out_Domain=eic,
                                          periodStart=fmt(a), periodEnd=fmt(b)), "price.amount"):
+        hv = entsoe.to_eur(_ts, _ns, hv, cl.errors)  # UA-IPS publishes in UAH
         for h, v in hv.items():
             if a <= h < b:
                 price[h] = v if h not in price else (price[h] + v) / 2
@@ -102,7 +103,7 @@ def cell(zone: str, m: str) -> dict:
         for h, v in hv.items():
             if a <= h < b:
                 d[h] = d.get(h, 0) + max(0.0, v)
-    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls}
+    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls, "fx": 1}
     if cl.errors:
         out["err"] = cl.errors[-2:]
     if not price:
@@ -138,7 +139,7 @@ def main() -> None:
     for m in ms:
         for z in zones:
             c = cells.get(f"{z}|{m}")
-            if c is None:
+            if c is None or (z == "UA-IPS" and not c.get("fx")):  # fetched before UAH -> EUR conversion
                 todo.append((z, m))
             elif m in ms[:2] and c.get("day") != today.isoformat():
                 todo.append((z, m))

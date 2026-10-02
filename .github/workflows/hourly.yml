@@ -24,7 +24,7 @@ permissions:
 jobs:
   feed:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -56,6 +56,7 @@ jobs:
           WM_WINDY_MODEL: ${{ vars.WM_WINDY_MODEL || 'iconEu' }}
           WM_DAILY_CALL_CAP: ${{ vars.WM_DAILY_CALL_CAP || '3000' }}
           WINDY_KEY: ${{ secrets.WINDY_KEY }}
+          ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
         run: python -m pipeline.run
 
       - uses: actions/cache/save@v4

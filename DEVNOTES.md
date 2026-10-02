@@ -167,6 +167,15 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - System tab: "EU gas storage" overview (fill line this year vs year before, largest countries) at the top,
   and "Gas storage and LNG" card for the selected country.
 
+## ENTSO-E (Oct 2026)
+- pipeline/entsoe.py, called from market.build when ENTSOE_TOKEN is set (hourly workflow). Fills day-ahead prices
+  for every zone Energy-Charts can't publish (A44), and adds System-tab countries from ENTSO-E (A75 generation per
+  PSR type mapped to Energy-Charts ids, A65 load, A11 physical flows per neighbour -> net import; flows refreshed
+  every 3 h). Cache in state/entsoe_cache.json. Errors land in feed market.diag.entsoe.
+- Page: "CEE / SEE" group in the selector (GROUPS), CEE/SEE countries without farms get map boxes (CBOX);
+  Market highlights the group's zones, System shows the group's countries.
+- Next: A73 per-unit generation for large plants on the map (needs plant positions: powerplantmatching).
+
 ## Known gaps / next ideas
 - Newer farms outside Europe (China's 2021-26 build-out, Taiwan, Japan, US) need a newer source.
 - The EuroWindWakes database has no Finnish farms (Tahkoluoto) and only two Norwegian demos (no Hywind Tampen).

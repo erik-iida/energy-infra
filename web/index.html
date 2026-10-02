@@ -136,14 +136,21 @@ const TY=DATA.types||[];
 F.forEach(f=>{f.lay=!!f.xy;f.inst=f.lay?(f.inst||f.mw*f.xy.length/2):f.cap;f.tix=f.lay&&f.ti!=null&&TY.length?(Array.isArray(f.ti)?f.ti:Array(f.xy.length/2).fill(f.ti)):null;
  if(!f.lay){const kx=111320*Math.cos(f.lat*Math.PI/180);f.o=f.ol.map(r=>r.map((v,i)=>i%2?(v-f.lat)*110574:(v-f.lon)*kx))}});
 F.forEach(f=>{f.rg=f.rg||"Europe"});Z.forEach(z=>{z.rg=z.rg||"Europe"});
+const GROUPS={"CEE / SEE":["Poland","Czechia","Slovakia","Hungary","Romania","Bulgaria","Slovenia","Croatia","Serbia","Greece","Bosnia and Herzegovina","Montenegro","North Macedonia","Estonia","Latvia","Lithuania"]};
 const RGOF={};[...F,...Z].forEach(x=>{RGOF[x.c]=x.rg});
 const REGIONS=[...new Set(F.map(f=>f.rg))].sort((a,b)=>F.filter(f=>f.rg===b).reduce((s,f)=>s+f.inst,0)-F.filter(f=>f.rg===a).reduce((s,f)=>s+f.inst,0));
-const isReg=c=>REGIONS.includes(c);
+const isReg=c=>REGIONS.includes(c)||!!GROUPS[c];
 // c: null = world, a region name, or a country
-function inC(x,c){return !c||x.c===c||x.rg===c}
+function inC(x,c){return !c||x.c===c||x.rg===c||(GROUPS[c]&&GROUPS[c].includes(x.c))}
 const place=c=>c||"World";
 function sum(c){return F.filter(f=>inC(f,c)).reduce((a,f)=>a+f.inst,0)}
 const COUNTRIES=[...new Set([...F.map(f=>f.c),...Z.map(z=>z.c)])].sort((a,b)=>sum(b)-sum(a)||a.localeCompare(b));
+// power-system countries without wind farms (System / Market tabs, ENTSO-E): name -> map box [W,S,E,N]
+const CBOX={Czechia:[12,48.5,19,51.1],Slovakia:[16.8,47.7,22.6,49.6],Hungary:[16,45.7,22.9,48.6],Romania:[20.2,43.6,29.7,48.3],Bulgaria:[22.3,41.2,28.6,44.2],
+ Slovenia:[13.3,45.4,16.6,46.9],Croatia:[13.4,42.4,19.5,46.6],Serbia:[18.8,42.2,23,46.2],Greece:[19.3,34.8,28.3,41.8],"Bosnia and Herzegovina":[15.7,42.5,19.7,45.3],
+ Montenegro:[18.4,41.8,20.4,43.6],"North Macedonia":[20.4,40.8,23.1,42.4],Austria:[9.5,46.3,17.2,49.1],Switzerland:[5.9,45.8,10.5,47.9],Italy:[6.6,36.6,18.6,47.1],
+ Latvia:[20.9,55.6,28.3,58.1],Lithuania:[20.9,53.8,26.9,56.5]};
+Object.keys(CBOX).forEach(c=>{RGOF[c]=RGOF[c]||"Europe";if(!COUNTRIES.includes(c))COUNTRIES.push(c)});GROUPS["CEE / SEE"].forEach(c=>{RGOF[c]=RGOF[c]||"Europe";if(!COUNTRIES.includes(c))COUNTRIES.push(c)});
 
 /* ---------- in-browser wake models (map heatmap + what-if) ---------- */
 // In-browser copies of the PyWake models (same formulas and defaults as pipeline/wake.py)
@@ -304,7 +311,8 @@ function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;cons
  for(const uc of[0,1]){cx.strokeStyle="#d660d6";cx.lineWidth=1.3*zw;cx.setLineDash(uc?[5,3]:[]);cx.stroke(P2[12+uc])}
  cx.restore()}
 function coastPath(){const p=new Path2D(),v=viewBox();for(let q=0;q<COASTL.length;q++){const r=COASTL[q],b=COASTLB[q];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}}return p}
-function bbox(c){let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
+function bbox(c){if(GROUPS[c]){let a=[180,90,-180,-90];GROUPS[c].forEach(m=>{const b=bbox(m);if(b[2]-b[0]<200){a=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])]}});return a}
+ if(CBOX[c]&&!F.some(f=>f.c===c))return CBOX[c];let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
  F.filter(f=>inC(f,c)).forEach(f=>f.ol.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
  if($("Z").checked||!F.some(f=>inC(f,c)))Z.filter(z=>inC(z,c)).forEach(z=>z.r.forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])}));
  return a[0]>a[2]?WORLD():a}
@@ -504,13 +512,16 @@ const FLAGS={
  si:'<rect width="30" height="7" fill="#fff"/><rect y="6.6" width="30" height="7" fill="#005DA4"/><rect y="13.3" width="30" height="6.7" fill="#ED1C24"/>',
  sk:'<rect width="30" height="7" fill="#fff"/><rect y="6.6" width="30" height="7" fill="#0B4EA2"/><rect y="13.3" width="30" height="6.7" fill="#EE1C25"/>',
  ua:'<rect width="30" height="10" fill="#0057B7"/><rect y="10" width="30" height="10" fill="#FFD700"/>',
+ ba:'<rect width="30" height="20" fill="#002395"/><path d="M8,0 22,0 22,20Z" fill="#FECB00"/>',
+ mk:'<rect width="30" height="20" fill="#D20000"/><circle cx="15" cy="10" r="3.5" fill="#FFE600"/><path d="M15,10 0,0 4,0ZM15,10 30,0 26,0ZM15,10 0,20 4,20ZM15,10 30,20 26,20ZM15,10 0,8 0,12ZM15,10 30,8 30,12ZM15,10 13,0 17,0ZM15,10 13,20 17,20Z" fill="#FFE600"/>',
+ al:'<rect width="30" height="20" fill="#E41E20"/><circle cx="15" cy="10" r="4" fill="#000"/>',
  gb:'<rect width="30" height="20" fill="#012169"/><path d="M0,0 30,20 M30,0 0,20" stroke="#fff" stroke-width="4"/><path d="M0,0 30,20 M30,0 0,20" stroke="#C8102E" stroke-width="1.5"/><rect x="12.5" width="5" height="20" fill="#fff"/><rect y="7.5" width="30" height="5" fill="#fff"/><rect x="13.5" width="3" height="20" fill="#C8102E"/><rect y="8.5" width="30" height="3" fill="#C8102E"/>'};
-const CFLAG={Germany:"de",France:"fr",Netherlands:"nl",Belgium:"be",Denmark:"dk",Norway:"no",Sweden:"se",Finland:"fi",Poland:"pl",Austria:"at",Switzerland:"ch",
+const CFLAG={"Bosnia and Herzegovina":"ba","North Macedonia":"mk",Albania:"al",Germany:"de",France:"fr",Netherlands:"nl",Belgium:"be",Denmark:"dk",Norway:"no",Sweden:"se",Finland:"fi",Poland:"pl",Austria:"at",Switzerland:"ch",
  Ireland:"ie",Spain:"es",Portugal:"pt",Italy:"it",Bulgaria:"bg",Czechia:"cz","Czech Republic":"cz",Estonia:"ee",Greece:"gr",Croatia:"hr",Hungary:"hu",Lithuania:"lt",Latvia:"lv",
  Montenegro:"me",Romania:"ro",Serbia:"rs",Slovenia:"si",Slovakia:"sk",Ukraine:"ua","United Kingdom":"gb"};
 // bidding zones that belong to the selected place: null = no filter (world / Europe)
-function selZones(){if(!S.c||S.c==="Europe")return null;const fc=CFLAG[S.c];if(isReg(S.c))return new Set();return new Set(Object.keys(ZONEFLAG).filter(z=>fc&&ZONEFLAG[z]===fc))}
-const ZONEFLAG={"BG":"bg","CZ":"cz","EE":"ee","GR":"gr","HR":"hr","HU":"hu","LT":"lt","LV":"lv","ME":"me","RO":"ro","RS":"rs","SI":"si","SK":"sk","UA-IPS":"ua",
+function selZones(){if(!S.c||S.c==="Europe")return null;if(GROUPS[S.c]){const fs=new Set(GROUPS[S.c].map(c=>CFLAG[c]));return new Set(Object.keys(ZONEFLAG).filter(z=>fs.has(ZONEFLAG[z])))}const fc=CFLAG[S.c];if(isReg(S.c))return new Set();return new Set(Object.keys(ZONEFLAG).filter(z=>fc&&ZONEFLAG[z]===fc))}
+const ZONEFLAG={"MK":"mk","BA":"ba","BG":"bg","CZ":"cz","EE":"ee","GR":"gr","HR":"hr","HU":"hu","LT":"lt","LV":"lv","ME":"me","RO":"ro","RS":"rs","SI":"si","SK":"sk","UA-IPS":"ua",
  "NO3":"no","NO4":"no","NO5":"no","SE1":"se","SE2":"se","IT-North":"it","IT-Centre-North":"it","IT-Centre-South":"it","IT-South":"it","IT-Calabria":"it","IT-Sicily":"it","IT-Sardinia":"it","DE-LU":"de","FR":"fr","NL":"nl","BE":"be","DK1":"dk","DK2":"dk","NO1":"no","NO2":"no","SE3":"se","SE4":"se","FI":"fi","PL":"pl","AT":"at","CH":"ch","IE(SEM)":"ie","ES":"es","PT":"pt"};
 let FLAGN=0;
 function flagSVG(code,x,y,r){const id="fg"+(FLAGN++),k=r/10;
@@ -597,7 +608,7 @@ function market(){series();const el=$("mkt");TIPS=[];
  if(!MK){el.innerHTML="<div class='feednote'><b>No market data yet.</b> The pipeline adds it on its next run with a real forecast source.</div>";return}
  const zinst=z=>F.filter(f=>f.zone===z).reduce((a,f)=>a+f.inst,0),zones=Object.keys(MK.prices).filter(z=>F.some(f=>f.zone===z&&(inC(f,S.c)))).sort((a,b)=>zinst(b)-zinst(a));
  let lo=0,hi=50;zones.forEach(z=>MK.prices[z].forEach(p=>{if(p!=null){lo=Math.min(lo,p);hi=Math.max(hi,p)}}));hi=Math.ceil(hi/50)*50;lo=Math.floor(lo/50)*50;
- let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because their price licence is private use only: "+MK.restricted_zones.length+" zones ("+MK.restricted_zones.join(", ")+"). ":"")+"UK has no day-ahead price in this source yet.</div>";
+ let h="<div class='feednote'>Day-ahead prices and actual generation from <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE); prices Bundesnetzagentur | SMARD.de, CC BY 4.0. Offshore output from the "+MODELS[S.fm]+" model on the forecast (change it in Compare). "+(MK.restricted_zones.length?"Not shown because their price licence is private use only: "+MK.restricted_zones.length+" zones ("+MK.restricted_zones.join(", ")+"). ":"")+"UK has no day-ahead price in this source yet."+(MK.price_source?" Prices for "+Object.keys(MK.price_source).length+" zones (incl. the Baltics, CEE / SEE, Iberia, Nordics, Italy) from the ENTSO-E Transparency Platform.":"")+"</div>";
  const pz=(MK.core_zones||Object.keys(MK.prices)).filter(z=>MK.prices[z]&&ZONEFLAG[z]),tAv=pz.some(z=>MK.prices[z].slice(N0+1).some(v=>v!=null));S.prng=S.prng||"past";if(S.prng==="next"&&!tAv)S.prng="past";
  const SZ=selZones();if(SZ&&!SZ.size)h+="<div class='feednote'>No day-ahead price data for "+S.c+" in this source yet; showing Europe.</div>";else if(SZ)h+="<div class='feednote'>"+S.c+"'s bidding zones are highlighted"+([...SZ].some(z=>MK.prices[z])?"":" (none of them has an openly licensed price)")+". Pick World or Europe in the selector to clear.</div>";
  h+="<div class='card' style='cursor:default'><h3>Day-ahead prices by zone<span class='seg'><button data-pr='past' class='"+(S.prng==="past"?"on":"")+"'>Last 24 h</button><button data-pr='next' "+(tAv?"":"disabled title='Published around midday'")+" class='"+(S.prng==="next"?"on":"")+"'>Tomorrow</button></span></h3><svg class='cmp' id='cmpPrice'></svg><div class='mut' style='font-size:12px'>Hourly averages of the 15-minute day-ahead auction, €/MWh. Hover to rank all zones for one hour; the line under the cursor is highlighted.</div></div>";
@@ -617,7 +628,7 @@ function market(){series();const el=$("mkt");TIPS=[];
   h+="</div>"}
  h+="<h2>History: offshore capture rate by month <span class='mut' style='font:13px system-ui'>· from actual national offshore output and day-ahead prices, not the model</span></h2><div id='mhist' class='grid'></div><div class='tw'><table id='mtab'></table></div>";
  el.innerHTML=h;
- CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:290,sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1};hmRender("hmPrice");
+ CMP.cmpPrice={series:pz.map(z=>({id:z,label:z,flag:ZONEFLAG[z],v:MK.prices[z]})),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1,fmt:v=>Math.round(v)+"",H:Math.max(290,pz.length*15+50),sel:selZones()};cmpRender("cmpPrice");HM.hmPrice={sel:selZones(),zones:Object.keys(MK.prices),a:S.prng==="past"?0:N0+1,b:S.prng==="past"?N0:NT-1};hmRender("hmPrice");
  el.querySelectorAll("svg.mk").forEach(sv=>{const W=sv.clientWidth||220,Hh=70;sv.setAttribute("viewBox","0 0 "+W+" "+(Hh+12));
   if(sv.dataset.z)sv.innerHTML=tsSVG(W,Hh,NT,[{v:MK.prices[sv.dataset.z],cls:"pr"}],+sv.dataset.lo,+sv.dataset.hi,N0,sv.dataset.hi+" €/MWh")+axl(W,Hh,"−24 h","now","+24 h",3+(W-6)*N0/(NT-1));
   else{const c=sv.dataset.c,fs=F.filter(f=>f.c===CCN[c]),mod=[...Array(NP)].map((_,k)=>modSum(fs,k));
@@ -638,7 +649,7 @@ $("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("d
 $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
 
 /* ---------- System tab: generation mix, load, prices, cross-border flows (Energy-Charts) ---------- */
-const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland"};
+const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland",cz:"Czechia",sk:"Slovakia",hu:"Hungary",ro:"Romania",bg:"Bulgaria",si:"Slovenia",hr:"Croatia",rs:"Serbia",gr:"Greece",ba:"Bosnia and Herzegovina",me:"Montenegro",mk:"North Macedonia",ee:"Estonia",lv:"Latvia",lt:"Lithuania",fi:"Finland",es:"Spain",pt:"Portugal",it:"Italy"};
 // stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
 const MIXC=[["nuc","Nuclear",["nuclear"]],["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],["gas","Gas",["fossil_gas"]],
  ["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]],
@@ -699,12 +710,12 @@ function gasCard(cc){gasLoad();if(!GAS.d)return"";const g=GAS.d.countries[cc==="
   "</tbody></table><div class='mut' style='font-size:12px'>Daily entries into the national transmission system by origin (pipeline from neighbouring countries, LNG terminals, domestic production), ENTSOG. Includes gas in transit to other countries. 1 GWh/d ≈ 42 MW average.</div></div>"}
 function system(){const el=$("sys");STIPS=[];
  if(!MK||!Object.keys(SYS).length){el.innerHTML="<div class='feednote'><b>No system data yet.</b> It arrives with the next pipeline run.</div>";return}
- const all=Object.keys(SYS).map(sysData).filter(Boolean).sort((a,b)=>(b.load?b.load[b.last]:b.gen[b.last])-(a.load?a.load[a.last]:a.gen[a.last]));
+ const grp=GROUPS[S.c]?new Set(GROUPS[S.c]):null;const all=Object.keys(SYS).filter(k=>!grp||grp.has(SYSN[k])).map(sysData).filter(Boolean).sort((a,b)=>(b.load?b.load[b.last]:b.gen[b.last])-(a.load?a.load[a.last]:a.gen[a.last]));
  const csel=S.c&&!isReg(S.c)?Object.keys(SYSN).find(k=>SYSN[k]===S.c):null;
  if(csel&&all.some(d=>d.c===csel))S.sys=csel;
  if(!S.sys||!all.some(d=>d.c===S.sys))S.sys=all[0]&&all[0].c;
  const D=all.find(d=>d.c===S.sys);
- let h=(S.c&&S.c!=="Europe"&&!csel?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. Public net generation, last 24 h, hourly averages. Flows: positive = import.</div>";
+ let h=(S.c&&S.c!=="Europe"&&!csel&&!grp?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote'>Generation, load and cross-border physical flows: <a href='https://www.energy-charts.info' style='color:inherit'>Energy-Charts</a> (Fraunhofer ISE), CC BY 4.0. Day-ahead prices: Bundesnetzagentur | SMARD.de via Energy-Charts. CEE / SEE, Baltics, Italy, Iberia and Finland: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (actual generation per production type, actual load, physical flows). Last 24 h, hourly averages. Flows: positive = import.</div>";
  h+=gieOverview();
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
  h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
@@ -738,7 +749,7 @@ $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");if(!sv){$("dtip").s
 $("sys").onmouseleave=()=>{$("dtip").style.display="none"};
 
 /* ---------- events ---------- */
-$("C").innerHTML="<option value=''>World</option>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);
+$("C").innerHTML="<option value=''>World</option><optgroup label='Groups'>"+Object.keys(GROUPS).map(g=>"<option value='"+g+"'>"+g+"</option>").join("")+"</optgroup>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};
 $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==="e"?go(null,null):a.dataset.go==="r"?go(RGOF[S.c],null):go(S.c,null)};
 ["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;draw()};$("Z").onchange=()=>{legSync();draw()};$("LV").onchange=draw;if(F.some(f=>f.on))$("lon").style.display="";
@@ -797,7 +808,7 @@ $("ftab").onmousemove=e=>{const sv=e.target.closest("svg");if(!sv){$("dtip").sty
  dtip(e,f.n+" · "+dl(h)+(h>N0?" (forecast)":"")+" · "+fmt(f.P[h])+(f.P[h]==null?"":" · CF "+(100*f.P[h]/f.inst).toFixed(0)+"%")+(f.U48[h]!=null?" · "+f.U48[h].toFixed(1)+" m/s from "+f.D48[h]+"°":""))};
 $("ftab").onmouseleave=()=>{$("dtip").style.display="none"};
 $("LV").checked=!!FEED;
-$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
+$("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Generation, load, flows and day-ahead prices for zones not openly licensed in Energy-Charts (incl. CEE / SEE): <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
 addEventListener("resize",draw);size();Object.assign(V,fit(WORLD()));draw();
 }
 (async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;

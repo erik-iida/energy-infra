@@ -177,6 +177,7 @@ in it.
 | Terrain shading (optional) | [Mapterhorn](https://mapterhorn.com/) terrain tiles (terrarium), hillshade computed in the browser; [attribution](https://mapterhorn.com/attribution) | see Mapterhorn attribution |
 | Gas flows (interconnection points, LNG terminals, production entries; daily) | [ENTSOG Transparency Platform](https://transparency.entsog.eu) public API; point positions georeferenced from ENTSOG's schematic map (~20 km typical error) | ENTSOG terms |
 | Gas storage fill and LNG send-out (daily) | [GIE AGSI+](https://agsi.gie.eu) and [ALSI](https://alsi.gie.eu), Gas Infrastructure Europe; API key as GitHub secret `GIE_KEY` | GIE terms |
+| CEE / SEE, Baltic, Nordic, Iberian, Italian prices; generation by type, load and physical flows for CZ, SK, HU, RO, BG, SI, HR, RS, GR, BA, ME, MK, EE, LV, LT, FI, ES, PT, IT | [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) API (token as GitHub secret `ENTSOE_TOKEN`) | ENTSO-E terms, source credited |
 | Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |

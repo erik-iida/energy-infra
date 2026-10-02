@@ -17,7 +17,7 @@ import time
 from collections import defaultdict
 from datetime import date, datetime, timedelta, timezone
 
-from . import config
+from . import config, entsoe
 
 EC_URL = "https://api.energy-charts.info/v2"
 MIN_GAP_S = 3.0  # seconds between calls (the API answers bursts with HTTP 429)
@@ -331,6 +331,27 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
         "licences": {k: v for k, v in sorted(lic.items())},
         "diag": {"calls": cl.calls, "errors": cl.errors[-10:]},
     }
+    if entsoe.token():  # ENTSO-E fills the zones and countries Energy-Charts can't publish (CEE / SEE first)
+        try:
+            ec = entsoe.Client()
+            want = [z for z in sorted(set(ALL_PRICE_ZONES) | {"MK", "BA"}) if z not in market["prices"]]
+            ep = entsoe.prices(ec, want, hours)
+            for z, v in ep.items():
+                market["prices"][z] = v
+            market["price_source"] = {z: "entsoe" for z in ep}
+            market["restricted_zones"] = sorted(set(market["restricted_zones"]) - set(ep))
+            es = entsoe.system(ec, hours)
+            for c, d in es.items():
+                if c not in market["system"] or not market["system"][c].get("series"):
+                    market["system"][c] = d
+            cee = {z for c in ("cz", "sk", "hu", "ro", "bg", "si", "hr", "rs", "gr", "me", "ee", "lv", "lt") for z in entsoe.COUNTRIES[c][2]}
+            market["core_zones"] = sorted(set(market["core_zones"]) | (cee & set(market["prices"])))
+            market["source"] += "; ENTSO-E Transparency Platform"
+            market["diag"]["entsoe"] = {"calls": ec.calls, "errors": ec.errors[-15:], "prices": sorted(ep), "system": sorted(es)}
+            print(f"entsoe: {ec.calls} calls, {len(ec.errors)} errors, prices {len(ep)} zones, system {sorted(es)}")
+        except Exception as ex:  # never block the feed
+            market.setdefault("diag", {})["entsoe"] = {"error": repr(ex)[:300]}
+            print(f"entsoe: failed {ex!r}")
     hist_pub = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "note": "Capture price = generation-weighted day-ahead price using ACTUAL national offshore wind "
                         "output (Energy-Charts). DK blends DK1/DK2 prices by installed offshore MW per zone.",

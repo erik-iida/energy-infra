@@ -570,13 +570,28 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
   fundamentals.py but nothing on the site uses them.
 - 2 Oct editorial rewritten in the new format (newsletter/editorial/2026-10-02.md).
 
+## Flags drill-down, step 2 (Oct 3 2026)
+- Under the main chart: **Cross-border flows** (diverging stacked bars per border, + = import into the zone, black line =
+  net position over the borders in the store), **Day-ahead prices next door** (zone bold, neighbours thin; GB labelled
+  Market Index; a neighbour priced identically all day is noted as hidden behind the zone line), **Next door** cards
+  (mean price and difference, day-mean net flow "sent / took N MW", the day's generation mix bar). Each neighbour keeps one
+  identity colour (`FXNC`, Tableau-10-like) across flows, prices and cards; technology colours stay for generation only.
+- Neighbours = the zone file's flow columns (`x|in|N`, `x|out|N`) with data on that day (`fxNbZones`), ordered by mean
+  |net flow|. Their ts files load in parallel after the zone file; a missing file or a non-EUR price (UA-IPS, UAH) shows
+  "price n/a" with the reason. Borders to zones outside the store (MD, TR) do not appear.
+- Clicking a card swaps the panel to that neighbour for the same day (FX.open.row keeps the clicked row, "← back to RO";
+  the hash follows the shown zone). Shared crosshair: every chart registers in `FX.charts` with the same x geometry
+  (`fxGeom`), hovering one draws the line in all and shows that chart's tooltip.
+- "What else was unusual": a value only counts as unusual when it is also beyond P90 / P10 (ties: 0 negative hours on a
+  zone whose history is all zeros used to read P98 "unusually high").
+
 ## Known gaps / next ideas
+- Flags drill-down Phase 2: "copy context as text" first, congestion marker once NTC is in the store, starred story
+  candidates (browser-only).
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,
   whether the border was at its limit. Revisit names for multi-zone countries in tables.
-- Flags drill-down step 2: cross-border flows per neighbour (diverging bars + net position), neighbour price lines
-  (GB labelled Market Index; zones outside the store "price n/a"), neighbour strip with mix bars and click-to-swap
-  ("back to <zone>"), shared crosshair across charts. Then Phase 2: "copy context as text" first, congestion (NTC),
-  starred candidates. Measure the neighbour load (one ts file is 90-340 KB raw); add `browse/day/<day>.json` if slow.
+- Neighbour load: one ts file is 90-340 KB raw (~50 KB gzipped); DE-LU opens 11 neighbours. Add `browse/day/<day>.json`
+  if that feels slow.
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).
 - Newsletter: first hand-assembled briefs from `newsletter.build`, then the 15-user test; UA-IPS via data/fx.json.

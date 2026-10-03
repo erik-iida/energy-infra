@@ -497,6 +497,11 @@ sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.t
   2018), NESO embedded wind and solar forecast, Elexon day-ahead national demand and wind/solar forecasts. NESO licence: "Supported by National Energy SO Open
   Data" (commercial use and redistribution allowed). Not done: the embedded forecast archive (5 M rows a year), Elexon NDF/TSDF history, Carbon Intensity
   API regional data (CC BY 4.0; regions are DNO areas).
+- **GitHub API rate limit** (found Oct 3): every monthly store write costs several GitHub API calls, and the Actions token allows ~1000 calls per hour for the
+  whole repository (all workflows share it). The first full gb_hist backfill (214 monthly files) exhausted it after ~190 files; further writes (and other jobs)
+  then fail with `HTTP 403: API rate limit exceeded for installation`. Hence `GBHIST_MAX_MONTHS` (40 per run, only months missing in the store) and run logs:
+  collect-gbunits / collect-gbhist commit `data/raw/gbie/last_run_<job>.txt` after a failure or manual run (Actions logs are not readable from the cloud).
+  Never dispatch several big backfills in the same hour.
 - **National Gas** (gas NTS flows, linepack, entry points): reachable (`data.nationalgas.com/api/latest-gas-flows-download` without parameters returns the
   latest 2-minute flows; `find-gas-data-download?ids=PUBOBJ...` needs the right parameters, still 500). Reuse licence NOT clear (site terms forbid
   republishing; the portal says only that data is open under the GSO licence), so nothing is collected or published until the wording is checked.

@@ -1,4 +1,4 @@
-"""Spark spreads for the site's Market tab (feed.market.spark), only when SPARK_PUBLIC=1 (repo variable).
+"""Spark spreads for the site's Market tab (feed.market.spark), only when the repo variable SPARK is set (private|public).
 
 Per zone and window (past 24 h / tomorrow): mean of the 4 highest hourly day-ahead prices minus the reference gas
 cost, and baseload minus it (newsletter/fuel.py: TTF front month via yfinance, 55 % CCGT, fuel-only unless

@@ -312,11 +312,19 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   against DE-LU/NL to measure local premia (needs carbon).
 - Not done: dark spreads (no coal price source), implied-gas-cost metric, spark spreads on the site's Data/Signals tabs.
 - Market tab (Oct 3 2026): optional "Spark" column and sort in the "All bidding zones" heatmap (feed.market.spark, built by
-  pipeline/spark.py: top-4-hour price minus the reference gas cost, past 24 h and tomorrow). OFF by default: set the repo
-  variable SPARK_PUBLIC=1 (Settings > Secrets and variables > Actions > Variables) to publish. Reason: the page also
+  pipeline/spark.py: top-4-hour price minus the reference gas cost, past 24 h and tomorrow). OFF by default: repo variable
+  SPARK (Settings > Secrets and variables > Actions > Variables) = `private` (spreads only in the login-protected copy, see
+  below) or `public` (everyone). Reason: the page also
   shows the hourly prices, so baseload minus spark gives the reference cost back and with it the TTF price - publishing
   the spreads publishes the gas price de facto (Erik chose "derived only" before this was clear; confirm before
   switching on). The gas cost is cached in state/fuel_cache.json (Actions cache, 6 h), never in the feed.
+- PRIVATE SITE (Oct 3 2026): public repo + public GitHub Pages showcase (no non-sharing data) AND a full copy behind a
+  login. scripts/split_private.py (hourly.yml) copies web/ to site_private/ before stripping market.spark from the public
+  feed; with SPARK=private and the secrets CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID and repo variable
+  CF_PAGES_PROJECT, the step deploys site_private/ to Cloudflare Pages (continue-on-error). The login is Cloudflare
+  Access (Zero Trust, free plan, email one-time-PIN for Erik): created in the Cloudflare dashboard, not in code.
+  Setup steps for Erik are in the chat; once done, other non-sharing data (e.g. a future paid gas feed) can go into the
+  private copy the same way. Never put it in web/ or the store release.
 - newsletter.yml installs requirements-newsletter.txt (collect + yfinance). Yahoo is not reachable from the cloud
   session: the fuel fetch only runs on Actions; a failed fetch leaves the brief without spark spreads and says so.
 

@@ -25,6 +25,8 @@ jobs:
   feed:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -59,7 +61,7 @@ jobs:
           ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
           COLLECT_FARMS: "1"
           GH_TOKEN: ${{ github.token }}
-          SPARK_PUBLIC: ${{ vars.SPARK_PUBLIC }}   # "1" publishes spark spreads on the Market tab (see pipeline/spark.py)
+          SPARK: ${{ vars.SPARK }}   # "private" (login-protected site only) or "public"; empty = off (pipeline/spark.py)
         run: python -m pipeline.run
 
       - uses: actions/cache/save@v4
@@ -83,6 +85,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/build_browse.py
+
+      # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.
+      - name: Split public / private site
+        env:
+          SPARK: ${{ vars.SPARK }}
+        run: python scripts/split_private.py
+      - name: Deploy private site (Cloudflare Pages, behind Cloudflare Access)
+        if: ${{ env.CF_TOKEN != '' && vars.SPARK == 'private' }}
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy site_private --project-name=${{ vars.CF_PAGES_PROJECT }} --branch=main
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

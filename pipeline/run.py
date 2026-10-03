@@ -146,7 +146,7 @@ def main(argv=None) -> None:
             mk, hist = market.build(farms, feed["hours"] + feed["fc_hours"])
             farms_block = feed.pop("farms")
             feed["market"] = mk
-            if os.environ.get("SPARK_PUBLIC") == "1":  # off by default: see pipeline/spark.py
+            if os.environ.get("SPARK") in ("private", "public"):  # off by default: see pipeline/spark.py and scripts/split_private.py
                 try:
                     from . import spark
                     sp = spark.build(mk.get("prices", {}), len(feed["hours"]))

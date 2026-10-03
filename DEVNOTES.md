@@ -2,6 +2,11 @@
 
 Handover notes for whoever (human or Claude) picks this up next. Keep them current.
 
+**Before the first commit in a fresh clone** (Claude sessions default to `Claude <noreply@anthropic.com>`, which GitHub
+does not count in Erik's contribution graph):
+`git config user.name "Erik Iida" && git config user.email "152779827+erik-iida@users.noreply.github.com"`
+Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow commits by `wake-monitor-bot` stay as they are.
+
 ## How it runs
 - GitHub Actions (`.github/workflows/hourly.yml`) runs `python -m pipeline.run` hourly at :07, on every
   push to `main`, and on "Run workflow". It then deploys `web/` to GitHub Pages.

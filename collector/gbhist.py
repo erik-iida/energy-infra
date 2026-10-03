@@ -23,6 +23,7 @@ import io
 import os
 import re
 import sys
+import warnings
 from datetime import datetime, timedelta, timezone
 
 import pandas as pd
@@ -51,7 +52,9 @@ def neso_csv(url: str, **read_kw) -> pd.DataFrame:
 
 def london_to_utc(date: pd.Series, period: pd.Series) -> pd.Series:
     """Settlement date + period (1-based half hours from local midnight, 46/50 on clock change days) -> UTC start time."""
-    d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+    with warnings.catch_warnings():  # the older files use other date spellings; dateutil reads them all
+        warnings.simplefilter("ignore", UserWarning)
+        d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
     return d + pd.to_timedelta((period.astype(int) - 1) * 30, unit="m")
 
 
@@ -186,7 +189,7 @@ def daily(store: Store) -> None:
     write(store, "gb_forecast", f)
 
 
-MAX_MONTHS = int(os.environ.get("GBHIST_MAX_MONTHS", "60"))  # months written per run (each write costs several GitHub API calls)
+MAX_MONTHS = int(os.environ.get("GBHIST_MAX_MONTHS", "40"))  # months written per run (each write costs several GitHub API calls)
 
 
 def backfill(store: Store) -> None:

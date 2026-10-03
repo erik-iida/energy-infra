@@ -356,7 +356,9 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   first run: BG solar, MK wind, LV solar+wind). Unusually low values (BA, MK solar) probably mean missing generation
   or old capacity. ENTSO-E generation can also miss small distributed solar.
 - Data tab: "Installed capacity & capacity factor" (web/data/browse/capacity.json, written by scripts/build_browse.py:
-  `capacity_export`): zones x classes, switch between installed GW (+ IRENA year) and 30-day CF %. CFs above a per-class
+  `capacity_export`): since Oct 3 (later) every IRENA country (224), not just bidding zones; `fundamentals.ZONE_ISO3` maps all 45
+  store zones to countries (NO1-5, SE1-4, IT-*, DK1/2 are summed; a country gets a CF only if all its zones are in the
+  store; DE-LU capacity incl. Luxembourg), CSV download, filter to countries with a zone. Rows are countries x classes, switch between installed GW (+ IRENA year) and 30-day CF %. CFs above a per-class
   ceiling (solar 25 %, onshore wind 40 %, offshore 60 %, anything else 100 %) are hidden. Credit "(c) IRENA" is on the page;
   confirm the edition year of the workbook and add it to the credit line (licence asks for the copyright year).
 - Oddities seen in the first run (not investigated): RO nuclear is 0 MW all of September (Aug max 629 MW; ENTSO-E B14),

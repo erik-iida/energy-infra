@@ -24,6 +24,14 @@ ISO3 = {"AT": ["AUT"], "BA": ["BIH"], "BE": ["BEL"], "BG": ["BGR"], "CH": ["CHE"
         "DE-LU": ["DEU", "LUX"], "EE": ["EST"], "ES": ["ESP"], "FI": ["FIN"], "FR": ["FRA"], "GR": ["GRC"],
         "HR": ["HRV"], "HU": ["HUN"], "LT": ["LTU"], "LV": ["LVA"], "ME": ["MNE"], "MK": ["MKD"], "NL": ["NLD"],
         "PL": ["POL"], "PT": ["PRT"], "RO": ["ROU"], "RS": ["SRB"], "SI": ["SVN"], "SK": ["SVK"]}
+# every bidding zone in the store -> its country (ISO3), for country-level capacity factors (IE(SEM) also covers Northern
+# Ireland and DE-LU also Luxembourg, so those two are only approximate)
+ZONE_ISO3 = {"AL": "ALB", "AT": "AUT", "BA": "BIH", "BE": "BEL", "BG": "BGR", "CH": "CHE", "CZ": "CZE", "DE-LU": "DEU",
+             "DK1": "DNK", "DK2": "DNK", "EE": "EST", "ES": "ESP", "FI": "FIN", "FR": "FRA", "GR": "GRC", "HR": "HRV",
+             "HU": "HUN", "IE(SEM)": "IRL", "LT": "LTU", "LV": "LVA", "ME": "MNE", "MK": "MKD", "NL": "NLD", "PL": "POL",
+             "PT": "PRT", "RO": "ROU", "RS": "SRB", "SI": "SVN", "SK": "SVK",
+             **{f"NO{i}": "NOR" for i in range(1, 6)}, **{f"SE{i}": "SWE" for i in range(1, 5)},
+             **{z: "ITA" for z in ("IT-Calabria", "IT-Centre-North", "IT-Centre-South", "IT-North", "IT-Sardinia", "IT-Sicily", "IT-South")}}
 # ENTSO-E production types -> IRENA classes (scripts/ingest_irena.py)
 PSR_CLS = {"B16": "solar", "B19": "wind_onshore", "B18": "wind_offshore", "B11": "hydro", "B12": "hydro",
            "B10": "pumped", "B14": "nuclear", "B02": "fossil", "B03": "fossil", "B04": "fossil", "B05": "fossil",
@@ -146,3 +154,39 @@ def _pct(x):
 
 def _r(x, nd=1):
     return None if x is None or x != x else round(float(x), nd)
+
+
+def country_capacity() -> pd.DataFrame:
+    """iso3, country, cls, cap_mw, year - every IRENA country, latest year with capacity, fossil fuels summed."""
+    t = _irena()
+    t = t[t["cap_mw"].notna()].copy()
+    if t.empty:
+        return pd.DataFrame(columns=["iso3", "country", "cls", "cap_mw", "year"])
+    t["cls"] = t["cls"].where(~t["cls"].isin(FOSSIL_IRENA), "fossil")
+    yr = t.groupby("iso3")["year"].transform("max")
+    t = t[t["year"] == yr]
+    return t.groupby(["iso3", "country", "cls", "year"], as_index=False)["cap_mw"].sum()
+
+
+def country_capacity_factors(ga: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """iso3, cls, gen_gwh, cap_mw, cf, cover for countries whose bidding zones are ALL in `ga` (generation of the zones
+    is summed instant by instant, so a country with a zone missing would read too low and is left out)."""
+    cols = ["iso3", "cls", "gen_gwh", "cap_mw", "cf", "cover"]
+    cc = country_capacity()
+    if ga is None or ga.empty or cc.empty:
+        return pd.DataFrame(columns=cols)
+    have = set(ga["zone"])
+    need: dict[str, set] = {}
+    for z, iso in ZONE_ISO3.items():
+        need.setdefault(iso, set()).add(z)
+    ok = {iso for iso, zs in need.items() if zs <= have}
+    g = ga[ga["zone"].isin([z for z, i in ZONE_ISO3.items() if i in ok])].copy()
+    if g.empty:
+        return pd.DataFrame(columns=cols)
+    g["zone"] = g["zone"].map(ZONE_ISO3)
+    cap = cc.rename(columns={"iso3": "zone"})[["zone", "cls", "cap_mw"]]
+    if "DEU" in ok:  # DE-LU: Luxembourg's capacity is part of the zone
+        lux = cc[cc["iso3"] == "LUX"].rename(columns={"iso3": "zone"})[["zone", "cls", "cap_mw"]].assign(zone="DEU")
+        cap = pd.concat([cap, lux]).groupby(["zone", "cls"], as_index=False)["cap_mw"].sum()
+    r = capacity_factors(g, start, end, cap)
+    return r.rename(columns={"zone": "iso3"})

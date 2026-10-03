@@ -63,29 +63,33 @@ def write_zone(ds: str, zone: str, w: pd.DataFrame, meta: dict, a, b) -> None:
 
 
 CAP_CLS = [("solar", "Solar"), ("wind_onshore", "Onshore wind"), ("wind_offshore", "Offshore wind"), ("hydro", "Hydro (excl. pumped)"),
-           ("pumped", "Pumped storage"), ("nuclear", "Nuclear"), ("fossil", "Fossil"), ("bio", "Bio & waste"), ("other", "Other")]
+           ("pumped", "Pumped storage"), ("nuclear", "Nuclear"), ("fossil", "Fossil"), ("bio", "Bio & waste"),
+           ("geothermal", "Geothermal"), ("other", "Other")]
 
 
 def capacity_export(ga: pd.DataFrame, now: datetime) -> dict | None:
-    """Installed capacity per zone and class (IRENA, data/ref) and the 30-day capacity factor from the store's generation."""
-    cap = FU.capacity()
-    if cap.empty:
+    """Installed capacity for every IRENA country (data/ref, latest year) and, where the store has all of the country's
+    bidding zones, the 30-day capacity factor from ENTSO-E generation."""
+    cc = FU.country_capacity()
+    if cc.empty:
         return None
-    cap = cap.assign(cls=cap["cls"].where(~cap["cls"].isin(["geothermal"]), "other"))
-    cap = cap.groupby(["zone", "cls", "year"], as_index=False)["cap_mw"].sum()
     end = pd.Timestamp(now).floor("D")
     start = end - pd.Timedelta(days=30)
-    cf = FU.capacity_factors(ga, start, end, FU.capacity()) if ga is not None and not ga.empty else pd.DataFrame()
-    out = {"classes": [{"id": k, "name": n} for k, n in CAP_CLS], "gw": {}, "cf": {}, "year": {},
-           "cf_window": [start.strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]}
-    for r in cap.itertuples():
-        out["gw"].setdefault(r.zone, {})[r.cls] = round(r.cap_mw / 1000, 3)
-        out["year"][r.zone] = int(r.year)
-    for r in (cf.itertuples() if not cf.empty else []):
+    cf = FU.country_capacity_factors(ga, start, end)
+    zones_of: dict[str, list] = {}
+    for z, iso in FU.ZONE_ISO3.items():
+        zones_of.setdefault(iso, []).append(z)
+    cfm: dict[str, dict] = {}
+    for r in cf.itertuples():
         v = FU.plausible_cf(r.cls, r.cf)
         if v is not None:
-            out["cf"].setdefault(r.zone, {})[r.cls] = round(100 * v, 1)
-    return out
+            cfm.setdefault(r.iso3, {})[r.cls] = round(100 * v, 1)
+    rows = []
+    for (iso, name, yr), g in cc.groupby(["iso3", "country", "year"]):
+        rows.append({"id": iso, "name": name, "year": int(yr), "zones": sorted(zones_of.get(iso, [])),
+                     "gw": {r.cls: round(r.cap_mw / 1000, 3) for r in g.itertuples()}, "cf": cfm.get(iso, {})})
+    return {"classes": [{"id": k, "name": n} for k, n in CAP_CLS], "rows": rows,
+            "cf_window": [start.strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]}
 
 
 def main() -> None:
@@ -141,7 +145,7 @@ def main() -> None:
     if capx:
         OUT.mkdir(parents=True, exist_ok=True)
         (OUT / "capacity.json").write_text(json.dumps(capx, separators=(",", ":")))
-        zones["capacity"] = set(capx["gw"])
+        zones["capacity"] = {r["id"] for r in capx["rows"]}
     index = {"generated": now.isoformat(timespec="seconds"),
              "window": [a.isoformat(), b.isoformat()], "step_s": 3600,
              "datasets": {k: {"label": LABELS[k][0], "unit": LABELS[k][1], "zones": sorted(v)} for k, v in zones.items() if v}}

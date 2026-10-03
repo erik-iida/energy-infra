@@ -964,18 +964,26 @@ function dataTab(){const el=$("dat");
  if(DB.cache[k]){go(DB.cache[k]);return}
  dbHead(null);dbJson("data/browse/"+k+".json").then(f=>{DB.cache[k]=f;go(f)}).catch(()=>{if(my===DB.tok)$("dat").querySelector("#dbbody").innerHTML="<div class='feednote'>No stored rows for this zone and dataset.</div>"})}
 /* installed capacity (IRENA, annual) and 30-day capacity factor from the store: web/data/browse/capacity.json */
+function capRows(c){const f=DB.cf==="zone"?c.rows.filter(r=>r.zones.length):c.rows.slice(),rk=r=>{const i=Math.min(...r.zones.map(z=>DBFIRST.indexOf(z)<0?99:DBFIRST.indexOf(z)));return r.zones.length?i:100};
+ return f.sort((x,y)=>rk(x)-rk(y)||x.name.localeCompare(y.name))}
 function capView(){const el=$("dat"),I=DB.idx.datasets;
- const go=c=>{if(S.tab!=="dat"||!(DB.idx.datasets[DB.ds]||{}).static)return;const v=DB.cv||"gw",cls=c.classes,zs=DBFIRST.filter(z=>c.gw[z]).concat(Object.keys(c.gw).filter(z=>!DBFIRST.includes(z)).sort());
-  const cell=(z,k)=>{const x=(v==="gw"?c.gw:c.cf)[z]&&(v==="gw"?c.gw:c.cf)[z][k];return x==null?"<td class='nu'>–</td>":"<td>"+x.toLocaleString("en",{maximumFractionDigits:v==="gw"?2:1})+"</td>"};
-  let h="<div class='feednote'>Installed capacity by technology from the IRENA Renewable Energy Statistics (year-end of the latest edition, per country; DE-LU = Germany + Luxembourg; only zones that are a whole country). Capacity factor = ENTSO-E actual generation over "+c.cf_window[0]+" to "+c.cf_window[1]+" ÷ (installed capacity × hours). IRENA capacity is older than the generation, so zones that added capacity since read too high; values above a physical ceiling (solar 25 %, onshore wind 40 %, offshore wind 60 % over 30 days) are hidden (–).</div>"
+ const go=c=>{if(S.tab!=="dat"||!(DB.idx.datasets[DB.ds]||{}).static)return;const v=DB.cv||"gw",cls=c.classes,rows=capRows(c),nz=c.rows.filter(r=>r.zones.length).length;
+  const cell=(r,k)=>{const x=(v==="gw"?r.gw:r.cf)[k];return x==null?"<td class='nu'>–</td>":"<td>"+x.toLocaleString("en",{maximumFractionDigits:v==="gw"?2:1})+"</td>"};
+  let h="<div class='feednote'>Installed capacity by technology for every country in the IRENA Renewable Energy Statistics (year-end of each country's latest year; DE-LU = Germany + Luxembourg). Capacity factor = ENTSO-E actual generation over "+c.cf_window[0]+" to "+c.cf_window[1]+" ÷ (installed capacity × hours), shown for countries whose bidding zones are all in the store (multi-zone countries are summed). IRENA capacity is older than the generation, so countries that added capacity since read too high; values above a physical ceiling (solar 25 %, onshore wind 40 %, offshore wind 60 %, others 100 % over 30 days) are hidden (–).</div>"
   +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
-  +"<div class='row'><span class='seg' id='cpv'><button data-v='gw' class='"+(v==="gw"?"on":"")+"'>Installed GW</button><button data-v='cf' class='"+(v==="cf"?"on":"")+"'>30-day capacity factor %</button></span></div>"
-  +"<div class='dw'><table class='dt'><thead><tr><th>Zone</th>"+(v==="gw"?"<th>IRENA year</th>":"")+cls.map(k=>"<th>"+k.name+" <span class='mut'>"+(v==="gw"?"GW":"%")+"</span></th>").join("")+"</tr></thead><tbody>"
-  +zs.map(z=>"<tr><td>"+z+"</td>"+(v==="gw"?"<td>"+(c.year[z]||"–")+"</td>":"")+cls.map(k=>cell(z,k.id)).join("")+"</tr>").join("")+"</tbody></table></div>"
-  +"<div class='mut' style='font-size:12px'>Installed capacity: IRENA Renewable Energy Statistics, © IRENA (<a href='https://www.irena.org/Data' style='color:inherit'>irena.org/Data</a>). Generation: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Fossil capacity is shown as one class (not every country splits it by fuel); ENTSO-E generation can miss small distributed solar, which lowers its capacity factor.</div>";
+  +"<div class='row'><span class='seg' id='cpv'><button data-v='gw' class='"+(v==="gw"?"on":"")+"'>Installed GW</button><button data-v='cf' class='"+(v==="cf"?"on":"")+"'>30-day capacity factor %</button></span>"
+  +"<label style='gap:6px;align-items:center'>Show <select id='cpf'><option value='all'"+(DB.cf==="zone"?"":" selected")+">all "+c.rows.length+" IRENA countries</option><option value='zone'"+(DB.cf==="zone"?" selected":"")+">"+nz+" countries with a bidding zone</option></select></label>"
+  +"<button id='cpcsv' style='width:auto;padding:5px 11px;font-size:13px'>Download CSV</button></div>"
+  +"<div class='dw'><table class='dt'><thead><tr><th>Country</th><th>Zones</th>"+(v==="gw"?"<th>IRENA year</th>":"")+cls.map(k=>"<th>"+k.name+" <span class='mut'>"+(v==="gw"?"GW":"%")+"</span></th>").join("")+"</tr></thead><tbody>"
+  +rows.map(r=>"<tr><td>"+r.name+"</td><td style='text-align:left' title='"+r.zones.join(", ")+"'>"+(r.zones.length>3?r.zones.length+" zones":r.zones.join(", ")||"–")+"</td>"+(v==="gw"?"<td>"+r.year+"</td>":"")+cls.map(k=>cell(r,k.id)).join("")+"</tr>").join("")+"</tbody></table></div>"
+  +"<div class='mut' style='font-size:12px'>"+rows.length+" countries. Installed capacity: IRENA Renewable Energy Statistics, © IRENA (<a href='https://www.irena.org/Data' style='color:inherit'>irena.org/Data</a>). Generation: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Fossil capacity is one class (not every country splits it by fuel); ENTSO-E generation can miss small distributed solar, which lowers its capacity factor.</div>";
   el.innerHTML=h};
  if(DB.cap){go(DB.cap);return}
  el.innerHTML="<div class='feednote'>Loading…</div>";dbJson("data/browse/capacity.json").then(c=>{DB.cap=c;go(c)}).catch(()=>{el.innerHTML="<div class='feednote'>No capacity table published yet.</div>"})}
+function capCsv(){const c=DB.cap;if(!c)return;const q=x=>'"'+String(x).replace(/"/g,'""')+'"',cl=c.classes;
+ let t=["iso3","country","zones","irena_year"].concat(cl.map(k=>k.name+" [GW]")).concat(cl.map(k=>k.name+" [30-day CF %]")).map(q).join(",")+"\n";
+ capRows(c).forEach(r=>{t+=[r.id,r.name,r.zones.join(" "),r.year].map(q).concat(cl.map(k=>r.gw[k.id]==null?"":r.gw[k.id]),cl.map(k=>r.cf[k.id]==null?"":r.cf[k.id])).join(",")+"\n"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_irena_capacity.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 function dbHead(f){const I=DB.idx.datasets,el=$("dat");
  el.innerHTML="<div class='feednote'>Stored history from the ENTSO-E Transparency Platform, hourly means of the native-resolution rows (UTC hours), last 30 days; the store itself keeps more and the full resolution. Exported "+DB.idx.generated.slice(0,16).replace("T"," ")+" UTC. Day-ahead prices: auction result only (classification sequence 1). Rows marked ·fc are in the future (day-ahead data).</div>"
  +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
@@ -1002,12 +1010,13 @@ function dbCsv(){const c=DB.cur;if(!c)return;const f=c.f,q=x=>'"'+String(x).repl
 $("dat").addEventListener("click",e=>{let b;
  if(b=e.target.closest("#dbds button")){DB.ds=b.dataset.d;dataTab()}
  else if(b=e.target.closest("#cpv button")){DB.cv=b.dataset.v;capView()}
+ else if(e.target.closest("#cpcsv"))capCsv()
  else if(!DB.cur&&!e.target.closest("#dbds button"))return;
  else if(b=e.target.closest("#dbtz button")){DB.tz=b.dataset.z;dbRender(DB.cur.f)}
  else if(b=e.target.closest("#dbo button")){DB.desc=b.dataset.o==="1";dbRender(DB.cur.f)}
  else if(b=e.target.closest(".chip")){const i=+b.dataset.i,c=DB.cur.f.cols[i],k=DB.ds+"|"+DB.z+"|"+c.id;DB.off[k]=DB.cur.on[i];dbRender(DB.cur.f)}
  else if(e.target.closest("#dbcsv"))dbCsv()});
-$("dat").addEventListener("change",e=>{if(e.target.id==="dbz"){DB.z=e.target.value;dataTab()}else if(e.target.id==="dbn"){DB.days=+e.target.value;dbRender(DB.cur.f)}});
+$("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.value;capView()}else if(e.target.id==="dbz"){DB.z=e.target.value;dataTab()}else if(e.target.id==="dbn"){DB.days=+e.target.value;dbRender(DB.cur.f)}});
 
 document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(b)tab(b.dataset.t)};

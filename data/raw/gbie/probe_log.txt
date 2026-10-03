@@ -1,0 +1,92 @@
+probe at 2026-10-03T11:00Z
+=== Elexon dataset FUELHH (publish window): HTTP 200 application/json; charset=utf-8 47213 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELHH?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    rows: 260; first: {"dataset": "FUELHH", "publishTime": "2026-10-03T11:00:00Z", "startTime": "2026-10-03T10:30:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 24, "fuelType": "BIOMASS", "generation": 2497}
+    distinct fuelType: ['BIOMASS', 'CCGT', 'COAL', 'INTELEC', 'INTEW', 'INTFR', 'INTGRNL', 'INTIFA2', 'INTIRL', 'INTNED', 'INTNEM', 'INTNSL', 'INTVKL', 'NPSHYD', 'NUCLEAR', 'OCGT', 'OIL', 'OTHER', 'PS', 'WIND']
+=== Elexon dataset FUELINST (publish window): HTTP 200 application/json; charset=utf-8 267973 B in 0.5s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/FUELINST?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    rows: 1460; first: {"dataset": "FUELINST", "publishTime": "2026-10-03T11:00:00Z", "startTime": "2026-10-03T10:55:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 24, "fuelType": "BIOMASS", "generation": 2509}
+    distinct fuelType: ['BIOMASS', 'CCGT', 'COAL', 'INTELEC', 'INTEW', 'INTFR', 'INTGRNL', 'INTIFA2', 'INTIRL', 'INTNED', 'INTNEM', 'INTNSL', 'INTVKL', 'NPSHYD', 'NUCLEAR', 'OCGT', 'OIL', 'OTHER', 'PS', 'WIND']
+=== Elexon dataset B1630 (publish window): HTTP 404 application/json 54 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/B1630?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    json: {"statusCode": 404, "message": "Resource not found"}
+=== Elexon dataset INDO (publish window): HTTP 200 application/json; charset=utf-8 2064 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/INDO?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    rows: 13; first: {"dataset": "INDO", "publishTime": "2026-10-03T11:00:00Z", "startTime": "2026-10-03T10:30:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 24, "demand": 20881}
+=== Elexon dataset ITSDO (publish window): HTTP 200 application/json; charset=utf-8 2077 B in 0.5s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/ITSDO?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    rows: 13; first: {"dataset": "ITSDO", "publishTime": "2026-10-03T11:00:00Z", "startTime": "2026-10-03T10:30:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 24, "demand": 23103}
+=== Elexon dataset TSDF (publish window): HTTP 200 application/json; charset=utf-8 1649971 B in 0.8s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/TSDF?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    rows: 9540; first: {"dataset": "TSDF", "demand": 194, "publishTime": "2026-10-03T10:48:00Z", "startTime": "2026-10-03T11:00:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 25, "boundary": "B1"}
+=== Elexon dataset MID (publish window): HTTP 400 application/json; charset=utf-8 347 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?publishDateTimeFrom=2026-10-03T05%3A00Z&publishDateTimeTo=2026-10-03T11%3A00Z&format=json
+    json: {"type": "https://tools.ietf.org/html/rfc9110#section-15.5.1", "title": "One or more validation errors occurred.", "status": 400, "errors": {"To": ["A value for the 'To' parameter or property was not provided."], "From": ["A value for the 'From' parameter or property was not provided."]}, "traceId": "00-7b60ef8f6d8b7e4eeafa617c4b5f58e9-40fde0d9e340f94d-00"}
+=== Elexon MID (settlement date range): HTTP 200 application/json; charset=utf-8 12352 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2026-10-02T11%3A00Z&to=2026-10-03T11%3A00Z&format=json
+    rows: 77; first: {"dataset": "MID", "startTime": "2026-10-03T11:00:00Z", "dataProvider": "N2EXMIDP", "settlementDate": "2026-10-03", "settlementPeriod": 25, "price": 0.0, "volume": 0.0}
+=== Elexon demand outturn: HTTP 200 application/json; charset=utf-8 14779 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/demand/outturn?settlementDateFrom=2026-10-02&settlementDateTo=2026-10-03&format=json
+    rows: 73; first: {"publishTime": "2026-10-01T23:30:00Z", "startTime": "2026-10-01T23:00:00Z", "settlementDate": "2026-10-02", "settlementPeriod": 1, "initialDemandOutturn": 22070, "initialTransmissionSystemDemandOutturn": 25431}
+=== Elexon wind+solar actual per type: HTTP 200 application/json; charset=utf-8 27254 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/generation/actual/per-type/wind-and-solar?from=2026-10-02T11%3A00Z&to=2026-10-03T11%3A00Z&format=json
+    rows: 135; first: {"publishTime": "2026-10-03T11:30:07Z", "businessType": "Wind generation", "psrType": "Wind Onshore", "quantity": 2444.0, "startTime": "2026-10-03T09:00:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 21}
+    distinct psrType: ['Solar', 'Wind Offshore', 'Wind Onshore']
+    distinct businessType: ['Solar generation', 'Wind generation']
+=== Elexon system prices: HTTP 200 application/json; charset=utf-8 42808 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/balancing/settlement/system-prices/2026-10-02?format=json
+    rows: 48; first: {"settlementDate": "2026-10-02", "settlementPeriod": 1, "startTime": "2026-10-01T23:00:00Z", "createdDateTime": "2026-10-02T23:44:38Z", "systemSellPrice": 180.85, "systemBuyPrice": 180.85, "bsadDefaulted": false, "priceDerivationCode": "P", "reserveScarcityPrice": 0.0, "netImbalanceVolume": 28.142533063492063, "sellPriceAdjustment": 0.0, "buyPriceAdjustment": 0.0, "replacementPrice": null, "replac
+=== Elexon openapi (title, licence): HTTP 404 application/json 54 B in 0.4s
+    url: https://data.elexon.co.uk/bmrs/api/v1/openapi.json
+    json: {"statusCode": 404, "message": "Resource not found"}
+=== PV_Live national: HTTP 404 text/html; charset=utf-8 5054 B in 0.4s
+    url: https://api.pvlive.uk/pvlive/v4/gsp/0?start=2026-10-03T05%3A00Z&end=2026-10-03T11%3A00Z&data_format=json&extra_fields=installedcapacity_mwp
+    body: <!doctype html> <html lang="en">  <head> 	<meta charset="utf-8"> 	<meta name="viewport" content="width=device-width, initial-scale=1"> 	<title>Sheffield Solar</title> 	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" 		integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous"> 	<link href="https://api.pvlive.uk/static/css/app.css" rel="stylesheet" type="text/css"> </head>  <body> <!--#container --> <div id="header-div" class="clearfix">     <div>         <!--#header -->         <header id="header" class="clearfix container-fluid">             <div id="uos-logo">                 <a href="htt
+=== Carbon Intensity generation: HTTP 200 application/json 333 B in 0.4s
+    url: https://api.carbonintensity.org.uk/generation
+    json: {"data": {"from": "2026-10-03T11:00Z", "to": "2026-10-03T11:30Z", "generationmix": [{"perc": 8.1, "fuel": "biomass"}, {"fuel": "coal", "perc": 0}, {"perc": 24.2, "fuel": "imports"}, {"fuel": "gas", "perc": 11.1}, {"perc": 13, "fuel": "nuclear"}, {"perc": 1.5, "fuel": "other"}, {"perc": 1.4, "fuel": "hydro"}, {"perc": 25, "fuel": "solar"}, {"perc": 15.6, "fuel": "wind"}]}}
+=== EirGrid demandactual ALL: HTTP 200 application/json; charset=utf-8 9495 B in 1.3s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=demandactual&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    json: {"ErrorMessage": null, "LastUpdated": "03-Oct-2026 11:00:00", "Rows": [{"EffectiveTime": "02-Oct-2026 11:00:00", "FieldName": "SYSTEM_DEMAND", "Region": "ALL", "Value": 5313}, {"EffectiveTime": "02-Oct-2026 11:15:00", "FieldName": "SYSTEM_DEMAND", "Region": "ALL", "Value": 5322}, {"EffectiveTime": "02-Oct-2026 11:30:00", "FieldName": "SYSTEM_DEMAND", "Region": "ALL", "Value": 5359}, {"EffectiveTime": "02-Oct-2026 11:45:00", "FieldName": "SYSTEM_DEMAND", "Region": "ALL", "Value": 5398}, {"Effecti
+=== EirGrid demandactual ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.4s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=demandactual&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid generationactual ALL: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=generationactual&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid generationactual ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=generationactual&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid windactual ALL: HTTP 200 application/json; charset=utf-8 9256 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=windactual&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    json: {"ErrorMessage": null, "LastUpdated": "03-Oct-2026 11:00:00", "Rows": [{"EffectiveTime": "02-Oct-2026 11:00:00", "FieldName": "WIND_ACTUAL", "Region": "ALL", "Value": 3410}, {"EffectiveTime": "02-Oct-2026 11:15:00", "FieldName": "WIND_ACTUAL", "Region": "ALL", "Value": 3562}, {"EffectiveTime": "02-Oct-2026 11:30:00", "FieldName": "WIND_ACTUAL", "Region": "ALL", "Value": 3664}, {"EffectiveTime": "02-Oct-2026 11:45:00", "FieldName": "WIND_ACTUAL", "Region": "ALL", "Value": 3814}, {"EffectiveTime":
+=== EirGrid windactual ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=windactual&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid interconnection ALL: HTTP 503 text/html; charset=us-ascii 326 B in 0.4s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=interconnection&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid interconnection ROI: HTTP 200 application/json; charset=utf-8 27494 B in 0.9s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=interconnection&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    json: {"ErrorMessage": null, "LastUpdated": "03-Oct-2026 11:00:00", "Rows": [{"EffectiveTime": "02-Oct-2026 11:00:00", "FieldName": "INTER_EWIC", "Region": "ROI", "Value": 0}, {"EffectiveTime": "02-Oct-2026 11:15:00", "FieldName": "INTER_EWIC", "Region": "ROI", "Value": 0}, {"EffectiveTime": "02-Oct-2026 11:30:00", "FieldName": "INTER_EWIC", "Region": "ROI", "Value": 0}, {"EffectiveTime": "02-Oct-2026 11:45:00", "FieldName": "INTER_EWIC", "Region": "ROI", "Value": 0}, {"EffectiveTime": "02-Oct-2026 12
+=== EirGrid co2intensity ALL: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=co2intensity&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid co2intensity ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=co2intensity&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid snsp ALL: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=snsp&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid snsp ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.4s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=snsp&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid fuelmix ALL: HTTP 503 text/html; charset=us-ascii 326 B in 0.4s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=fuelmix&region=ALL&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid fuelmix ROI: HTTP 503 text/html; charset=us-ascii 326 B in 0.5s
+    url: https://www.smartgriddashboard.com/DashboardService.svc/data?area=fuelmix&region=ROI&datefrom=02-Oct-2026+11%3A00&dateto=03-Oct-2026+11%3A00
+    body: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN""http://www.w3.org/TR/html4/strict.dtd"> <HTML><HEAD><TITLE>Service Unavailable</TITLE> <META HTTP-EQUIV="Content-Type" Content="text/html; charset=us-ascii"></HEAD> <BODY><h2>Service Unavailable</h2> <hr><p>HTTP Error 503. The service is unavailable.</p> </BODY></HTML> 
+=== EirGrid dashboard page: HTTP 200, 53987 chars
+    licence hint: },{\"label\":\"Privacy policy\",\"mobileLabel\":\"Privacy\",\"path\":\"/all/privacy-statement\"},{\"label\":\"Open Data License\",\"path\":\"/all/open-data-license\"}]}}]]}]],null],[[\"$\",\"svg\",null,{\"xmlns\":\"http://www.w3.org/2000/svg\",\"viewBox\":\"0 0 200 200\",\"width\":48,\"height\":48,\"className\":\"m-auto mb-4\
+    licence hint: bileLabel\":\"Privacy\",\"path\":\"/all/privacy-statement\"},{\"label\":\"Open Data License\",\"path\":\"/all/open-data-license\"}]}}]]}]],null],[[\"$\",\"svg\",null,{\"xmlns\":\"http://www.w3.org/2000/svg\",\"viewBox\":\"0 0 200 200\",\"width\":48,\"height\":48,\"className\":\"m-auto mb-4\",\"children\":[[\"$\",\"circle\",nu

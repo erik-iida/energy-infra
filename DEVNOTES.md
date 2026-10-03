@@ -440,6 +440,13 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   "Compare across countries" selector (MW, or % of consumption; the "% of generation" button falls back to consumption for it).
 - Not done: carrying lagging technologies forward (we show gaps instead of estimates); the Market tab charts were not changed.
 
+## Layout of the non-map tabs (Oct 3 2026)
+- The right-hand pane (`aside`) is hidden on every tab except the map; the content uses the full width. A country selector with flag (`#C2`, `#csf`, `csSync()`)
+  sits top right of the tab row on those tabs and drives the same `S.c` / `go()` as the map's selector (a globe for World, regions and groups).
+  Flags / Newsletter / Data ignore the country (they have their own zone filters).
+- "Sources and disclaimer" (`#footd`) moved from the pane to the bottom of the page; it is still hidden on the map tab.
+- The System tab's generation table and hover list are ranked by current share; the stack order in the chart stays fixed (baseload to peaking).
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

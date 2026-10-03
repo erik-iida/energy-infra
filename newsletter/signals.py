@@ -42,29 +42,46 @@ def percentile(hist: pd.Series, value: float) -> float:
     return float((hist <= value).mean())
 
 
-def evaluate(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WINDOW_DAYS,
-             min_hist: int = MIN_HIST) -> list[dict]:
-    """Fired signals for `day`, strongest first. metrics: zone, day, metric, value."""
+def scan(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WINDOW_DAYS,
+         min_hist: int = MIN_HIST) -> list[dict]:
+    """Every (zone, rule) with a value on `day`: value, percentile against the zone's own trailing `window` days, the
+    trailing median / p10 / p90, and `side` ("high" / "low") when the rule fires, else None. `status`: "ok" (enough
+    history and passes the absolute gate), "short" (fewer than `min_hist` trailing days) or "gated" (below min_abs)."""
     out = []
     start = day - pd.Timedelta(days=window)
     for r in rules:
         m = metrics[metrics["metric"] == r.metric]
         today = m[m["day"] == day].set_index("zone")["value"]
         hist = m[(m["day"] >= start) & (m["day"] < day)]
+        scale = 100.0 if r.unit == "%" else 1.0
         for zone, v in today.items():
+            if pd.isna(v):
+                continue
             h = hist.loc[hist["zone"] == zone, "value"]
-            if len(h) < min_hist or pd.isna(v):
-                continue
-            if r.min_abs is not None and abs(v) < r.min_abs:
-                continue
-            p = percentile(h, v)
-            side = "high" if (r.hi is not None and p >= r.hi) else "low" if (r.lo is not None and p <= r.lo) else None
-            if side is None:
-                continue
-            scale = 100.0 if r.unit == "%" else 1.0
-            out.append({"zone": zone, "metric": r.metric, "label": r.label, "unit": r.unit, "side": side,
-                        "value": round(v * scale, 1), "pct": round(p, 3), "n_hist": int(len(h)),
-                        "median": round(float(h.median()) * scale, 1),
-                        "p10": round(float(h.quantile(0.1)) * scale, 1), "p90": round(float(h.quantile(0.9)) * scale, 1),
-                        "score": round(r.weight * (p if side == "high" else 1 - p), 4)})
-    return sorted(out, key=lambda s: -s["score"])
+            row = {"zone": zone, "metric": r.metric, "label": r.label, "unit": r.unit, "side": None,
+                   "value": round(v * scale, 1), "pct": None, "n_hist": int(len(h)), "status": "ok",
+                   "median": None, "p10": None, "p90": None, "score": 0.0}
+            if len(h) < min_hist:
+                row["status"] = "short"
+            else:
+                p = percentile(h, v)
+                row.update(pct=round(p, 3), median=round(float(h.median()) * scale, 1),
+                           p10=round(float(h.quantile(0.1)) * scale, 1), p90=round(float(h.quantile(0.9)) * scale, 1))
+                if r.min_abs is not None and abs(v) < r.min_abs:
+                    row["status"] = "gated"
+                else:
+                    side = "high" if (r.hi is not None and p >= r.hi) else "low" if (r.lo is not None and p <= r.lo) else None
+                    if side:
+                        row["side"] = side
+                        row["score"] = round(r.weight * (p if side == "high" else 1 - p), 4)
+            out.append(row)
+    return out
+
+
+def evaluate(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WINDOW_DAYS,
+             min_hist: int = MIN_HIST) -> list[dict]:
+    """Fired signals for `day`, strongest first. metrics: zone, day, metric, value."""
+    fired = [r for r in scan(metrics, day, rules, window, min_hist) if r["side"]]
+    for r in fired:
+        del r["status"]
+    return sorted(fired, key=lambda s: -s["score"])

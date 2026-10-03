@@ -93,6 +93,18 @@ aside>*{flex-shrink:0}
 #dat .dt th:first-child,#dat .dt td:first-child{position:sticky;left:0;text-align:left;background:var(--panel);z-index:1;border-right:1px solid var(--line)}#dat .dt th:first-child{z-index:3}
 #dat .dt tr.sm td{color:var(--mut);background:var(--bg)}#dat .dt tr.sm td:first-child{background:var(--bg)}#dat .dt td.ng{color:var(--exp)}#dat .dt td.nu{color:var(--mut)}
 #dat .dt tr.fc td:first-child::after{content:" ·fc";color:var(--mut);font-size:10px}
+#flg{display:none;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh;min-width:0}
+#flg .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#flg select{width:auto;padding:5px 8px;font-size:13px}
+#flg .flh{font-size:15px;margin:6px 0 0}#flg .flh .mut{font-size:12px;font-weight:400}
+#flg .dw{overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:6px}
+#flg table.dt{width:auto;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums}
+#flg .dt th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:right;padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:600}
+#flg .dt td{padding:3px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+#flg .dt th:first-child,#flg .dt td:first-child{position:sticky;left:0;text-align:left;background:var(--panel);z-index:1;border-right:1px solid var(--line)}#flg .dt th:first-child{z-index:3}
+#flg .dt td.nu{color:var(--mut)}#flg .dt td.sh{color:var(--mut)}#flg .dt td.fd{font-weight:700;outline:2px solid var(--ink);outline-offset:-2px}
+#flg .pc{display:block;font-size:10px;color:var(--mut);font-weight:400}#flg .fh{color:#c2410c}#flg .fl{color:#1f5f99}
+#dat .vg{display:flex;flex-direction:column;gap:4px;margin-bottom:2px}#dat .vgh{display:flex;gap:8px;align-items:center;font-size:12px}
+#dat .vgh button{width:auto;padding:2px 8px;font-size:12px;border-radius:99px}#dat .vgh .gtog{font-weight:600;border:0;background:none;padding:2px 0;color:var(--ink)}
 #sys{display:none;flex-direction:column;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh}
 :root{--m-nuc:#d42c2c;--m-coal:#1c1c1c;--m-gas:#8f8f8f;--m-oil:#8b5a2b;--m-hyd:#7a4fc4;--m-bio:#1e5e2e;--m-oth:#d2b48c;--m-woff:#0c2264;--m-won:#3aa648;--m-sol:#f7cf00;--imp:#2a78d6;--exp:#e34948}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--m-nuc:#e5484d;--m-coal:#575757;--m-gas:#a3a3a3;--m-oil:#9c6a38;--m-hyd:#9572d6;--m-bio:#2f7d3e;--m-oth:#c4a77d;--m-woff:#2b4ba3;--m-won:#46b555;--m-sol:#e9c400;--imp:#3987e5;--exp:#e66767}}
@@ -117,14 +129,14 @@ table.sortable th{cursor:pointer;user-select:none}table.sortable th:hover{color:
 svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
 </style></head><body><main>
-<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button><button data-t="dat">Data</button></div>
+<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button><button data-t="flg">Flags</button><button data-t="dat">Data</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the Europe view" aria-label="Back to the Europe view">⌂</button></div><div id="tip"></div><div id="note"></div>
 <div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span class="lh">Click a heading to switch a layer on or off, an entry to hide it</span><button class="lc" data-c="price">Day-ahead prices</button><div class="lrow"><div class="seg" id="mosel"><button data-mo="now">Now</button><button data-mo="avg">24 h avg</button><button data-mo="next">Tomorrow</button><button data-mo="tb2">TB2</button><button data-mo="tb4">TB4</button></div><div id="mobar"></div></div><button class="lc" data-c="farms">Wind farms</button><div class="lrow"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button></div><button class="lc" data-c="zones">Future zones</button><div class="lrow"><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button></div><button class="lc" data-c="gas">Gas</button><div class="lrow" id="gasleg"><button class="lk" data-k="gip"><i class="gk gd" style="border-radius:50%"></i>pipeline point</button><button class="lk" data-k="glng"><i class="gk gd" style="transform:rotate(45deg)"></i>LNG</button><button class="lk" data-k="gprod"><i class="gk gd"></i>production</button></div><button class="lc" data-c="grid">High-voltage grid</button><div class="lrow" id="gleg"><button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></div><button class="lc" data-c="depth">Depth</button><div class="lrow"><span><i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span><div id="bys"><label for="BD" style="font-size:11px">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"></div></div></div></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
-<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="dat"></div><div id="dtip"></div></div>
+<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="flg"></div><div id="dat"></div><div id="dtip"></div></div>
 <aside>
 <div class="keep"><h1>GridEconomics</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" class="keep" aria-label="Region or country"></select>
@@ -356,7 +368,7 @@ function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat
  const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);clampV();paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
 function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(zMin(),V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat=mercInv(mercY(V.lat)+mercY(lat)-mercY(a2));clampV();repaint()}
 function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
-function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}if(S.tab==="dat"){dataTab();sidebar();return}paint();sidebar()}
+function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}if(S.tab==="flg"){flagsTab();sidebar();return}if(S.tab==="dat"){dataTab();sidebar();return}paint();sidebar()}
 // Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
 // streaks stay crisp. Colour = one sequential ramp; tiny deficits fully transparent (no box edge).
 const RAMP=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]]; // viridis
@@ -549,7 +561,7 @@ function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filte
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
 function tab(t){S.tab=t;document.body.dataset.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
- $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";$("dat").style.display=t==="dat"?"flex":"none";draw()}
+ $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";$("flg").style.display=t==="flg"?"flex":"none";$("dat").style.display=t==="dat"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
 
@@ -949,28 +961,90 @@ cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0||S.mzh
 $("mosel").onclick=e=>{const b=e.target.closest("button[data-mo]");if(b)moSet(b.dataset.mo)};
 $("zin").onclick=()=>zoomAt(W0/2,H0/2,1.6);$("zout").onclick=()=>zoomAt(W0/2,H0/2,1/1.6);$("zhome").onclick=()=>go(null,null);
 
-/* ---------- Data tab: browse the stored history (web/data/browse, built from the `store` release by scripts/build_browse.py) ---------- */
-const DB={idx:null,err:0,busy:0,ds:"da_price",z:null,days:7,tz:"CET",desc:true,off:{},cache:{},tok:0};
+/* ---------- Flags tab: signals and metric overview (web/data/browse/flags.json, built from the `store` release by scripts/build_browse.py with newsletter/signals.py) ---------- */
+const FL={j:null,err:0,busy:0,all:false};
+function flFmt(v,u){if(v==null)return"–";return v.toLocaleString("en",{maximumFractionDigits:Math.abs(v)>=100?0:1})}
+function flagsTab(){const el=$("flg");
+ if(!FL.j){if(FL.err){el.innerHTML="<div class='feednote'>No flags published yet. This tab reads the signals computed from the data store (last 90 days per zone), which the deploy job exports once the collector has run (see DEVNOTES: Data store, Newsletter generator).</div>";return}
+  el.innerHTML="<div class='feednote'>Loading…</div>";if(!FL.busy){FL.busy=1;dbJson("data/browse/flags.json").then(j=>{FL.j=j;FL.busy=0;if(S.tab==="flg")flagsTab()}).catch(()=>{FL.err=1;FL.busy=0;if(S.tab==="flg")flagsTab()})}return}
+ const j=FL.j,foc=new Set(j.focus),keep=r=>FL.all||foc.has(r.zone),rl={};j.rules.forEach(r=>rl[r.metric]=r);
+ const dl=new Date(j.day+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
+ const fired=j.scan.filter(r=>r.side&&keep(r)).sort((a,b)=>b.score-a.score);
+ const zr=z=>foc.has(z)?j.focus.indexOf(z):100,zones=[...new Set(j.scan.filter(keep).map(r=>r.zone))].sort((a,b)=>zr(a)-zr(b)||a.localeCompare(b));
+ const by={};j.scan.forEach(r=>by[r.zone+"|"+r.metric]=r);
+ const gate=r=>{const a=[];if(r.hi!=null)a.push("≥ P"+Math.round(r.hi*100));if(r.lo!=null)a.push("≤ P"+Math.round(r.lo*100));return a.join(" or ")+(r.min_abs!=null?" and |value| ≥ "+r.min_abs+" "+r.unit:"")};
+ let h="<div class='feednote'>Flags for <b>"+dl+"</b>, the latest complete CET day. A flag fires when a zone's value sits in the tail of its <i>own</i> last "+j.window_days+" days (percentile P: share of those days at or below the value), with at least "+j.min_hist+" days of history and an absolute floor so a tiny number does not flag. The store holds "+j.hist_days+" days of prices so far, so percentiles firm up as the history backfills. Rules: "+j.rules.map(r=>r.label+" "+gate(r)).join("; ")+". Same signals as the newsletter (without the private spark spreads). Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>.</div>"
+  +"<div class='row'><label style='gap:6px;align-items:center'>Zones <select id='flz'><option value='f'"+(FL.all?"":" selected")+">CEE / SEE + DE-LU</option><option value='a'"+(FL.all?" selected":"")+">all zones in the store</option></select></label></div>";
+ h+="<h3 class='flh'>Signals fired ("+fired.length+")</h3>";
+ h+=fired.length?"<div class='dw' style='max-height:none'><table class='dt ft'><thead><tr><th>Zone</th><th style='text-align:left'>Signal</th><th>Value</th><th>Percentile</th><th>Typical (median · P10–P90)</th><th>Days in window</th></tr></thead><tbody>"+fired.map(r=>"<tr><td>"+r.zone+"</td><td style='text-align:left'>"+rl[r.metric].label+" — "+(r.side==="high"?"unusually <b class='fh'>high</b>":"unusually <b class='fl'>low</b>")+"</td><td>"+flFmt(r.value)+" <span class='mut'>"+rl[r.metric].unit+"</span></td><td>P"+Math.round(r.pct*100)+"</td><td>"+flFmt(r.median)+" · "+flFmt(r.p10)+"–"+flFmt(r.p90)+"</td><td>"+r.n_hist+"</td></tr>").join("")+"</tbody></table></div>":"<div class='feednote'>No metric left its own normal range for these zones on this day.</div>";
+ h+="<h3 class='flh'>Overview, all metrics <span class='mut'>shade = percentile vs the zone's own last "+j.window_days+" days (orange high, blue low); bold = flag fired; grey = under "+j.min_hist+" days of history</span></h3>"
+  +"<div class='dw'><table class='dt ft'><thead><tr><th>Zone</th>"+j.rules.map(r=>"<th>"+r.label+" <span class='mut'>"+r.unit+"</span></th>").join("")+"</tr></thead><tbody>"
+  +zones.map(z=>"<tr><td>"+z+"</td>"+j.rules.map(r=>{const c=by[z+"|"+r.metric];if(!c)return"<td class='nu'>–</td>";
+    let st="",cl="";if(c.status==="short")cl=" sh";else if(c.pct!=null){const a=Math.min(.75,Math.abs(c.pct-.5)*1.5);st="background:"+(c.pct>=.5?"rgba(194,65,12,"+a.toFixed(2)+")":"rgba(31,95,153,"+a.toFixed(2)+")")}
+    if(c.side)cl+=" fd";const tip=c.pct==null?"under "+j.min_hist+" days of history ("+c.n_hist+")":"P"+Math.round(c.pct*100)+" of the last "+c.n_hist+" days · median "+flFmt(c.median)+" · P10–P90 "+flFmt(c.p10)+"–"+flFmt(c.p90)+(c.status==="gated"?" · below the absolute floor, no flag":"");
+    return"<td class='"+cl.trim()+"' style='"+st+"' title='"+tip+"'>"+flFmt(c.value)+(c.pct!=null?"<span class='pc'>P"+Math.round(c.pct*100)+"</span>":"")+"</td>"}).join("")+"</tr>").join("")+"</tbody></table></div>"
+  +"<div class='mut' style='font-size:12px'>Capture rate = generation-weighted day-ahead price ÷ baseload; only the low side flags. TB2 / TB4: mean of the 2 / 4 highest minus the 2 / 4 lowest hourly day-ahead prices of the CET day. Generated "+j.generated.slice(0,16).replace("T"," ")+" UTC.</div>";
+ el.innerHTML=h}
+
+/* ---------- Data tab: one flexible time-series browser (any variables x any zones) plus the installed-capacity view ---------- */
+/* web/data/browse/{index.json, ts/<zone>.json, capacity.json}, built from the `store` release by scripts/build_browse.py */
+const DB={idx:null,err:0,busy:0,mode:"ts",zs:["RO"],on:null,days:7,tz:"CET",desc:true,cache:{},open:{},tok:0,cap:null,cv:"gw",cf:"all",cur:null};
 const DBFIRST=["PL","CZ","SK","HU","RO","BG","SI","HR","RS","GR","BA","ME","MK","EE","LV","LT","DE-LU"];
 function dbJson(u){return fetch(u).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})}
 function dbFmt(t,tz){if(tz==="UTC")return new Date(t*1000).toISOString().slice(0,16).replace("T"," ");return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(t*1000))}
 function dbNum(v,u){return v==null?"–":v.toLocaleString("en",{maximumFractionDigits:u&&u.endsWith("/MWh")?2:1})}
-function dbZones(){const z=DB.idx.datasets[DB.ds].zones;return DBFIRST.filter(x=>z.includes(x)).concat(z.filter(x=>!DBFIRST.includes(x)))}
+function dbZonesAll(){const z=DB.idx.zones;return DBFIRST.filter(x=>z.includes(x)).concat(z.filter(x=>!DBFIRST.includes(x)))}
+function dbModeBar(){return"<div class='row'><span class='seg big' id='dbmode'><button data-m='ts' class='"+(DB.mode==="ts"?"on":"")+"'>Time series</button>"+(DB.idx.capacity?"<button data-m='cap' class='"+(DB.mode==="cap"?"on":"")+"'>Installed capacity &amp; capacity factor</button>":"")+"</span></div>"}
 function dataTab(){const el=$("dat");
  if(!DB.idx){if(DB.err){el.innerHTML="<div class='feednote'>No stored data is published yet. The Data tab reads the last 30 days of the data store, which the deploy job exports once the collector has run (see DEVNOTES: Data store).</div>";return}
   el.innerHTML="<div class='feednote'>Loading…</div>";if(!DB.busy){DB.busy=1;dbJson("data/browse/index.json").then(j=>{DB.idx=j;DB.busy=0;if(S.tab==="dat")dataTab()}).catch(()=>{DB.err=1;DB.busy=0;if(S.tab==="dat")dataTab()})}return}
- const I=DB.idx.datasets;if(!Object.keys(I).length){DB.idx=null;DB.err=1;dataTab();return}if(!I[DB.ds])DB.ds=Object.keys(I)[0];if(I[DB.ds].static){DB.cur=null;capView();return}const zs=dbZones();if(!DB.z||!zs.includes(DB.z))DB.z=zs.includes("RO")?"RO":zs[0];
- const my=++DB.tok,k=DB.ds+"/"+DB.z,go=f=>{if(my===DB.tok&&S.tab==="dat")dbRender(f)};
- if(DB.cache[k]){go(DB.cache[k]);return}
- dbHead(null);dbJson("data/browse/"+k+".json").then(f=>{DB.cache[k]=f;go(f)}).catch(()=>{if(my===DB.tok)$("dat").querySelector("#dbbody").innerHTML="<div class='feednote'>No stored rows for this zone and dataset.</div>"})}
+ if(!DB.idx.zones.length){DB.idx=null;DB.err=1;dataTab();return}
+ if(!DB.on){DB.on={};DB.idx.vars.forEach(v=>{if(v.def)DB.on[v.id]=1})}
+ DB.zs=DB.zs.filter(z=>DB.idx.zones.includes(z));if(!DB.zs.length)DB.zs=[DB.idx.zones.includes("RO")?"RO":DB.idx.zones[0]];
+ if(DB.mode==="cap"&&!DB.idx.capacity)DB.mode="ts";
+ if(DB.mode==="cap"){capView();return}tsView()}
+function tsView(){const my=++DB.tok,need=DB.zs.filter(z=>!(z in DB.cache)),go=()=>{if(my===DB.tok&&S.tab==="dat"&&DB.mode==="ts")tsRender()};
+ if(!need.length){go();return}
+ $("dat").innerHTML=dbModeBar()+"<div class='feednote'>Loading…</div>";
+ Promise.all(need.map(z=>dbJson("data/browse/ts/"+z+".json").then(f=>{f.ix={};f.cols.forEach((c,i)=>f.ix[c.id]=i);DB.cache[z]=f}).catch(()=>{DB.cache[z]=null}))).then(go)}
+function tsRender(){const I=DB.idx,zf=DB.zs.filter(z=>DB.cache[z]);
+ if(!zf.length){$("dat").innerHTML=dbModeBar()+"<div class='feednote'>No stored rows for this zone.</div>";return}
+ const av=new Set();zf.forEach(z=>DB.cache[z].cols.forEach(c=>av.add(c.id)));
+ const cols=[];I.vars.forEach(v=>{if(!DB.on[v.id]||!av.has(v.id))return;zf.forEach(z=>{const f=DB.cache[z],k=f.ix[v.id];if(k!=null)cols.push({z,v,c:f.cols[k],a:f.v[k]})})});
+ const f0=DB.cache[zf[0]],t0=f0.t0,step=f0.step,n=f0.v[0].length,multi=DB.zs.length>1;
+ const zop=!!DB.open.__z,zchips="<div class='chips' id='dbzs'>"+(zop?dbZonesAll():DB.zs).map(z=>"<button class='chip"+(DB.zs.includes(z)?" on":"")+"' data-z='"+z+"'>"+z+"</button>").join("")+"</div>";
+ let vh="";I.groups.forEach((g,gi)=>{const vs=I.vars.filter(v=>v.grp===g&&av.has(v.id));if(!vs.length)return;const op=!!DB.open[g],non=vs.filter(v=>DB.on[v.id]).length,shown=op?vs:vs.filter(v=>DB.on[v.id]);
+  vh+="<div class='vg'><div class='vgh'><button class='gtog' data-g='"+g+"' title='"+(op?"Hide the unselected variables":"Show all variables of this group")+"'>"+(op?"▾ ":"▸ ")+g+"</button><span class='mut'>"+non+" of "+vs.length+" shown</span><button class='gall' data-g='"+g+"'>all</button><button class='gnone' data-g='"+g+"'>none</button></div>"
+   +(shown.length?"<div class='chips'>"+shown.map(v=>"<button class='chip vchip"+(DB.on[v.id]?" on":"")+"' data-v='"+v.id+"' title='"+v.unit+"' style='"+(v.tech?"--c:var(--m-"+v.tech+")":"")+"'><i></i>"+v.name+"</button>").join("")+"</div>":"")+"</div>"});
+ const nowH=Math.floor(Date.now()/3600000)*3600;let last=-1;for(let r=n-1;r>=0&&last<0;r--)if(cols.some(c=>c.a[r]!=null))last=r;if(last<0)last=n-1;
+ const first=Math.max(0,last-DB.days*24+1),rows=[];for(let r=first;r<=last;r++)rows.push(r);if(DB.desc)rows.reverse();
+ const stat=c=>{const a=[];for(let r=first;r<=last;r++)if(c.a[r]!=null)a.push(c.a[r]);return a.length?{mn:Math.min(...a),mx:Math.max(...a),av:a.reduce((x,y)=>x+y,0)/a.length}:null};
+ const st=cols.map(stat),sm=(lab,fn)=>"<tr class='sm'><td>"+lab+"</td>"+cols.map((c,j)=>"<td>"+(st[j]?dbNum(fn(st[j]),c.c.unit):"–")+"</td>").join("")+"</tr>";
+ let tb="<div class='feednote'>Pick any zones and any variables; they combine in one table. Stored history from the ENTSO-E Transparency Platform, hourly means of the native-resolution rows (UTC hours), last 30 days; the store itself keeps more and the full resolution. Exported "+I.generated.slice(0,16).replace("T"," ")+" UTC. Day-ahead prices: auction result only (classification sequence 1). Daily columns (baseload, TB2, TB4, capture rates …) are computed per CET day and repeated on every hour of that day. Rows marked ·fc are in the future (day-ahead data).</div>"
+  +dbModeBar()
+  +"<div class='row'><label style='gap:6px;align-items:center'>Show <select id='dbn'>"+[[1,"last day"],[3,"last 3 days"],[7,"last 7 days"],[14,"last 14 days"],[30,"all 30 days"]].map(([k,t])=>"<option value='"+k+"'"+(k===DB.days?" selected":"")+">"+t+"</option>").join("")+"</select></label>"
+  +"<span class='seg' id='dbtz'><button data-z='CET' class='"+(DB.tz==="CET"?"on":"")+"'>CET/CEST</button><button data-z='UTC' class='"+(DB.tz==="UTC"?"on":"")+"'>UTC</button></span>"
+  +"<span class='seg' id='dbo'><button data-o='1' class='"+(DB.desc?"on":"")+"'>Newest first</button><button data-o='0' class='"+(DB.desc?"":"on")+"'>Oldest first</button></span>"
+  +"<button id='dbcsv' style='width:auto;padding:5px 11px;font-size:13px'>Download CSV</button></div>"
+  +"<div class='row'><button class='gtog' id='dbzt' style='width:auto;border:0;background:none;padding:2px 0;font-weight:600'>"+(zop?"▾ ":"▸ ")+"Zones ("+DB.zs.length+")</button><span class='seg' id='dbq'><button data-q='focus'>CEE / SEE + DE-LU</button><button data-q='one'>Only "+DB.zs[0]+"</button></span></div>"+zchips
+  +"<div class='row' style='margin-top:2px'><span style='font-size:13px;font-weight:600'>Variables</span><span class='mut' style='font-size:12px'>click a group name to see all of its variables</span></div>"+vh;
+ const head=c=>(multi?"<span class='mut'>"+c.z+"</span> ":"")+c.v.name+" <span class='mut'>"+c.c.unit+"</span>";
+ tb+=cols.length?"<div class='dw'><table class='dt'><thead><tr><th>Time ("+(DB.tz==="UTC"?"UTC":"CET/CEST")+")</th>"+cols.map(c=>"<th>"+head(c)+"</th>").join("")+"</tr></thead><tbody>"+sm("Mean",x=>x.av)+sm("Min",x=>x.mn)+sm("Max",x=>x.mx)
+  +rows.map(r=>{const t=t0+r*step;return"<tr"+(t>=nowH+3600?" class='fc'":"")+"><td>"+dbFmt(t,DB.tz)+"</td>"+cols.map(c=>{const v=c.a[r];return"<td"+(v==null?" class='nu'":v<0?" class='ng'":"")+">"+dbNum(v,c.c.unit)+"</td>"}).join("")+"</tr>"}).join("")
+  +"</tbody></table></div><div class='mut' style='font-size:12px'>"+rows.length+" hours × "+cols.length+" columns. Negative values in red, – = nothing stored for that hour (not yet published, or the TSO doesn't report it). Source: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>.</div>":"<div class='feednote'>No variable switched on for the selected zones.</div>";
+ $("dat").innerHTML=tb;DB.cur={cols,t0,step,rows,multi}}
+function dbCsv(){const c=DB.cur;if(!c)return;const q=x=>'"'+String(x).replace(/"/g,'""')+'"';
+ let t=["utc,local_cet"].concat(c.cols.map(k=>q((c.multi?k.z+" · ":"")+k.v.name+" ["+k.c.unit+"]"))).join(",")+"\n";
+ c.rows.forEach(r=>{const ts=c.t0+r*c.step;t+=[dbFmt(ts,"UTC"),dbFmt(ts,"CET")].concat(c.cols.map(k=>k.a[r]==null?"":k.a[r])).join(",")+"\n"});
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_timeseries.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 /* installed capacity (IRENA, annual) and 30-day capacity factor from the store: web/data/browse/capacity.json */
 function capRows(c){const f=DB.cf==="zone"?c.rows.filter(r=>r.zones.length):c.rows.slice(),rk=r=>{const i=Math.min(...r.zones.map(z=>DBFIRST.indexOf(z)<0?99:DBFIRST.indexOf(z)));return r.zones.length?i:100};
  return f.sort((x,y)=>rk(x)-rk(y)||x.name.localeCompare(y.name))}
-function capView(){const el=$("dat"),I=DB.idx.datasets;
- const go=c=>{if(S.tab!=="dat"||!(DB.idx.datasets[DB.ds]||{}).static)return;const v=DB.cv||"gw",cls=c.classes,rows=capRows(c),nz=c.rows.filter(r=>r.zones.length).length;
+function capView(){const el=$("dat");
+ const go=c=>{if(S.tab!=="dat"||DB.mode!=="cap")return;const v=DB.cv||"gw",cls=c.classes,rows=capRows(c),nz=c.rows.filter(r=>r.zones.length).length;
   const cell=(r,k)=>{const x=(v==="gw"?r.gw:r.cf)[k];return x==null?"<td class='nu'>–</td>":"<td>"+x.toLocaleString("en",{maximumFractionDigits:v==="gw"?2:1})+"</td>"};
   let h="<div class='feednote'>Installed capacity by technology for every country in the IRENA Renewable Energy Statistics (year-end of each country's latest year; DE-LU = Germany + Luxembourg). Capacity factor = ENTSO-E actual generation over "+c.cf_window[0]+" to "+c.cf_window[1]+" ÷ (installed capacity × hours), shown for countries whose bidding zones are all in the store (multi-zone countries are summed). IRENA capacity is older than the generation, so countries that added capacity since read too high; values above a physical ceiling (solar 25 %, onshore wind 40 %, offshore wind 60 %, others 100 % over 30 days) are hidden (–).</div>"
-  +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
+  +dbModeBar()
   +"<div class='row'><span class='seg' id='cpv'><button data-v='gw' class='"+(v==="gw"?"on":"")+"'>Installed GW</button><button data-v='cf' class='"+(v==="cf"?"on":"")+"'>30-day capacity factor %</button></span>"
   +"<label style='gap:6px;align-items:center'>Show <select id='cpf'><option value='all'"+(DB.cf==="zone"?"":" selected")+">all "+c.rows.length+" IRENA countries</option><option value='zone'"+(DB.cf==="zone"?" selected":"")+">"+nz+" countries with a bidding zone</option></select></label>"
   +"<button id='cpcsv' style='width:auto;padding:5px 11px;font-size:13px'>Download CSV</button></div>"
@@ -979,44 +1053,26 @@ function capView(){const el=$("dat"),I=DB.idx.datasets;
   +"<div class='mut' style='font-size:12px'>"+rows.length+" countries. Installed capacity: IRENA Renewable Energy Statistics, © IRENA (<a href='https://www.irena.org/Data' style='color:inherit'>irena.org/Data</a>). Generation: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Fossil capacity is one class (not every country splits it by fuel); ENTSO-E generation can miss small distributed solar, which lowers its capacity factor.</div>";
   el.innerHTML=h};
  if(DB.cap){go(DB.cap);return}
- el.innerHTML="<div class='feednote'>Loading…</div>";dbJson("data/browse/capacity.json").then(c=>{DB.cap=c;go(c)}).catch(()=>{el.innerHTML="<div class='feednote'>No capacity table published yet.</div>"})}
+ el.innerHTML=dbModeBar()+"<div class='feednote'>Loading…</div>";dbJson("data/browse/capacity.json").then(c=>{DB.cap=c;go(c)}).catch(()=>{el.innerHTML=dbModeBar()+"<div class='feednote'>No capacity table published yet.</div>"})}
 function capCsv(){const c=DB.cap;if(!c)return;const q=x=>'"'+String(x).replace(/"/g,'""')+'"',cl=c.classes;
  let t=["iso3","country","zones","irena_year"].concat(cl.map(k=>k.name+" [GW]")).concat(cl.map(k=>k.name+" [30-day CF %]")).map(q).join(",")+"\n";
  capRows(c).forEach(r=>{t+=[r.id,r.name,r.zones.join(" "),r.year].map(q).concat(cl.map(k=>r.gw[k.id]==null?"":r.gw[k.id]),cl.map(k=>r.cf[k.id]==null?"":r.cf[k.id])).join(",")+"\n"});
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_irena_capacity.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
-function dbHead(f){const I=DB.idx.datasets,el=$("dat");
- el.innerHTML="<div class='feednote'>Stored history from the ENTSO-E Transparency Platform, hourly means of the native-resolution rows (UTC hours), last 30 days; the store itself keeps more and the full resolution. Exported "+DB.idx.generated.slice(0,16).replace("T"," ")+" UTC. Day-ahead prices: auction result only (classification sequence 1). Rows marked ·fc are in the future (day-ahead data).</div>"
- +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
- +"<div class='row'><label style='gap:6px;align-items:center'>Zone <select id='dbz'>"+dbZones().map(z=>"<option"+(z===DB.z?" selected":"")+">"+z+"</option>").join("")+"</select></label>"
- +"<label style='gap:6px;align-items:center'>Show <select id='dbn'>"+[[1,"last day"],[3,"last 3 days"],[7,"last 7 days"],[14,"last 14 days"],[30,"all 30 days"]].map(([n,t])=>"<option value='"+n+"'"+(n===DB.days?" selected":"")+">"+t+"</option>").join("")+"</select></label>"
- +"<span class='seg' id='dbtz'><button data-z='CET' class='"+(DB.tz==="CET"?"on":"")+"'>CET/CEST</button><button data-z='UTC' class='"+(DB.tz==="UTC"?"on":"")+"'>UTC</button></span>"
- +"<span class='seg' id='dbo'><button data-o='1' class='"+(DB.desc?"on":"")+"'>Newest first</button><button data-o='0' class='"+(DB.desc?"":"on")+"'>Oldest first</button></span>"
- +"<button id='dbcsv' style='width:auto;padding:5px 11px;font-size:13px'>Download CSV</button></div><div id='dbbody'>"+(f?"":"<div class='feednote'>Loading…</div>")+"</div>"}
-function dbRender(f){dbHead(f);const key=c=>DB.ds+"|"+DB.z+"|"+c.id,on=f.cols.map(c=>DB.off[key(c)]===undefined?!/\(consumption\)/.test(c.name):!DB.off[key(c)]);
- const vis=f.cols.map((c,i)=>i).filter(i=>on[i]),n=f.v[0].length;let last=-1;for(let r=n-1;r>=0&&last<0;r--)if(vis.some(i=>f.v[i][r]!=null))last=r;if(last<0)last=n-1;
- const first=Math.max(0,last-DB.days*24+1),rows=[];for(let r=first;r<=last;r++)rows.push(r);if(DB.desc)rows.reverse();
- const nowH=Math.floor(Date.now()/3600000)*3600;
- const chips="<div class='chips'>"+f.cols.map((c,i)=>"<button class='chip"+(on[i]?" on":"")+"' data-i='"+i+"' style='"+(c.tech?"--c:var(--m-"+c.tech+")":"")+"'><i></i>"+c.name+"</button>").join("")+"</div>";
- const stat=i=>{const a=[];for(let r=first;r<=last;r++)if(f.v[i][r]!=null)a.push(f.v[i][r]);return a.length?{mn:Math.min(...a),mx:Math.max(...a),av:a.reduce((x,y)=>x+y,0)/a.length}:null};
- const st=vis.map(stat),sm=(lab,fn)=>"<tr class='sm'><td>"+lab+"</td>"+vis.map((i,j)=>"<td>"+(st[j]?dbNum(fn(st[j]),f.cols[i].unit):"–")+"</td>").join("")+"</tr>";
- let h=chips+"<div class='dw'><table class='dt'><thead><tr><th>Time ("+(DB.tz==="UTC"?"UTC":"CET/CEST")+")</th>"+vis.map(i=>"<th>"+f.cols[i].name+" <span class='mut'>"+f.cols[i].unit+"</span></th>").join("")+"</tr></thead><tbody>"+sm("Mean",x=>x.av)+sm("Min",x=>x.mn)+sm("Max",x=>x.mx);
- rows.forEach(r=>{const t=f.t0+r*f.step;h+="<tr"+(t>=nowH+3600?" class='fc'":"")+"><td>"+dbFmt(t,DB.tz)+"</td>"+vis.map(i=>{const v=f.v[i][r];return "<td"+(v==null?" class='nu'":v<0?" class='ng'":"")+">"+dbNum(v,f.cols[i].unit)+"</td>"}).join("")+"</tr>"});
- $("dbbody").innerHTML=h+"</tbody></table></div><div class='mut' style='font-size:12px'>"+rows.length+" hours × "+vis.length+" variables. Negative values in red, – = nothing stored for that hour (not yet published, or the TSO doesn't report it). Source: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>.</div>";
- DB.cur={f,vis,rows,on}}
-function dbCsv(){const c=DB.cur;if(!c)return;const f=c.f,q=x=>'"'+String(x).replace(/"/g,'""')+'"';
- let t=["utc,local_cet"].concat(c.vis.map(i=>q(f.cols[i].name+" ["+f.cols[i].unit+"]"))).join(",")+"\n";
- c.rows.forEach(r=>{const ts=f.t0+r*f.step;t+=[dbFmt(ts,"UTC"),dbFmt(ts,"CET")].concat(c.vis.map(i=>f.v[i][r]==null?"":f.v[i][r])).join(",")+"\n"});
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_"+DB.ds+"_"+DB.z+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 $("dat").addEventListener("click",e=>{let b;
- if(b=e.target.closest("#dbds button")){DB.ds=b.dataset.d;dataTab()}
+ if(b=e.target.closest("#dbmode button")){DB.mode=b.dataset.m;dataTab()}
+ else if(b=e.target.closest("#dbzs .chip")){const z=b.dataset.z,i=DB.zs.indexOf(z);if(i>=0){if(DB.zs.length>1)DB.zs.splice(i,1)}else DB.zs.push(z);tsView()}
+ else if(e.target.closest("#dbzt")){DB.open.__z=!DB.open.__z;tsRender()}
+ else if(b=e.target.closest("#dbq button")){DB.zs=b.dataset.q==="focus"?DBFIRST.filter(z=>DB.idx.zones.includes(z)):[DB.zs[0]];tsView()}
+ else if(b=e.target.closest(".vchip")){DB.on[b.dataset.v]=DB.on[b.dataset.v]?0:1;tsRender()}
+ else if(b=e.target.closest(".gtog")){const g=b.dataset.g;DB.open[g]=!DB.open[g];tsRender()}
+ else if(b=e.target.closest(".gall,.gnone")){const g=b.dataset.g,on=b.classList.contains("gall")?1:0,av=new Set();DB.zs.forEach(z=>DB.cache[z]&&DB.cache[z].cols.forEach(c=>av.add(c.id)));DB.idx.vars.forEach(v=>{if(v.grp===g&&av.has(v.id))DB.on[v.id]=on});DB.open[g]=true;tsRender()}
+ else if(b=e.target.closest("#dbtz button")){DB.tz=b.dataset.z;tsRender()}
+ else if(b=e.target.closest("#dbo button")){DB.desc=b.dataset.o==="1";tsRender()}
+ else if(e.target.closest("#dbcsv"))dbCsv()
  else if(b=e.target.closest("#cpv button")){DB.cv=b.dataset.v;capView()}
- else if(e.target.closest("#cpcsv"))capCsv()
- else if(!DB.cur&&!e.target.closest("#dbds button"))return;
- else if(b=e.target.closest("#dbtz button")){DB.tz=b.dataset.z;dbRender(DB.cur.f)}
- else if(b=e.target.closest("#dbo button")){DB.desc=b.dataset.o==="1";dbRender(DB.cur.f)}
- else if(b=e.target.closest(".chip")){const i=+b.dataset.i,c=DB.cur.f.cols[i],k=DB.ds+"|"+DB.z+"|"+c.id;DB.off[k]=DB.cur.on[i];dbRender(DB.cur.f)}
- else if(e.target.closest("#dbcsv"))dbCsv()});
-$("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.value;capView()}else if(e.target.id==="dbz"){DB.z=e.target.value;dataTab()}else if(e.target.id==="dbn"){DB.days=+e.target.value;dbRender(DB.cur.f)}});
+ else if(e.target.closest("#cpcsv"))capCsv()});
+$("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.value;capView()}else if(e.target.id==="dbn"){DB.days=+e.target.value;tsRender()}});
+$("flg").addEventListener("change",e=>{if(e.target.id==="flz"){FL.all=e.target.value==="a";flagsTab()}});
 
 document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(b)tab(b.dataset.t)};

@@ -295,18 +295,32 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   signal fires, the Streamlit/site "Signals" view, e-mail sending.
 - Needs history for percentiles: until the backfill has run, the draft says so in the data notes.
 
-## Data tab (Oct 3 2026)
-- Fifth tab, "Data": browse the stored history like a spreadsheet. Dataset buttons (day-ahead price, actual generation,
-  wind & solar forecast, load, cross-border flows), zone select, range (1-30 days), CET/UTC, newest/oldest first,
-  variable chips to switch columns on/off (technology colours from the --m-* palette; pumping/consumption columns start
-  off), Mean/Min/Max rows on top, negatives red, future (day-ahead) rows marked, CSV download of what is shown.
-  Timestamps run down the rows. The Signals tab (anomaly filters) comes later and will be the sixth.
-- Data path: the site is static and release assets are not CORS-readable, so scripts/build_browse.py (run by hourly.yml,
-  cached for 3 h, continue-on-error) exports the last 30 days of the store to web/data/browse/ (index.json +
-  <dataset>/<zone>.json, hourly means in UTC, seq 1 prices only). Not committed (.gitignore). If the export is missing
-  or the store is empty the tab says so. Local test: STORE_DIR=<folder> python scripts/build_browse.py, then serve web/.
-- Next: chart toggle (the page already has svg line charts), native 15-min resolution, longer ranges per month file,
-  farm_hourly / farm_forecast per wind farm, capture/TB2/TB4 derived columns (newsletter/metrics.py has them).
+## Flags and Data tabs (Oct 3 2026)
+- Tabs: Map, Compare, Market, System, **Flags**, **Data**.
+- **Flags** (fifth tab): the newsletter signals as an overview. `newsletter/signals.py` has `scan()` (every zone x rule with
+  value, percentile vs the zone's own last 90 days, median/P10/P90, status ok/short/gated, side when fired);
+  `evaluate()` is its fired subset. `build_browse.flags_export` writes `web/data/browse/flags.json` for the latest complete
+  CET day (spark spreads excluded: private data). Page: fired-signals table + a zone x metric matrix shaded by percentile
+  (orange high, blue low, bold outline = fired, grey = < 30 days of history), zones filter (CEE/SEE + DE-LU or all).
+  The rules, gates and window are the same as in the newsletter, so a new Rule appears in both.
+- **Data** (sixth tab) has two modes only: *Time series* and *Installed capacity & capacity factor*.
+  Time series: one flexible table, any zones x any variables. Zone chips (multi-select, list collapsed to the selected
+  ones), variable chips grouped (Prices & daily spreads, Actual generation, Day-ahead forecast, Load, Cross-border flows;
+  click a group name to expand, all/none per group). Columns are ordered variable-then-zone so the same variable in several
+  zones sits side by side. Range 1-30 days, CET/UTC, newest/oldest first, Mean/Min/Max rows, future rows marked, CSV.
+  Daily metrics are columns too (baseload, **TB2, TB4**, top-4 mean, negative hours, min/max price, solar/onshore/offshore
+  capture price and rate) computed per CET day by `newsletter/metrics.py` and repeated on every hour of the day.
+  Default on: day-ahead price, TB2, TB4, solar, onshore/offshore wind, actual load.
+- Data path: static site, release assets not CORS-readable, so `scripts/build_browse.py` (hourly.yml, cached 3 h,
+  continue-on-error) exports `web/data/browse/{index.json, ts/<zone>.json, capacity.json, flags.json}` (hourly means in
+  UTC, last 30 days + days ahead, seq-1 prices only; one file per zone holds every variable; index.json has the variable
+  catalogue and which variable exists in which zone). Not committed (.gitignore). Local test: `STORE_DIR=<folder> python
+  scripts/build_browse.py`, serve web/.
+- Capacity mode: every IRENA country (224), zones column, GW or 30-day CF, filter to countries with a bidding zone, CSV
+  (see "Installed capacity and capacity factors").
+- Next: chart toggle for the selected columns, native 15-min resolution and longer ranges (month files), per-farm wind
+  data, capacity history (IRENA years 2015+ are already in data/ref/irena_capacity.csv), flags for tomorrow's auction,
+  signal history (flags per day) once the store has a year.
 
 ## Fuel prices and spark spreads (Oct 3 2026)
 - Gas: yfinance `TTF=F` (Yahoo, ICE Endex front month, EUR/MWh, daily since Oct 2017; probe: scripts/probe_yf.py ->
@@ -355,7 +369,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   CFs above a physical ceiling (solar 25 %, wind 40 % over 30 days) are withheld and the zone flagged (`stale_cap`;
   first run: BG solar, MK wind, LV solar+wind). Unusually low values (BA, MK solar) probably mean missing generation
   or old capacity. ENTSO-E generation can also miss small distributed solar.
-- Data tab: "Installed capacity & capacity factor" (web/data/browse/capacity.json, written by scripts/build_browse.py:
+- Data tab capacity mode (web/data/browse/capacity.json, written by scripts/build_browse.py:
   `capacity_export`): since Oct 3 (later) every IRENA country (224), not just bidding zones; `fundamentals.ZONE_ISO3` maps all 45
   store zones to countries (NO1-5, SE1-4, IT-*, DK1/2 are summed; a country gets a CF only if all its zones are in the
   store; DE-LU capacity incl. Luxembourg), CSV download, filter to countries with a zone. Rows are countries x classes, switch between installed GW (+ IRENA year) and 30-day CF %. CFs above a per-class

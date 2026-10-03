@@ -30,6 +30,14 @@ PSR_CLS = {"B16": "solar", "B19": "wind_onshore", "B18": "wind_offshore", "B11":
            "B06": "fossil", "B07": "fossil", "B08": "fossil"}
 FOSSIL_IRENA = ("coal", "gas", "oil", "fossil_nes")
 MIN_COVER = 0.90
+CLS_CEILING = {"solar": 0.25, "wind_onshore": 0.40, "wind_offshore": 0.60}  # per class, 30-day window (see CF_CEILING)
+
+
+def plausible_cf(cls: str, cf):
+    """The capacity factor, or None where it is above the class's physical ceiling (capacity older than the fleet)."""
+    if cf is None or cf != cf:
+        return None
+    return None if cf > CLS_CEILING.get(cls, 1.0) else cf
 # A 30-day capacity factor above these is not physical for the zone: the IRENA capacity is older than the fleet that
 # produced the energy. The value is dropped (None) and the zone is flagged `stale` instead of printing a wrong number.
 CF_CEILING = {"solar": 0.25, "wind": 0.40}

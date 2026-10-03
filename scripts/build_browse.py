@@ -5,7 +5,7 @@
 
 Hourly means of the native-resolution rows (the store keeps 15/30/60-minute data untouched), UTC hour starts, one file
 per zone and dataset so the page loads only what is opened. Not committed: the deploy job builds it from the `store`
-release (hourly.yml). Only ENTSO-E data is exported (credited on the page). STORE_DIR=<folder> reads a local copy.
+release (hourly.yml). ENTSO-E data plus capacity.json (IRENA installed capacity from data/ref, capacity factor from the store; credited on the page). STORE_DIR=<folder> reads a local copy.
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from collector.store import Store  # noqa: E402
+from newsletter import fundamentals as FU  # noqa: E402
 from pipeline.entsoe import PSR  # noqa: E402
 
 OUT = ROOT / "web" / "data" / "browse"
@@ -30,7 +31,7 @@ TECH_KEY = {"nuclear": "nuc", "fossil_brown_coal_lignite": "coal", "fossil_hard_
             "biomass": "bio", "waste": "bio"}
 LABELS = {"da_price": ("Day-ahead price", "EUR/MWh"), "gen_actual": ("Actual generation", "MW"),
           "gen_forecast": ("Wind & solar day-ahead forecast", "MW"), "load": ("Load", "MW"),
-          "flows": ("Cross-border physical flows", "MW")}
+          "flows": ("Cross-border physical flows", "MW"), "capacity": ("Installed capacity & capacity factor", "GW")}
 
 
 def read(st: Store, ds: str, months: list[str], a, b) -> pd.DataFrame:
@@ -61,6 +62,32 @@ def write_zone(ds: str, zone: str, w: pd.DataFrame, meta: dict, a, b) -> None:
     p.write_text(json.dumps({"t0": int(idx[0].timestamp()), "step": 3600, "cols": cols, "v": v}, separators=(",", ":")))
 
 
+CAP_CLS = [("solar", "Solar"), ("wind_onshore", "Onshore wind"), ("wind_offshore", "Offshore wind"), ("hydro", "Hydro (excl. pumped)"),
+           ("pumped", "Pumped storage"), ("nuclear", "Nuclear"), ("fossil", "Fossil"), ("bio", "Bio & waste"), ("other", "Other")]
+
+
+def capacity_export(ga: pd.DataFrame, now: datetime) -> dict | None:
+    """Installed capacity per zone and class (IRENA, data/ref) and the 30-day capacity factor from the store's generation."""
+    cap = FU.capacity()
+    if cap.empty:
+        return None
+    cap = cap.assign(cls=cap["cls"].where(~cap["cls"].isin(["geothermal"]), "other"))
+    cap = cap.groupby(["zone", "cls", "year"], as_index=False)["cap_mw"].sum()
+    end = pd.Timestamp(now).floor("D")
+    start = end - pd.Timedelta(days=30)
+    cf = FU.capacity_factors(ga, start, end, FU.capacity()) if ga is not None and not ga.empty else pd.DataFrame()
+    out = {"classes": [{"id": k, "name": n} for k, n in CAP_CLS], "gw": {}, "cf": {}, "year": {},
+           "cf_window": [start.strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]}
+    for r in cap.itertuples():
+        out["gw"].setdefault(r.zone, {})[r.cls] = round(r.cap_mw / 1000, 3)
+        out["year"][r.zone] = int(r.year)
+    for r in (cf.itertuples() if not cf.empty else []):
+        v = FU.plausible_cf(r.cls, r.cf)
+        if v is not None:
+            out["cf"].setdefault(r.zone, {})[r.cls] = round(100 * v, 1)
+    return out
+
+
 def main() -> None:
     now = datetime.now(timezone.utc)
     a = pd.Timestamp(now - timedelta(days=DAYS_BACK)).floor("D")
@@ -83,6 +110,7 @@ def main() -> None:
             emit("da_price", hourly(g, lambda x: "price", "price"),
                  {"price": {"id": "price", "name": "Day-ahead price", "tech": "", "unit": f"{cur}/MWh"}})
     d = read(st, "gen_actual", months, a, b)
+    capx = capacity_export(d, now)
     if not d.empty:
         meta = {}
         for psr, (key, name) in PSR.items():
@@ -110,9 +138,15 @@ def main() -> None:
                     "tech": "", "unit": "MW"} for c in wide.columns}
         emit("flows", {z: g.droplevel("zone") for z, g in wide.groupby(level="zone")}, meta)
 
+    if capx:
+        OUT.mkdir(parents=True, exist_ok=True)
+        (OUT / "capacity.json").write_text(json.dumps(capx, separators=(",", ":")))
+        zones["capacity"] = set(capx["gw"])
     index = {"generated": now.isoformat(timespec="seconds"),
              "window": [a.isoformat(), b.isoformat()], "step_s": 3600,
              "datasets": {k: {"label": LABELS[k][0], "unit": LABELS[k][1], "zones": sorted(v)} for k, v in zones.items() if v}}
+    if "capacity" in index["datasets"]:
+        index["datasets"]["capacity"]["static"] = True
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "index.json").write_text(json.dumps(index, separators=(",", ":")))
     n = sum(1 for _ in OUT.rglob("*.json"))

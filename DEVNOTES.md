@@ -344,6 +344,12 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   CFs above a physical ceiling (solar 25 %, wind 40 % over 30 days) are withheld and the zone flagged (`stale_cap`;
   first run: BG solar, MK wind, LV solar+wind). Unusually low values (BA, MK solar) probably mean missing generation
   or old capacity. ENTSO-E generation can also miss small distributed solar.
+- Data tab: "Installed capacity & capacity factor" (web/data/browse/capacity.json, written by scripts/build_browse.py:
+  `capacity_export`): zones x classes, switch between installed GW (+ IRENA year) and 30-day CF %. CFs above a per-class
+  ceiling (solar 25 %, onshore wind 40 %, offshore 60 %, anything else 100 %) are hidden. Credit "(c) IRENA" is on the page;
+  confirm the edition year of the workbook and add it to the credit line (licence asks for the copyright year).
+- Oddities seen in the first run (not investigated): RO nuclear is 0 MW all of September (Aug max 629 MW; ENTSO-E B14),
+  BE nuclear 0 %, SK nuclear >100 % before the ceiling (Mochovce 3 not in the 2024 capacity).
 - Next: ENTSO-E A68 (installed capacity per production type, annual) as a collector dataset with current-year values
   to replace the IRENA vintage; A71 forecast generation capacity is another option. Then capacity-by-tech in the Data
   tab, seasonal CF baselines once > 1 year of generation is in the store, and a CF-vs-price signal.

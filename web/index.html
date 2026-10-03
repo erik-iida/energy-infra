@@ -959,10 +959,23 @@ function dbZones(){const z=DB.idx.datasets[DB.ds].zones;return DBFIRST.filter(x=
 function dataTab(){const el=$("dat");
  if(!DB.idx){if(DB.err){el.innerHTML="<div class='feednote'>No stored data is published yet. The Data tab reads the last 30 days of the data store, which the deploy job exports once the collector has run (see DEVNOTES: Data store).</div>";return}
   el.innerHTML="<div class='feednote'>Loading…</div>";if(!DB.busy){DB.busy=1;dbJson("data/browse/index.json").then(j=>{DB.idx=j;DB.busy=0;if(S.tab==="dat")dataTab()}).catch(()=>{DB.err=1;DB.busy=0;if(S.tab==="dat")dataTab()})}return}
- const I=DB.idx.datasets;if(!Object.keys(I).length){DB.idx=null;DB.err=1;dataTab();return}if(!I[DB.ds])DB.ds=Object.keys(I)[0];const zs=dbZones();if(!DB.z||!zs.includes(DB.z))DB.z=zs.includes("RO")?"RO":zs[0];
+ const I=DB.idx.datasets;if(!Object.keys(I).length){DB.idx=null;DB.err=1;dataTab();return}if(!I[DB.ds])DB.ds=Object.keys(I)[0];if(I[DB.ds].static){DB.cur=null;capView();return}const zs=dbZones();if(!DB.z||!zs.includes(DB.z))DB.z=zs.includes("RO")?"RO":zs[0];
  const my=++DB.tok,k=DB.ds+"/"+DB.z,go=f=>{if(my===DB.tok&&S.tab==="dat")dbRender(f)};
  if(DB.cache[k]){go(DB.cache[k]);return}
  dbHead(null);dbJson("data/browse/"+k+".json").then(f=>{DB.cache[k]=f;go(f)}).catch(()=>{if(my===DB.tok)$("dat").querySelector("#dbbody").innerHTML="<div class='feednote'>No stored rows for this zone and dataset.</div>"})}
+/* installed capacity (IRENA, annual) and 30-day capacity factor from the store: web/data/browse/capacity.json */
+function capView(){const el=$("dat"),I=DB.idx.datasets;
+ const go=c=>{if(S.tab!=="dat"||!(DB.idx.datasets[DB.ds]||{}).static)return;const v=DB.cv||"gw",cls=c.classes,zs=DBFIRST.filter(z=>c.gw[z]).concat(Object.keys(c.gw).filter(z=>!DBFIRST.includes(z)).sort());
+  const cell=(z,k)=>{const x=(v==="gw"?c.gw:c.cf)[z]&&(v==="gw"?c.gw:c.cf)[z][k];return x==null?"<td class='nu'>–</td>":"<td>"+x.toLocaleString("en",{maximumFractionDigits:v==="gw"?2:1})+"</td>"};
+  let h="<div class='feednote'>Installed capacity by technology from the IRENA Renewable Energy Statistics (year-end of the latest edition, per country; DE-LU = Germany + Luxembourg; only zones that are a whole country). Capacity factor = ENTSO-E actual generation over "+c.cf_window[0]+" to "+c.cf_window[1]+" ÷ (installed capacity × hours). IRENA capacity is older than the generation, so zones that added capacity since read too high; values above a physical ceiling (solar 25 %, onshore wind 40 %, offshore wind 60 % over 30 days) are hidden (–).</div>"
+  +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
+  +"<div class='row'><span class='seg' id='cpv'><button data-v='gw' class='"+(v==="gw"?"on":"")+"'>Installed GW</button><button data-v='cf' class='"+(v==="cf"?"on":"")+"'>30-day capacity factor %</button></span></div>"
+  +"<div class='dw'><table class='dt'><thead><tr><th>Zone</th>"+(v==="gw"?"<th>IRENA year</th>":"")+cls.map(k=>"<th>"+k.name+" <span class='mut'>"+(v==="gw"?"GW":"%")+"</span></th>").join("")+"</tr></thead><tbody>"
+  +zs.map(z=>"<tr><td>"+z+"</td>"+(v==="gw"?"<td>"+(c.year[z]||"–")+"</td>":"")+cls.map(k=>cell(z,k.id)).join("")+"</tr>").join("")+"</tbody></table></div>"
+  +"<div class='mut' style='font-size:12px'>Installed capacity: IRENA Renewable Energy Statistics, © IRENA (<a href='https://www.irena.org/Data' style='color:inherit'>irena.org/Data</a>). Generation: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Fossil capacity is shown as one class (not every country splits it by fuel); ENTSO-E generation can miss small distributed solar, which lowers its capacity factor.</div>";
+  el.innerHTML=h};
+ if(DB.cap){go(DB.cap);return}
+ el.innerHTML="<div class='feednote'>Loading…</div>";dbJson("data/browse/capacity.json").then(c=>{DB.cap=c;go(c)}).catch(()=>{el.innerHTML="<div class='feednote'>No capacity table published yet.</div>"})}
 function dbHead(f){const I=DB.idx.datasets,el=$("dat");
  el.innerHTML="<div class='feednote'>Stored history from the ENTSO-E Transparency Platform, hourly means of the native-resolution rows (UTC hours), last 30 days; the store itself keeps more and the full resolution. Exported "+DB.idx.generated.slice(0,16).replace("T"," ")+" UTC. Day-ahead prices: auction result only (classification sequence 1). Rows marked ·fc are in the future (day-ahead data).</div>"
  +"<div class='row'><span class='seg big' id='dbds'>"+Object.keys(I).map(d=>"<button data-d='"+d+"' class='"+(d===DB.ds?"on":"")+"'>"+I[d].label+"</button>").join("")+"</span></div>"
@@ -988,6 +1001,7 @@ function dbCsv(){const c=DB.cur;if(!c)return;const f=c.f,q=x=>'"'+String(x).repl
  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_"+DB.ds+"_"+DB.z+".csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 $("dat").addEventListener("click",e=>{let b;
  if(b=e.target.closest("#dbds button")){DB.ds=b.dataset.d;dataTab()}
+ else if(b=e.target.closest("#cpv button")){DB.cv=b.dataset.v;capView()}
  else if(!DB.cur&&!e.target.closest("#dbds button"))return;
  else if(b=e.target.closest("#dbtz button")){DB.tz=b.dataset.z;dbRender(DB.cur.f)}
  else if(b=e.target.closest("#dbo button")){DB.desc=b.dataset.o==="1";dbRender(DB.cur.f)}

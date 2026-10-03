@@ -609,6 +609,11 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
   re-folds after each re-render, open state kept per tab). Flags and Data keep a one-line instruction at the top.
   Map: the pane's source note is a collapsed block too. The site-wide "Sources and disclaimer" footer stays.
 
+## Flags in chart hovers (Oct 3 2026)
+- `cmpRender` / `cmpHover` (Market price chart, System "Compare … across countries"): the hover list is now a rich
+  tooltip (`dtipH`, HTML) with each series' flag, value right-aligned, the line under the cursor in bold; the chart draws a
+  dot on that line at the hovered hour with a flag + label badge (flips left near the right edge).
+
 ## Known gaps / next ideas
 - DC arrows: per-link flows (ENTSO-E A11 per border is already per zone pair; per cable would need TSO data) and a hover
   tooltip with the link name; time follows "latest hour", not the map's hover hour.

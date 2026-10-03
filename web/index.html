@@ -64,6 +64,8 @@ body:not([data-tab="map"]) aside{display:none}body:not([data-tab="map"]) main{gr
 .fsl{max-height:min(60vh,430px);overflow:auto}.fsg{padding:8px 8px 3px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}.fso{display:flex;align-items:center;gap:9px;padding:5px 8px;border-radius:6px;cursor:pointer;font-size:14px}.fso:hover{background:var(--bg)}.fso.on{background:var(--bg);font-weight:600}.fsi{flex:none;display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;color:var(--mut)}
 body[data-tab="map"] #footd{display:none}#footd summary{cursor:pointer;font-size:12px;color:var(--mut)}
 #leg .gd{width:8px;height:8px;border:none;background:var(--m-gas);vertical-align:middle}
+#dtip .dth{font-weight:600;margin-bottom:2px}#dtip .dtr{display:flex;align-items:center;gap:6px;line-height:1.35;white-space:nowrap}#dtip .dtr span{flex:1}#dtip .dtr b{font-weight:400;margin-left:12px}
+#dtip .dtr.on{font-weight:700}#dtip .dtr.on b{font-weight:700}#dtip .dtd{display:inline-block;width:10px;height:10px;border-radius:50%}
 #dtip{position:fixed;white-space:pre-line;max-width:340px;font-variant-numeric:tabular-nums;pointer-events:none;background:var(--panel);border:1px solid var(--line);padding:4px 8px;border-radius:5px;font-size:12px;display:none;z-index:5}
 
 .ln.fc{stroke-dasharray:4 3;opacity:.8}.ar.fc{opacity:.06}.nowl{stroke:var(--ink);stroke-width:1;opacity:.35}
@@ -723,14 +725,21 @@ function cmpRender(id){const C=CMP[id],sv=document.getElementById(id);if(!sv)ret
  for(let j=1;j<ends.length;j++)ends[j].yy=Math.max(ends[j].yy,ends[j-1].yy+15);const over=ends.length?ends[ends.length-1].yy-(H-B):0;if(over>0)ends.forEach(e=>e.yy-=over);
  ends.forEach(e=>{const se=C.series[e.i],xe=x(e.k)+10;s+="<line x1='"+x(e.k)+"' x2='"+(xe-7)+"' y1='"+y(se.v[e.k])+"' y2='"+e.yy+"' stroke='var(--line)'/>"+(se.flag?flagSVG(se.flag,xe,e.yy,6.5):"<circle cx='"+xe+"' cy='"+e.yy+"' r='4' fill='"+(se.col||"var(--mut)")+"'/>")+"<text x='"+(xe+9)+"' y='"+(e.yy+4)+"' font-size='11' fill='"+(e.i===C.hl?"var(--ink)":"var(--mut)")+"' font-weight='"+(e.i===C.hl?600:400)+"'>"+se.label+"</text>"});
  if(C.hk!=null)s+="<line class='xh' x1='"+x(C.hk)+"' x2='"+x(C.hk)+"' y1='"+T+"' y2='"+(H-B)+"'/>";
+ // the line under the cursor: a dot at the hovered hour plus its flag and label
+ if(C.hk!=null&&C.hl!=null){const se=C.series[C.hl],v=se&&se.v[C.hk];if(v!=null){const px=x(C.hk),py=y(v),lw=7*String(se.label).length+(se.flag?24:8),left=px+lw+14>W-R;
+  const bx=left?px-10-lw:px+10;s+="<circle cx='"+px.toFixed(1)+"' cy='"+py.toFixed(1)+"' r='4' fill='var(--acc)' stroke='var(--panel)' stroke-width='1.5'/>"
+   +"<rect x='"+bx.toFixed(1)+"' y='"+(py-20).toFixed(1)+"' width='"+lw+"' height='18' rx='4' fill='var(--panel)' stroke='var(--line)'/>"
+   +(se.flag?flagSVG(se.flag,bx+11,py-11,6.5):"")+"<text x='"+(bx+(se.flag?22:5)).toFixed(1)+"' y='"+(py-7).toFixed(1)+"' font-size='11.5' font-weight='600' fill='var(--ink)'>"+se.label+"</text>"}}
  sv.innerHTML=s}
 function cmpHover(e,sv){const C=CMP[sv.id];if(!C||!C.x)return;const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*C.W/r.width,py=(e.clientY-r.top)*C.W/r.width;
  const k=Math.max(C.a,Math.min(C.b,Math.round(C.a+(px-C.L)/(C.W-C.L-C.R)*(C.b-C.a))));let best=null,bd=1e9;
  C.series.forEach((se,i)=>{const v=se.v[k];if(v!=null){const d=Math.abs(C.y(v)-py);if(d<bd){bd=d;best=i}}});
  if(px>C.W-C.R){const lab=[...sv.querySelectorAll("text")].find(t=>{const b=t.getBBox();return py>=b.y-4&&py<=b.y+b.height+4&&px>=b.x-20});if(lab){const i=C.series.findIndex(se=>se.label===lab.textContent);if(i>=0)best=i}}
  if(best!==C.hl||k!==C.hk){C.hl=best;C.hk=k;cmpRender(sv.id)}
- const rows=C.series.map(se=>[se.label,se.v[k]]).filter(q=>q[1]!=null).sort((p,q)=>q[1]-p[1]);
- dtip(e,(C.tl?C.tl(k):dl(k))+"\n"+rows.map(([l,v])=>l+"  "+C.fmt(v)).join("\n"))}
+ const rows=C.series.map((se,i)=>[se,se.v[k],i]).filter(q=>q[1]!=null).sort((p,q)=>q[1]-p[1]);
+ dtipH(e,"<div class='dth'>"+(C.tl?C.tl(k):dl(k))+"</div>"+rows.map(([se,v,i])=>"<div class='dtr"+(i===C.hl?" on":"")+"'>"+(se.flag?flagHTML(se.flag,6):"<i class='dtd' style='background:"+(se.col||"var(--mut)")+"'></i>")+"<span>"+se.label+"</span><b>"+C.fmt(v)+"</b></div>").join(""))}
+// rich tooltip (flags, highlighted row); same box and placement as dtip
+function dtipH(e,html){const d=$("dtip");d.style.display="block";d.innerHTML=html;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
 function cmpLeave(sv){const C=CMP[sv.id];if(C){C.hl=null;C.hk=null;cmpRender(sv.id)}$("dtip").style.display="none"}
 // ---- price heatmap: every bidding zone (rows, sorted by mean) x hour (columns) ----
 // One warm sequential hue for prices >= 0 (light -> dark), a separate cool hue for negative prices.

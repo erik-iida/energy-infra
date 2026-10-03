@@ -28,7 +28,7 @@ ISO3 = {"AT": ["AUT"], "BA": ["BIH"], "BE": ["BEL"], "BG": ["BGR"], "CH": ["CHE"
 # Ireland and DE-LU also Luxembourg, so those two are only approximate)
 ZONE_ISO3 = {"AL": "ALB", "AT": "AUT", "BA": "BIH", "BE": "BEL", "BG": "BGR", "CH": "CHE", "CZ": "CZE", "DE-LU": "DEU",
              "DK1": "DNK", "DK2": "DNK", "EE": "EST", "ES": "ESP", "FI": "FIN", "FR": "FRA", "GR": "GRC", "HR": "HRV",
-             "HU": "HUN", "IE(SEM)": "IRL", "LT": "LTU", "LV": "LVA", "ME": "MNE", "MK": "MKD", "NL": "NLD", "PL": "POL",
+             "HU": "HUN", "GB": "GBR", "IE(SEM)": "IRL", "LT": "LTU", "LV": "LVA", "ME": "MNE", "MK": "MKD", "NL": "NLD", "PL": "POL",
              "PT": "PRT", "RO": "ROU", "RS": "SRB", "SI": "SVN", "SK": "SVK",
              **{f"NO{i}": "NOR" for i in range(1, 6)}, **{f"SE{i}": "SWE" for i in range(1, 5)},
              **{z: "ITA" for z in ("IT-Calabria", "IT-Centre-North", "IT-Centre-South", "IT-North", "IT-Sardinia", "IT-Sicily", "IT-South")}}

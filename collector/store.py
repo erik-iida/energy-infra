@@ -40,9 +40,15 @@ KEYS = {
     "metrics_daily": ["zone", "day", "metric"],
     # GB imbalance (system) prices from Elexon BMRS: zone, ts, res_min, sell, buy (GBP/MWh), niv (MWh), currency
     "imb_price": ["zone", "ts", "res_min"],
+    # GB metered output per BM unit (Elexon B1610), mw = average MW of the half hour, signed; run = settlement run type
+    "unit_output": ["bm_unit", "ts", "res_min"],
+    # GB history since 2009, one wide row per half hour: NESO generation mix + carbon intensity + demand file (collector/gbhist.py)
+    "gb_hist": ["zone", "ts", "res_min"],
+    # GB forecasts, long format; `issued` = when the forecast was made, `ts` = the half hour it is for
+    "gb_forecast": ["series", "issued", "ts", "res_min"],
 }
 # datasets keyed by month of `ts`; farm_forecast by month of `issued`; farms_meta by month of the snapshot
-MONTH_COL = {"farm_forecast": "issued", "metrics_daily": "day"}
+MONTH_COL = {"farm_forecast": "issued", "metrics_daily": "day", "gb_forecast": "issued"}
 
 
 def asset_name(dataset: str, month: str) -> str:

@@ -474,6 +474,32 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   collected; add it only after Erik decides. The state file is `gbie_state_v2.json` (v1 predates `imb_price`).
 - Not done: Data tab shows `imb_price` (build_browse has no group for it yet); capacity vintage for GB/IE in the capacity-factor tables.
 
+## GB open data: the free equivalent of a paid GB API (Oct 3 2026)
+Erik asked for the data of a paid GB API (energydashboard.co.uk: its terms forbid redistributing raw data, so it can't feed the public store) from free
+sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.txt) mapped what is open.
+- `collector/gbunits.py` + `collect-gbunits.yml` (daily 13:10 UTC, backfill every 2 h from BACKFILL_FROM, state `gbunits_state.json`, concurrency group
+  `store-gbopen`): **unit_output** store dataset = Elexon B1610 metered output per BM unit (`/datasets/B1610/stream?from&to&bmUnit=...` repeated; 25 units
+  x 10 days per request; mw = MWh x 2, signed; `run` = settlement run). About 750 units: any BM unit with a fuel type except interconnectors, plus T/E/M
+  units >= 5 MW without one (batteries). Only BM units: small embedded wind/solar are not in B1610 (their total is in B1630 `gen_actual`).
+  **Lag**: the latest day with data is ~4 days back (run II), later runs (SF, R1, ...) revise: the daily job re-reads 15 days, newest fetch wins,
+  backfill marks a month done only when it is > 45 days old. Elexon time: `halfHourEndTime` is UTC, ts = end - 30 min.
+- Same job refreshes release assets **gb_units.json** (BM-unit registry: id, NGC id, name, lead party, fuel, type, capacity, plus REPD match: repd_ref,
+  repd_site, lat, lon, match_score) and **gb_repd.json** (DESNZ REPD sites with status Operational / Under Construction / Awaiting Construction /
+  Decommissioned: tech, MW, turbines, CfD round, offshore round, lat/lon from British National Grid via pyproj). REPD licence: Open Government Licence v3.0.
+  Matching is by name overlap (token Jaccard >= 0.5, technology-compatible), so check `match_score`; thermal and nuclear units are not in REPD (no coordinates).
+  The log prints the share of wind capacity placed. Improve matching later (lead-party aliases) or use powerplantmatching for thermal.
+- `collector/gbhist.py` + `collect-gbhist.yml` (daily 14:20 UTC, backfill every 6 h until done, state `gbhist_state.json`): **gb_hist** = NESO historic
+  generation mix + carbon intensity (half-hourly since 2009) merged with NESO historic demand (ND, TSD, embedded wind/solar generation and capacity,
+  pumping, interconnector flows), one wide row per half hour; **gb_forecast** (long: series, issued, ts, mw) = NESO day-ahead wind forecast (+ archive since
+  2018), NESO embedded wind and solar forecast, Elexon day-ahead national demand and wind/solar forecasts. NESO licence: "Supported by National Energy SO Open
+  Data" (commercial use and redistribution allowed). Not done: the embedded forecast archive (5 M rows a year), Elexon NDF/TSDF history, Carbon Intensity
+  API regional data (CC BY 4.0; regions are DNO areas).
+- **National Gas** (gas NTS flows, linepack, entry points): reachable (`data.nationalgas.com/api/latest-gas-flows-download` without parameters returns the
+  latest 2-minute flows; `find-gas-data-download?ids=PUBOBJ...` needs the right parameters, still 500). Reuse licence NOT clear (site terms forbid
+  republishing; the portal says only that data is open under the GSO licence), so nothing is collected or published until the wording is checked.
+- Not done: Data tab group / site layer for unit output and the REPD sites (build_browse), a GB plant map layer, capacity factors per wind farm
+  (unit_output / REPD capacity), comparison of B1610 with PyWake output for UK farms.
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

@@ -1,0 +1,218 @@
+probe3 at 2026-10-03T12:00Z
+=== B1610 2026-09-30 SP12: HTTP 200 11 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-30&settlementPeriod=12&format=json
+    rows: 0
+=== B1610 2026-09-30 SP30: HTTP 200 11 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-30&settlementPeriod=30&format=json
+    rows: 0
+=== B1610 2026-09-25 SP12: HTTP 200 2144244 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-25&settlementPeriod=12&format=json
+    rows: 9328; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-25", "settlementPeriod": 12, "halfHourEndTime": "2026-09-25T05:00:00", "settlementRunType": "II", "quantity": -0.082}
+    distinct bmUnit: 9328
+=== B1610 2026-09-25 SP30: HTTP 200 2144248 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-25&settlementPeriod=30&format=json
+    rows: 9328; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-25", "settlementPeriod": 30, "halfHourEndTime": "2026-09-25T14:00:00", "settlementRunType": "II", "quantity": -0.1}
+    distinct bmUnit: 9328
+=== B1610 2026-09-03 SP12: HTTP 200 2104031 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-03&settlementPeriod=12&format=json
+    rows: 9152; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-03", "settlementPeriod": 12, "halfHourEndTime": "2026-09-03T05:00:00", "settlementRunType": "SF", "quantity": -0.082}
+    distinct bmUnit: 9152
+=== B1610 2026-09-03 SP30: HTTP 200 2104034 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-03&settlementPeriod=30&format=json
+    rows: 9152; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-03", "settlementPeriod": 30, "halfHourEndTime": "2026-09-03T14:00:00", "settlementRunType": "SF", "quantity": -0.102}
+    distinct bmUnit: 9152
+=== B1610 bmUnit filter: HTTP 200 242 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610?settlementDate=2026-09-25&settlementPeriod=30&bmUnit=T_SGRWO-1&format=json
+    rows: 1; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "T_SGRWO-1", "nationalGridBmUnitId": "SGRWO-1", "settlementDate": "2026-09-25", "settlementPeriod": 30, "halfHourEndTime": "2026-09-25T14:00:00", "settlementRunType": "II", "quantity": 14.701}
+    distinct bmUnit: 1
+=== B1610 stream whole day: HTTP 200 104972761 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610/stream?from=2026-09-25T00%3A00Z&to=2026-09-26T00%3A00Z
+    rows: 457072; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-25", "settlementPeriod": 3, "halfHourEndTime": "2026-09-25T00:30:00", "settlementRunType": "II", "quantity": -0.093}
+    distinct bmUnit: 9328
+=== B1610 stream with settlementPeriodFrom: HTTP 200 25647182 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/B1610/stream?from=2026-09-25T00%3A00Z&to=2026-09-25T06%3A00Z&settlementPeriodFrom=1&settlementPeriodTo=12
+    rows: 111936; first: {"dataset": "B1610", "psrType": "Generation", "bmUnit": "2__AALAB000", "nationalGridBmUnitId": null, "settlementDate": "2026-09-25", "settlementPeriod": 1, "halfHourEndTime": "2026-09-24T23:30:00", "settlementRunType": "II", "quantity": -0.105}
+    distinct bmUnit: 9328
+=== PN settlementDate/period: HTTP 200 582078 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/PN?settlementDate=2026-10-03&settlementPeriod=20&format=json
+    rows: 2692; first: {"dataset": "PN", "settlementDate": "2026-10-03", "settlementPeriod": 20, "timeFrom": "2026-10-03T08:59:00Z", "timeTo": "2026-10-03T09:00:00Z", "levelFrom": 12, "levelTo": 0, "nationalGridBmUnit": "FFSE01", "bmUnit": "2__FCMRO002"}
+    distinct bmUnit: 2512
+=== PN stream: HTTP 200 1303 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/PN/stream?from=2026-10-02T12%3A00Z&to=2026-10-02T13%3A00Z&bmUnit=T_SGRWO-1
+    rows: 6; first: {"dataset": "PN", "settlementDate": "2026-10-02", "settlementPeriod": 29, "timeFrom": "2026-10-02T13:00:00Z", "timeTo": "2026-10-02T13:29:00Z", "levelFrom": 223, "levelTo": 223, "nationalGridBmUnit": "SGRWO-1", "bmUnit": "T_SGRWO-1"}
+    distinct bmUnit: 1
+=== AGPT (B1620 gen per type): HTTP 200 18817 B  https://data.elexon.co.uk/bmrs/api/v1/datasets/AGPT?publishDateTimeFrom=2026-10-02T00%3A00Z&publishDateTimeTo=2026-10-02T03%3A00Z&format=json
+    rows: 66; first: {"dataset": "AGPT", "documentId": "NGET-EMFIP-AGPT-1002260259", "documentRevisionNumber": 1, "publishTime": "2026-10-02T02:59:05Z", "businessType": "Production", "psrType": "Biomass", "quantity": 2525.0, "startTime": "2026-10-02T00:30:00Z", "settlementDate": "2026-10-02", "settlementPeriod": 4}
+=== wind-and-solar day-ahead forecast: HTTP 200 33515 B  https://data.elexon.co.uk/bmrs/api/v1/forecast/generation/wind-and-solar/day-ahead?from=2026-10-02T00%3A00Z&to=2026-10-03T00%3A00Z&processType=Day+Ahead&format=json
+    rows: 147; first: {"publishTime": "2026-10-02T16:45:03Z", "processType": "Day ahead", "businessType": "Solar generation", "psrType": "Solar", "startTime": "2026-10-03T00:00:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 3, "quantity": 0.0}
+=== wind latest forecast: HTTP 200 3646 B  https://data.elexon.co.uk/bmrs/api/v1/forecast/generation/wind/latest?from=2026-10-03T00%3A00Z&to=2026-10-04T00%3A00Z&format=json
+    rows: 25; first: {"publishTime": "2026-10-03T12:30:00Z", "startTime": "2026-10-03T00:00:00Z", "settlementDate": "2026-10-03", "settlementPeriod": 3, "generation": 12961}
+=== wind history forecast: HTTP 400 291 B  https://data.elexon.co.uk/bmrs/api/v1/forecast/generation/wind/history?from=2026-09-30T00%3A00Z&to=2026-10-01T00%3A00Z&format=json
+    json: {"type": "https://tools.ietf.org/html/rfc9110#section-15.5.1", "title": "One or more validation errors occurred.", "status": 400, "errors": {"PublishTime": ["A value for the 'PublishTime' parameter or property was not provided."]}, "traceId": "00-33019910d8ec560517134ab95ee56772-8759adfb4714671b-00"
+spec https://data.elexon.co.uk/bmrs/api/v1/swagger/v1/swagger.json: 404 54 B application/json
+spec https://data.elexon.co.uk/swagger/v1/swagger.json: 200 1476262 B application/json;charset=utf-8
+    322 paths
+    /balancing/physical
+    /balancing/physical/all
+    /datasets/B1610
+    /datasets/B1610/stream
+    /datasets/WINDFOR
+    /datasets/WINDFOR/stream
+    /forecast/availability/daily
+    /forecast/availability/daily/evolution
+    /forecast/availability/daily/history
+    /forecast/availability/weekly
+    /forecast/availability/weekly/evolution
+    /forecast/availability/weekly/history
+    /forecast/demand/daily
+    /forecast/demand/daily/evolution
+    /forecast/demand/daily/history
+    /forecast/demand/day-ahead
+    /forecast/demand/day-ahead/earliest
+    /forecast/demand/day-ahead/earliest/stream
+    /forecast/demand/day-ahead/evolution
+    /forecast/demand/day-ahead/history
+    /forecast/demand/day-ahead/latest
+    /forecast/demand/day-ahead/latest/stream
+    /forecast/demand/day-ahead/peak
+    /forecast/demand/total/day-ahead
+    /forecast/demand/total/week-ahead
+    /forecast/demand/total/week-ahead/latest
+    /forecast/demand/weekly
+    /forecast/demand/weekly/evolution
+    /forecast/demand/weekly/history
+    /forecast/generation/day-ahead
+    /forecast/generation/wind
+    /forecast/generation/wind-and-solar/day-ahead
+    /forecast/generation/wind/earliest
+    /forecast/generation/wind/earliest/stream
+    /forecast/generation/wind/evolution
+    /forecast/generation/wind/history
+    /forecast/generation/wind/latest
+    /forecast/generation/wind/latest/stream
+    /forecast/generation/wind/peak
+    /forecast/indicated/day-ahead
+    /forecast/indicated/day-ahead/evolution
+    /forecast/indicated/day-ahead/history
+    /forecast/margin/daily
+    /forecast/margin/daily/evolution
+    /forecast/margin/daily/history
+    /forecast/margin/weekly
+    /forecast/margin/weekly/evolution
+    /forecast/margin/weekly/history
+    /forecast/surplus/daily
+    /forecast/surplus/daily/evolution
+    /forecast/surplus/daily/history
+    /forecast/surplus/weekly
+    /forecast/surplus/weekly/evolution
+    /forecast/surplus/weekly/history
+    /forecast/system/loss-of-load
+    /generation/actual/per-type
+    /generation/actual/per-type/day-total
+    /generation/actual/per-type/wind-and-solar
+    /generation/outturn
+    /generation/outturn/FUELINSTHHCUR
+    /generation/outturn/current
+    /generation/outturn/halfHourlyInterconnector
+    /generation/outturn/interconnectors
+    /generation/outturn/summary
+    /lolpdrm/forecast/evolution
+    /reference/bmunits
+    /reference/bmunits/all
+    /reference/fueltypes/all
+    /reference/interconnectors/all
+    /reference/remit/assets/all
+    /reference/remit/fueltypes/all
+    /reference/remit/participants/all
+=== NESO license_list: HTTP 200 905 B  https://api.neso.energy/api/3/action/license_list
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=license_list", "success": true, "result": [{"status": "active", "maintainer": "National Energy System Operator (NESO)", "od_conformance": "", "family": "", "osd_conformance": "", "domain_data": false, "title": "NESO Open Data Licence", "url": "https://www.neso.energy/data-portal/ngeso-open-licence", "domain_content": false, "is_okd_compliant": false, "is_osi_compliant": false, "domain_software": false, "id": "ESO"}, {"status": "active", "maintainer": "National Energy System Operator (NESO)", "od_conformance": "approved", "family": "", "osd_conformance": "", "domain_data": false, "title": "NESO Public Data Licence", "url": "https://www.neso.energy/corporate-information/data-sharing-approach", "is_generic": true, "is_okd_compliant": true, "is_osi_compliant": false, "domain_content": true, "domain_software": false, "id": "other-pd"}]}
+=== NESO package_show historic-generation-mix: HTTP 200 4160 B  https://api.neso.energy/api/3/action/package_show?id=historic-generation-mix
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=package_show", "success": true, "resul
+    licence_title=NESO Open Data Licence url=https://www.neso.energy/data-portal/ngeso-open-licence modified=2026-10-03T12:20:54.432888
+    res: f93d1835-75bc-43e5-84ad-12472b180a98 | Historic GB Generation Mix | CSV | datastore=True | https://api.neso.energy/dataset/88313ae5-94e4-4ddc-a790-593554d8c6b9/resource/f93d1835-75bc-43e5-84ad-12472b180a98/download/df_fuel_ckan.csv
+=== NESO package_show day-ahead-wind-forecast: HTTP 200 12131 B  https://api.neso.energy/api/3/action/package_show?id=day-ahead-wind-forecast
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=package_show", "success": true, "resul
+    licence_title=NESO Open Data Licence url=https://www.neso.energy/data-portal/ngeso-open-licence modified=2026-10-03T08:45:25.387864
+    res: b2f03146-f05d-4824-a663-3a4f36090c71 | Day Ahead Wind Forecast | CSV | datastore=True | https://api.neso.energy/dataset/fbe3701d-1487-443e-abe9-47a6c01ecce2/resource/b2f03146-f05d-4824-a663-3a4f36090c71/download/b2f03146-f05d-4824-a663-3a4f36090c71-20261003084006.csv
+    res: 7524ec65-f782-4258-aaf8-5b926c17b966 | Historic Day Ahead Wind Forecasts | CSV | datastore=True | https://api.neso.energy/dataset/fbe3701d-1487-443e-abe9-47a6c01ecce2/resource/7524ec65-f782-4258-aaf8-5b926c17b966/download/7524ec65-f782-4258-aaf8-5b926c17b966-20261003084501.csv
+    res: 90e581e9-2d7f-4eaa-8fe0-6e323ee0f5f7 | Day Ahead Wind BMU Forecast | CSV | datastore=True | https://api.neso.energy/dataset/fbe3701d-1487-443e-abe9-47a6c01ecce2/resource/90e581e9-2d7f-4eaa-8fe0-6e323ee0f5f7/download/da_windunit_forecast_20261003083507.csv
+    res: 22625e0b-f63b-4d0e-9bbd-54383fc3e931 | Historic Day Ahead Wind BMU Forecasts 2024 | CSV | datastore=True | https://api.neso.energy/datastore/dump/22625e0b-f63b-4d0e-9bbd-54383fc3e931
+    res: 81413643-508e-4358-8414-c87e7c4bcc43 | Historic Day Ahead Wind BMU Forecasts 2025 | CSV | datastore=True | https://api.neso.energy/datastore/dump/81413643-508e-4358-8414-c87e7c4bcc43
+    res: 9c26224d-ba6f-4fff-a21f-6f0090d8ac7d | Historic Day Ahead Wind BMU Forecasts 2018 | CSV | datastore=True | https://api.neso.energy/datastore/dump/9c26224d-ba6f-4fff-a21f-6f0090d8ac7d
+    res: 11bc4219-0524-468d-8378-bba06c6114c4 | Historic Day Ahead Wind BMU Forecasts 2019 | CSV | datastore=True | https://api.neso.energy/datastore/dump/11bc4219-0524-468d-8378-bba06c6114c4
+    res: ae7cd368-7fcf-47ab-a835-27a6ee7a679e | Historic Day Ahead Wind BMU Forecasts 2020 | CSV | datastore=True | https://api.neso.energy/datastore/dump/ae7cd368-7fcf-47ab-a835-27a6ee7a679e
+    res: 53587966-5b79-4a8c-8029-efe1c3d13601 | Historic Day Ahead Wind BMU Forecasts 2021 | CSV | datastore=True | https://api.neso.energy/datastore/dump/53587966-5b79-4a8c-8029-efe1c3d13601
+    res: 411cfef3-2297-49b0-8426-476d913ba310 | Historic Day Ahead Wind BMU Forecasts 2022 | CSV | datastore=True | https://api.neso.energy/datastore/dump/411cfef3-2297-49b0-8426-476d913ba310
+    res: b8a784ac-f6fe-4f93-a965-ce6a32df0963 | Historic Day Ahead Wind BMU Forecasts 2023 | CSV | datastore=True | https://api.neso.energy/datastore/dump/b8a784ac-f6fe-4f93-a965-ce6a32df0963
+=== NESO package_show embedded-wind-and-solar-forecasts: HTTP 200 11413 B  https://api.neso.energy/api/3/action/package_show?id=embedded-wind-and-solar-forecasts
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=package_show", "success": true, "resul
+    licence_title=NESO Open Data Licence url=https://www.neso.energy/data-portal/ngeso-open-licence modified=2026-10-03T12:27:02.900916
+    res: db6c038f-98af-4570-ab60-24d71ebd0ae5 | Embedded Solar and Wind Forecast | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/db6c038f-98af-4570-ab60-24d71ebd0ae5/download/202610031225_embedded_forecast.csv
+    res: 3808c680-b5c0-4eab-aac4-7abb6345e65b | Embedded Definition | DOC | datastore=False | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/3808c680-b5c0-4eab-aac4-7abb6345e65b/download/definition-of-embedded.docx
+    res: bc4d1093-ecf2-46d8-b207-7a0e3e8fb957 | Embedded Solar and Wind Forecast Archive 2019 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/bc4d1093-ecf2-46d8-b207-7a0e3e8fb957/download/embedded_archive_2019.csv
+    res: 8a7249d4-ee67-45aa-9641-a3e063f54dba | Embedded Solar and Wind Forecast Archive 2020 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/8a7249d4-ee67-45aa-9641-a3e063f54dba/download/embedded_archive_2020.csv
+    res: 794107f5-8567-4b32-ae3a-6817fec73e5c | Embedded Solar and Wind Forecast Archive 2021 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/794107f5-8567-4b32-ae3a-6817fec73e5c/download/embedded_archive_2021.csv
+    res: 07b0b42c-5152-4fc5-bcd1-e10ec8ec07de | Embedded Solar and Wind Forecast Archive 2022 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/07b0b42c-5152-4fc5-bcd1-e10ec8ec07de/download/embedded_archive_2022.csv
+    res: 26c9ef64-ce43-4e22-b984-ef013636aacb | Embedded Solar and Wind Forecast Archive 2023 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/26c9ef64-ce43-4e22-b984-ef013636aacb/download/embedded_archive_2023.csv
+    res: 06abd00a-ef6b-488b-9b6d-5e08fdc0c890 | Embedded Solar and Wind Forecast Archive 2024 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/06abd00a-ef6b-488b-9b6d-5e08fdc0c890/download/embedded_archive_2024.csv
+    res: fc13df13-2dad-4a1c-b9e3-4569efba4955 | Embedded Solar and Wind Forecast Archive 2025 | CSV | datastore=True | https://api.neso.energy/dataset/91c0c70e-0ef5-4116-b6fa-7ad084b5e0e8/resource/fc13df13-2dad-4a1c-b9e3-4569efba4955/download/embedded_archive_2025.csv
+    res: 31861619-0b86-47ba-bac2-d008a760af54 | Embedded Solar and Wind Forecast Archive 2026 | CSV | datastore=True | https://api.neso.energy/datastore/dump/31861619-0b86-47ba-bac2-d008a760af54
+=== NESO package_show daily-demand-update: HTTP 200 5143 B  https://api.neso.energy/api/3/action/package_show?id=daily-demand-update
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=package_show", "success": true, "resul
+    licence_title=NESO Open Data Licence url=https://www.neso.energy/data-portal/ngeso-open-licence modified=2026-10-03T08:20:17.380505
+    res: 177f6fa4-ae49-4182-81ea-0c6b35f26ca6 | Demand Data Update | CSV | datastore=True | https://api.neso.energy/dataset/7a12172a-939c-404c-b581-a6128b74f588/resource/177f6fa4-ae49-4182-81ea-0c6b35f26ca6/download/demanddataupdate.csv
+    res: 974b8c00-9058-4883-bf34-268e53ed9d15 | Frequently Asked Questions (FAQ) | DOC | datastore=False | https://api.neso.energy/dataset/7a12172a-939c-404c-b581-a6128b74f588/resource/974b8c00-9058-4883-bf34-268e53ed9d15/download/faq-neso.docx
+=== NESO package_show historic-demand-data: HTTP 200 35119 B  https://api.neso.energy/api/3/action/package_show?id=historic-demand-data
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=package_show", "success": true, "resul
+    licence_title=NESO Open Data Licence url=https://www.neso.energy/data-portal/ngeso-open-licence modified=2026-10-03T08:20:20.954492
+    res: 243ca76a-eefe-419d-a4b5-397073deb100 | Frequently Asked Questions (FAQ) | DOC | datastore=False | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/243ca76a-eefe-419d-a4b5-397073deb100/download/faq-neso.docx
+    res: ed8a37cb-65ac-4581-8dbc-a3130780da3a | Historic Demand Data 2009 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/ed8a37cb-65ac-4581-8dbc-a3130780da3a/download/demanddata_2009.csv
+    res: b3eae4a5-8c3c-4df1-b9de-7db243ac3a09 | Historic Demand Data 2010 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/b3eae4a5-8c3c-4df1-b9de-7db243ac3a09/download/demanddata_2010.csv
+    res: 01522076-2691-4140-bfb8-c62284752efd | Historic Demand Data 2011 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/01522076-2691-4140-bfb8-c62284752efd/download/demanddata_2011.csv
+    res: 4bf713a2-ea0c-44d3-a09a-63fc6a634b00 | Historic Demand Data 2012 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/4bf713a2-ea0c-44d3-a09a-63fc6a634b00/download/demanddata_2012.csv
+    res: 2ff7aaff-8b42-4c1b-b234-9446573a1e27 | Historic Demand Data 2013 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/2ff7aaff-8b42-4c1b-b234-9446573a1e27/download/demanddata_2013.csv
+    res: b9005225-49d3-40d1-921c-03ee2d83a2ff | Historic Demand Data 2014 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/b9005225-49d3-40d1-921c-03ee2d83a2ff/download/demanddata_2014.csv
+    res: cc505e45-65ae-4819-9b90-1fbb06880293 | Historic Demand Data 2015 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/cc505e45-65ae-4819-9b90-1fbb06880293/download/demanddata_2015.csv
+    res: 3bb75a28-ab44-4a0b-9b1c-9be9715d3c44 | Historic Demand Data 2016 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/3bb75a28-ab44-4a0b-9b1c-9be9715d3c44/download/demanddata_2016.csv
+    res: 2f0f75b8-39c5-46ff-a914-ae38088ed022 | Historic Demand Data 2017 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/2f0f75b8-39c5-46ff-a914-ae38088ed022/download/demanddata_2017.csv
+    res: fcb12133-0db0-4f27-a4a5-1669fd9f6d33 | Historic Demand Data 2018 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/fcb12133-0db0-4f27-a4a5-1669fd9f6d33/download/demanddata_2018.csv
+    res: dd9de980-d724-415a-b344-d8ae11321432 | Historic Demand Data 2019 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/dd9de980-d724-415a-b344-d8ae11321432/download/demanddata_2019.csv
+    res: 33ba6857-2a55-479f-9308-e5c4c53d4381 | Historic Demand Data 2020 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/33ba6857-2a55-479f-9308-e5c4c53d4381/download/demanddata_2020.csv
+    res: 18c69c42-f20d-46f0-84e9-e279045befc6 | Historic Demand Data 2021 | CSV | datastore=True | https://api.neso.energy/dataset/8f2fe0af-871c-488d-8bad-960426f24601/resource/18c69c42-f20d-46f0-84e9-e279045befc6/download/demanddata_2021.csv
+=== NESO datastore_search historic gen mix: HTTP 200 9030 B  https://api.neso.energy/api/3/action/datastore_search?resource_id=f93d1835-75bc-43e5-84ad-12472b180a98&limit=2
+    json: {"help": "https://api.neso.energy/api/3/action/help_show?name=datastore_search", "success": true, "result": {"include_total": true, "resource_id": "f93d1835-75bc-43e5-84ad-12472b180a98", "fields": [{"type": "int", "id": "_id"}, {"info": {"comment": "", "description": "Date and time of the historic generation mix and carbon intensity, given in UTC (Coordinated Universal Time", "title": "Date & Time", "type": "datetime", "example": "2009-09-03T05:30:00+00:00", "unit": "ISO 8601"}, "type": "timesta
+NESO licence text:  NESO Open Licence | National Energy System Operator Skip to main content Please enable JavaScript to use the search interface. An error has occurred while loading the search interface. Please refresh the page. Data Portal Data Portal User account menu Sign in / Register Show/Hide Menu Toggle Main navigation What we do What we do We bring together eight activities required to deliver the plans, markets and operations of the energy system of today and the future. Bringing these activities together in one organisation encourages holistic thinking on the most cost-efficient and sustainable solutions to the needs of our customers. Back What we do View Strategic Planning The SEP team work in partnership with governments, Ofgem, industry and wider stakeholders to guide Great Britain on what infrastructure and sources of electricity are required to securely accelerate the transition away from fossil fuels into new energy technologies, including renewable energy. Security of Supply Security of Supply analyses where the energy we need over the short, medium and long-term will come from. In doing&nbsp;so it assesses a wide range of factors that could affect our supply of energy, enabling early actions and decisions to ensure we can meet future demand. Systems Operations From hospitals to households, telecoms to transportation, our society relies on electricity. Our control centre makes sure there is always a reliable and safe supply as we move megawatts around the country. Connections Explained We will deliver efficient system access for Generation and Demand projects, so that those projects that are first ready can be first served – delivering the energy system to meet net zero and facilitating economic growth by connecting new and existing industries. Whole Energy System Resilience Our energy system is complex, with an increasing number of interconnections. This means that disruption to one part can have implications for another. But this complexity also provides us with more options to mitigate problems. Energy Insights We will develop comprehensive and independent insights across the entire energy system, offering clear recommendations to policy makers, industry decision makers and leadership across our organisation on how to accelerate energy transition progress. Energy Markets Whether you’re interested in the innovation underway in the Markets team or are looking to brush up on market fundamentals, you’ve come to the right place.&nbsp; Data &amp; AI NESO will bring toget
+=== NationalGas scripts: ['/assets/index-NpP-pJsT.js']
+    https://data.nationalgas.com/assets/index-NpP-pJsT.js: 2561488 chars
+      api path: /api/customisable-downloads-download?
+      api path: /api/customisation
+      api path: /api/daily-summary-report-download?
+      api path: /api/entry-exit-capacity-download
+      api path: /api/find-gas-data-download?
+      api path: /api/find-gas-data-folders
+      api path: /api/gas-data-reports-folders
+      api path: /api/gas-quality-data-historical-locations
+      api path: /api/gas-quality-forecast-report
+      api path: /api/gas-quality-forecast-report-download
+      api path: /api/gas-quality-latest-report
+      api path: /api/gas-quality-latest-report-download
+      api path: /api/google-login
+      api path: /api/gqd-historical-data-download
+      api path: /api/latest-gas-flows-download
+      api path: /api/linkedin-login
+      api path: /api/notifications
+      api path: /api/report-table
+      api path: /api/reports-download?
+      api path: /api/search-everywhere
+      url: https://apideveloper.nationalgas.com/s
+      url: https://twitter.com/nationalgas_uk
+      url: https://www.nationalgas.com/
+      url: https://www.nationalgas.com/our-businesses/operational-data/gas-data-portal/soap-rest-api-transition
+      url: https://www.nationalgas.com/our-policies/terms-and-conditions
+      url: https://www.nationalgas.com/privacy-policy
+      url: https://www.nationalgas.com/sites/default/files/documents/API
+      url: https://www.nationalgas.com/sites/default/files/documents/Modern
+      hint: 21) (c) 2010-2023 Kenji Urushima | kjur.github.io/jsrsasign/license",VK}();const jK=({onLoginSuccess:e,onLoginError:t,width:n=240})=>{const r=Al.VITE_GOOGLE_CLIENT_ID;
+=== NationalGas json: HTTP 500 0 B  https://data.nationalgas.com/api/find-gas-data-download?applicableFor=Y&dateFrom=2026-09-30&dateTo=2026-10-02&dateType=GASDAY&latestFlag=Y&ids=PUBOBJ1660&formatType=json
+    body: 
+=== NationalGas csv: HTTP 500 0 B  https://data.nationalgas.com/api/find-gas-data-download?applicableFor=Y&dateFrom=2026-09-30&dateTo=2026-10-02&dateType=GASDAY&latestFlag=Y&ids=PUBOBJ1660&formatType=csv
+    body: 
+=== NationalGas None: HTTP 500 0 B  https://data.nationalgas.com/api/find-gas-data-download?applicableFor=Y&dateFrom=2026-09-30&dateTo=2026-10-02&dateType=GASDAY&latestFlag=Y&ids=PUBOBJ1660
+    body: 
+=== NationalGas None: HTTP 404 0 B  https://data.nationalgas.com/api/gas-system-status
+    body: 
+=== REPD content: HTTP 200 816 B  https://www.gov.uk/api/content/government/publications/renewable-energy-planning-database-monthly-extract
+    json: {"analytic
+    top keys: ['analytics_identifier', 'base_path', 'content_id', 'description', 'details', 'document_type', 'first_published_at', 'links', 'locale', 'phase', 'public_updated_at', 'publishing_app', 'publishing_request_id', 'publishing_scheduled_at', 'redirects', 'rendering_app', 'scheduled_publishing_delay_seconds', 'schema_name', 'title', 'updated_at', 'withdrawn_notice']
+    details keys: []
+    details: {}
+    links: {}

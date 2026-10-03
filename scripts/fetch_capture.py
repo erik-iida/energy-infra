@@ -35,7 +35,7 @@ MONTHS = 24
 TIME_BUDGET_S = 40 * 60
 WORKERS = 4
 CET = ZoneInfo("Europe/Brussels")
-SEQ2_ZONES = {"AT", "DE-LU", "DK2", "ES"}  # zones with an extra A44 seq-2 series (Oct 3 2026 probe)
+SEQ2_ZONES = {"AT", "DE-LU", "DK1", "DK2", "ES"}  # zones with an extra A44 seq-2 series (Oct 3 2026 probe)
 SKIP = {"AL"}  # no day-ahead market data on the platform
 log_lines: list[str] = []
 

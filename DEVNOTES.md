@@ -268,6 +268,17 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - Actions logs are not readable from the cloud session: use probe scripts that commit a log (probe-seq, probe-lag,
   entsoe-probe workflows).
 
+### First backfill check (Oct 3 2026, ~04:30 CET)
+- Store `store` release: Apr-Oct 2026 in all five datasets after two backfill runs (one manual); 28 months still to do
+  (BACKFILL_FROM 2024-01). Each month = 407 calls, 0 errors. Typical sizes: da_price ~0.31 MB, flows ~1.5 MB,
+  gen_actual ~4.4 MB, gen_forecast ~1.2 MB, load ~1.0 MB per month (zstd Parquet), so ~8.5 MB/month, ~280 MB for 33 months.
+- da_price in the store holds seq 1 only (checked Apr, Jun); `seq_dropped` in the log: AT, DE-LU, DK1, DK2, ES (DK1 had
+  no seq-2 in the first probe, it does in Jul-Sep; added to fetch_capture.SEQ2_ZONES).
+- capture.yml refetch finished (1055 cells, all `sq: 1`); AT, DE-LU, DK1, DK2, ES are back in capture.json (24 months).
+- newsletter.build on the real store (day 2026-10-02) works; first drafts sent to Erik. The collect workflow can be
+  started by hand with mode=backfill to speed up the history (the concurrency group serialises it with the cron runs).
+- RO late-lag check (point 2) is still to do after the 12:35 UTC daily run.
+
 ## Newsletter generator (Oct 3 2026)
 - newsletter/: metrics.py (daily metrics per zone and CET day from da_price seq 1, EUR only, hourly means: baseload,
   TB2, TB4, negative hours, min/max, capture price and capture rate for solar / onshore / offshore wind; a day needs

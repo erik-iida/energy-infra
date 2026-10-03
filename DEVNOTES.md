@@ -594,7 +594,24 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - Newsletter: whole numbers everywhere (`build._i`, half up), correlations keep two decimals; "Baseload" column is
   "Avg. power price", "% of load" is "% of consumption" (text too).
 
+## DC flow arrows, legend in the pane, sources folded (Oct 3 2026)
+- **DC flow direction** (grid layer, "DC" entry): each DC link's ends are placed in a bidding zone (zones.json; point in
+  polygon, else nearest zone vertex within ~0.6°; `dcZone`). Links between two countries get the latest hourly border
+  flow from the System data (`SYS[a].flows[b]`, import positive; keys are country names like "united_kingdom" or zone
+  codes like "no2", mapped by `FLN` / `flKey`; the other side is used if one is missing or zero). Chevrons along the link
+  point in flow direction (size grows with MW), one label per border when zoomed in ("NO2→GB 1.4 GW"). The value is the
+  whole border (all AC + DC links on it), so on mixed borders (FR-ES, DK1-DE) it is the net border flow. Domestic links
+  (Great Belt, Western Link, SAPEI, offshore DolWin/BorWin) and borders without flow data get no arrows.
+- **Legend** moved from the map overlay into the right-hand pane ("Layers & legend", after the wake controls), always
+  open (`#legt` hidden; same element and toggles).
+- **Sources and notes**: source / disclaimer notes carry class `srcnote`; `foldSrc` moves them into one collapsed
+  `details.srcd` "Sources and notes" at the end of the tab (Compare, Market, System, Flags, Data; a MutationObserver
+  re-folds after each re-render, open state kept per tab). Flags and Data keep a one-line instruction at the top.
+  Map: the pane's source note is a collapsed block too. The site-wide "Sources and disclaimer" footer stays.
+
 ## Known gaps / next ideas
+- DC arrows: per-link flows (ENTSO-E A11 per border is already per zone pair; per cable would need TSO data) and a hover
+  tooltip with the link name; time follows "latest hour", not the map's hover hour.
 - Flags drill-down Phase 2: "copy context as text" first, congestion marker once NTC is in the store, starred story
   candidates (browser-only).
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,

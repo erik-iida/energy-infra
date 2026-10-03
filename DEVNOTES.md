@@ -241,7 +241,48 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Licences: check ENTSO-E reuse terms for derived figures before the first newsletter goes out. Open-Meteo's free
   tier is non-commercial: farm wind/wake data needs a paid plan or another source once the product earns money.
 
+### Findings from the first collect probe (Oct 3 2026)
+- A44 `classificationSequence` (probe: scripts/probe_seq.py -> data/raw/entsoe/probe_seq_log.txt). Position 1 (or
+  untagged) is the auction result: the site's DE-LU price equals seq 1 to the cent (max diff 0.005). AT, DE-LU, DK2
+  and ES also carry a position-2 series: it differs from seq 1 by ~10 EUR/MWh on average (max 56), covers days whose
+  auction has not run (at 00:44 UTC on 3 Oct it ran to the end of 5 Oct), has gaps (e.g. 5 missing quarter-hours on
+  4 Oct) and exists for past days too (back to at least 18 Sep). What it is is NOT identified. FR, PL, BG (and the
+  other zones probed) return two identical series without a tag: harmless, the store merge collapses them.
+  Averaging all series gave a mean |diff| of 4.3 EUR/MWh against the site: that is what the old code did.
+- Fix: collector/entsoe_raw.py keeps seq 1 only (PRICE_SEQ_KEEP) and counts dropped rows per zone in
+  collector_log.json (`seq_dropped`; a change in ENTSO-E's tagging shows up there). The same bug was in
+  pipeline/entsoe.prices() and scripts/fetch_capture.cell(), which averaged every TimeSeries: capture prices,
+  baseload and TB2/TB4 for AT, DE-LU, DK2 and ES were wrong. Both now use entsoe.price_seq(); capture cells carry
+  `sq: 1`, older cells are refetched (all zones, 24 months, resumable) and AT/DE-LU/DK2/ES are left out of
+  capture.json until their cells are redone (SEQ2_ZONES in fetch_capture.py).
+- A75 lag (scripts/probe_lag.py, uses the collector's parser): RO publishes ~41 h late (newest 1 Oct 07:30 UTC at
+  00:53 UTC on 3 Oct), AL and MK ~28 h, every other zone < 6 h. 29-30 Sep are complete for RO, so the lag is
+  1.5-2.5 days, well inside the 4-day daily window (each day gets four retries). Note A03 curves: raw point counts
+  per type say nothing about completeness, always check after forward-fill. The daily run now logs
+  `late_gen_actual_h` (zones whose newest A75 is > 6 h old) in collector_log.json: watch RO there.
+- Actions logs are not readable from the cloud session: use probe scripts that commit a log (probe-seq, probe-lag,
+  entsoe-probe workflows).
+
+## Newsletter generator (Oct 3 2026)
+- newsletter/: metrics.py (daily metrics per zone and CET day from da_price seq 1, EUR only, hourly means: baseload,
+  TB2, TB4, negative hours, min/max, capture price and capture rate for solar / onshore / offshore wind; a day needs
+  >= 23 priced hours, capture >= 20 hours of generation data), signals.py (universal rule table: metric, high/low
+  percentile vs the zone's own last 90 days, min 30 days of history, absolute gate; add a rule = add a line to RULES),
+  build.py (facts.json = the contract, brief.md = deterministic draft, brief.html = draft + TB4 bar chart with each
+  zone's p90 tick). No API calls: the LLM/human step reads facts.json.
+- Run: `python -m newsletter.build [--day YYYY-MM-DD]` (yesterday CET by default; STORE_DIR=<folder> for a local copy
+  of the store). Workflow newsletter.yml is manual (workflow_dispatch), output as artifact, not committed (public repo).
+  Offline test: `python -m tests.test_newsletter` (synthetic store: seq-2 and UAH rows ignored, incomplete day gated,
+  spike flagged).
+- Draft shape follows the product note: headline (widest TB4 in CEE/SEE) + what left its normal range + next 24 h from
+  tomorrow's auction. Not yet: UA-IPS (UAH), price-setter / SRMC, clean spark spreads, flows and wind drill-down when a
+  signal fires, the Streamlit/site "Signals" view, e-mail sending.
+- Needs history for percentiles: until the backfill has run, the draft says so in the data notes.
+
 ## Known gaps / next ideas
+- Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
+  whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).
+- Newsletter: first hand-assembled briefs from `newsletter.build`, then the 15-user test; UA-IPS via data/fx.json.
 - TO DO: stability-aware hub-height wind. Today pipeline/run.py `hub_wind` scales the ECMWF IFS 100 m wind with a
   neutral log law (z0 = 0.0002 m, offshore) for every farm. Plan: also fetch 10 m wind (Open-Meteo ECMWF endpoint
   has both), fit the hourly shear from the 10/100 m ratio (power-law alpha or log-law with an effective z0) and

@@ -1,18 +1,2 @@
-resuming: 11833 turbines, 227 plants, done ['cn-shandong-n', 'estonia', 'cn-shandong-s', 'cn-zhejiang-s', 'cn-guangdong-e', 'cn-bohai', 'cn-zhejiang-n', 'taiwan', 'japan-c', 'cn-jiangsu-n', 'cn-guangdong-w', 'japan-sw', 'japan-n', 'us-ne', 'us-va-md', 'cn-fujian', 'cn-jiangsu-s', 'korea', 'cn-hainan-guangxi', 'us-nj-de']
-vietnam: 8.0,104.0,11.5,109.5
-  positions: overpass-api.de -> 747 elements
-  747 wind generators, 504 at sea or on the coast
-  tags 0: overpass-api.de -> 500 elements
-  tags 500: overpass-api.de -> 4 elements
-  plants: overpass-api.de -> 15 elements
-  estonia  Estonia              223
-  offshore China                9715
-  offshore Hong Kong            58
-  offshore Japan                742
-  offshore Macao                5
-  offshore North Korea          3
-  offshore South Korea          265
-  offshore Taiwan               568
-  offshore United States of America 253
-  offshore Vietnam              505
-wrote 12337 turbines, 236 plants -> data/raw/osm/osm_wind.json
+resuming: 12337 turbines, 236 plants, done ['cn-shandong-n', 'estonia', 'cn-shandong-s', 'cn-zhejiang-s', 'cn-guangdong-e', 'cn-bohai', 'cn-zhejiang-n', 'taiwan', 'japan-c', 'cn-jiangsu-n', 'cn-guangdong-w', 'japan-sw', 'japan-n', 'us-ne', 'us-va-md', 'cn-fujian', 'cn-jiangsu-s', 'korea', 'cn-hainan-guangxi', 'us-nj-de', 'vietnam']
+all parts fetched; nothing to do (delete data/raw/osm/osm_wind.json to refetch)

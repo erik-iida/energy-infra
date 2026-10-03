@@ -1,0 +1,35 @@
+name: newsletter
+
+# Daily brief draft from the data store (newsletter/build.py). Manual for now: run it after the first backfill months
+# are in and read the draft before anything is sent. Output is a workflow artifact (facts.json, brief.md, brief.html),
+# not committed: the brief is the product and the repo is public.
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: "CET delivery day YYYY-MM-DD (empty = yesterday)"
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  brief:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-collect.txt
+      - run: pip install -r requirements-collect.txt
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          DAY: ${{ inputs.day }}
+        run: python -m newsletter.build ${DAY:+--day "$DAY"} --out newsletter/out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: brief
+          path: newsletter/out

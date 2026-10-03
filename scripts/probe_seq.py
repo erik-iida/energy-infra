@@ -217,6 +217,53 @@ for d in parse(get(documentType="A44", in_Domain=DE, out_Domain=DE, periodStart=
         if miss:
             P(f"  period {d['periods'][0][0]}: missing {[m.strftime('%d %H:%M') for m in miss]}")
 
+# ---------------------------------------------------------------- 5. duplicate A44 series without a sequence tag
+P("\n=== A44 zones with two series per day and no sequence tag: how do the pair differ? (window today-1 .. today+1)")
+for z, eic in (("FR", "10YFR-RTE------C"), ("PL", "10YPL-AREA-----S"), ("BG", "10YCA-BULGARIA-R")):
+    t2 = get(documentType="A44", in_Domain=eic, out_Domain=eic, periodStart=f(today - timedelta(days=1)), periodEnd=f(today + timedelta(days=1)))
+    sl = parse(t2, "price.amount") if not t2.startswith(("HTTP", "failed")) else []
+    for i, d in enumerate(sl):
+        k = sorted(d["pts"])
+        P(f"  {z} TS{i} mRID={d['mRID']} auction={d['auction.type']} biz={d['businessType']} contract={d['contract_MarketAgreement.type']} "
+          f"curve={d['curveType']} cur={d['currency_Unit.name']} periods={d['periods']} n={len(k)} first4={[d['pts'][t] for t in k[:4]]}")
+    for i in range(0, len(sl) - 1, 2):
+        a_, b_ = sl[i]["pts"], sl[i + 1]["pts"]
+        both = set(a_) & set(b_)
+        if both:
+            P(f"  {z} pair {i}/{i+1}: overlap {len(both)} max|diff| {max(abs(a_[t]-b_[t]) for t in both):.3f}; only in first {len(set(a_)-set(b_))}, only in second {len(set(b_)-set(a_))}")
+
+# ---------------------------------------------------------------- 6. A75 lateness over all zones
+P("\n=== A75 actual generation, latest published timestamp per zone (lag vs now), window today-5 .. today+1")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from pipeline.entsoe import ZONE_EIC
+lagrows = []
+for z, eic in ZONE_EIC.items():
+    t2 = get(documentType="A75", processType="A16", in_Domain=eic, periodStart=f(today - timedelta(days=5)), periodEnd=f(today + timedelta(days=1)))
+    if t2.startswith(("HTTP", "failed")) or "Acknowledgement" in t2[:400]:
+        lagrows.append((9999, f"  {z}: no data"))
+        continue
+    last = {}
+    for d in parse(t2, "quantity"):
+        if d["gen"] and d["pts"]:
+            last[d["psrType"]] = max(d["pts"])
+    if last:
+        newest, oldest = max(last.values()), min(last.values())
+        lag = (now - newest).total_seconds() / 3600
+        lagrows.append((lag, f"  {z}: newest {newest:%d %b %H:%M} (lag {lag:.1f} h), type with oldest data ends {oldest:%d %b %H:%M} ({(now-oldest).total_seconds()/3600:.1f} h), {len(last)} types"))
+for _, row in sorted(lagrows, reverse=True):
+    P(row)
+
+P("\n=== A75 RO completeness, 1 Sep .. today: points per day (all types) and per type")
+txt = get(documentType="A75", processType="A16", in_Domain=RO, periodStart=f(datetime(2026, 9, 1, tzinfo=timezone.utc)), periodEnd=f(today + timedelta(days=1)))
+if not txt.startswith(("HTTP", "failed")) and "Acknowledgement" not in txt[:400]:
+    dd = defaultdict(lambda: defaultdict(int))
+    for d in parse(txt, "quantity"):
+        if d["gen"]:
+            for t in d["pts"]:
+                dd[t.date()][d["psrType"]] += 1
+    for day in sorted(dd):
+        P(f"  {day}: " + " ".join(f"{k}:{v}" for k, v in sorted(dd[day].items())))
+
 LOG.parent.mkdir(parents=True, exist_ok=True)
 LOG.write_text("\n".join(out) + "\n", encoding="utf-8")
 print("\n".join(out))

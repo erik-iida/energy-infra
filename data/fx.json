@@ -1,4 +1,9 @@
 {
+ "GBP": {
+  "history": {},
+  "source": "European Central Bank euro foreign exchange reference rate",
+  "unit": "GBP per EUR"
+ },
  "UAH": {
   "checked": "2026-10-03",
   "date": "2026-10-05",

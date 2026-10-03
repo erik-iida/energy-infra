@@ -62,6 +62,23 @@ def fetch_window(a: datetime, b: datetime, zones=None, borders=None) -> tuple[di
     return out, calls, errors
 
 
+def late_zones(data: dict[str, pd.DataFrame], min_h: float = 6.0) -> dict[str, float]:
+    """Zones whose newest actual-generation timestamp is more than min_h hours old (TSO publication lag)."""
+    df = data.get("gen_actual")
+    if df is None or df.empty:
+        return {}
+    now = pd.Timestamp.now(tz="UTC")
+    last = df.groupby("zone")["ts"].max()
+    lag = ((now - last).dt.total_seconds() / 3600).round(1)
+    return {z: float(h) for z, h in lag[lag > min_h].sort_values(ascending=False).items()}
+
+
+def seq_note() -> dict:
+    d = dict(er.SEQ_DROPPED)
+    er.SEQ_DROPPED.clear()
+    return {"seq_dropped": d} if d else {}
+
+
 def write_all(st: Store, data: dict[str, pd.DataFrame]) -> dict:
     summary = {}
     for ds, df in data.items():
@@ -89,7 +106,8 @@ def daily(st: Store) -> dict:
     log(f"daily window {a:%Y-%m-%d} .. {b:%Y-%m-%d}")
     data, calls, errors = fetch_window(a, b)
     return {"window": [a.isoformat(), b.isoformat()], "calls": calls, "errors": errors[:40],
-            "n_errors": len(errors), "written": write_all(st, data)}
+            "n_errors": len(errors), "late_gen_actual_h": late_zones(data), **seq_note(),
+            "written": write_all(st, data)}
 
 
 def backfill(st: Store, t0: float) -> dict:
@@ -114,7 +132,7 @@ def backfill(st: Store, t0: float) -> dict:
                                 "rows": {k: v["rows"] for k, v in written.items()}}
             st.write_json("backfill_state.json", state)
         log(f"backfill {m}: {calls} calls, {len(errors)} errors, {time.time() - t1:.0f} s")
-        did.append({"month": m, "calls": calls, "errors": errors[:15], "n_errors": len(errors)})
+        did.append({"month": m, "calls": calls, "errors": errors[:15], "n_errors": len(errors), **seq_note()})
     left = len([m for m in months if m not in state["done"]])
     return {"months": did, "left": left}
 
@@ -126,7 +144,7 @@ def probe() -> dict:
     for ds, df in data.items():
         log(f"{ds}: {len(df)} rows, res {sorted(df.res_min.unique())}, {df.ts.min()} .. {df.ts.max()}")
         log(df.head(3).to_string())
-    return {"calls": calls, "errors": errors}
+    return {"calls": calls, "errors": errors, "late_gen_actual_h": late_zones(data), **seq_note()}
 
 
 def main(argv=None) -> None:

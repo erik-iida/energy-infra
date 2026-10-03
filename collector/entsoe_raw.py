@@ -43,6 +43,14 @@ BORDERS = [
 ]
 NO_PRICE = {"AL"}  # no day-ahead market data published
 
+# A44 classificationSequence position: only position 1 (or untagged) is the auction result. DE-LU also carries a
+# position-2 series that differs from the auction by ~10 EUR/MWh on average, covers days whose auction hasn't run and
+# is not what the site shows (Oct 3 2026 probe, DEVNOTES "Data store"). Dropped rows are counted per zone and
+# reported in collector_log.json (`seq_dropped`) so a change in ENTSO-E's tagging doesn't go unnoticed.
+PRICE_SEQ_KEEP = 1
+SEQ_DROPPED: dict[str, int] = {}
+_SEQ_LOCK = threading.Lock()
+
 
 class RateLimiter:
     """Shared across worker threads: the API allows 400 requests per minute; stay at ~330."""
@@ -169,6 +177,10 @@ def fetch_zone(zone: str, a: datetime, b: datetime) -> tuple[dict[str, list[dict
                                                       "price.amount")):
             cur = _txt(ts, ns, "currency_Unit.name", "EUR")
             seq = int(_txt(ts, ns, "classificationSequence_AttributeInstanceComponent.position", 1) or 1)
+            if seq != PRICE_SEQ_KEEP:
+                with _SEQ_LOCK:
+                    SEQ_DROPPED[zone] = SEQ_DROPPED.get(zone, 0) + len(pts)
+                continue
             rows["da_price"] += [{"zone": zone, "ts": t, "res_min": res, "seq": seq, "price": v, "currency": cur}
                                  for t, v in pts]
 

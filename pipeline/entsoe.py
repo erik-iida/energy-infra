@@ -168,6 +168,9 @@ def fx_table() -> dict:
 
 
 ECB_HIST = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.csv"
+ECB_HIST_ZIP = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip"
+# ECB Data Portal (SDMX), daily GBP per EUR reference rate; the first source tried (plain CSV, one row per day)
+ECB_API = "https://data-api.ecb.europa.eu/service/data/EXR/D.GBP.EUR.SP00.A?format=csvdata&startPeriod={since}"
 GBP_FROM = "2023-01-01"  # history kept in data/fx.json (daily conversion of stored GB prices)
 
 
@@ -189,15 +192,54 @@ def _refresh_uah(fx: dict, log) -> None:
 
 
 def parse_ecb_gbp(text: str, since: str = GBP_FROM) -> dict[str, float]:
-    """{date: GBP per EUR} from the ECB reference-rate history csv."""
+    """{date: GBP per EUR} from either ECB format: the reference-rate history csv (Date, ..., GBP, ...) or the Data
+    Portal csvdata (TIME_PERIOD, OBS_VALUE). Header names are stripped (the history csv pads them)."""
     import csv
     import io
     out = {}
-    for row in csv.DictReader(io.StringIO(text)):
-        d, v = (row.get("Date") or "").strip(), (row.get("GBP") or "").strip()
+    rd = csv.reader(io.StringIO(text.lstrip("\ufeff")))
+    head = [h.strip() for h in next(rd, [])]
+    if "TIME_PERIOD" in head and "OBS_VALUE" in head:
+        di, vi = head.index("TIME_PERIOD"), head.index("OBS_VALUE")
+    elif "Date" in head and "GBP" in head:
+        di, vi = head.index("Date"), head.index("GBP")
+    else:
+        return out
+    for row in rd:
+        if len(row) <= max(di, vi):
+            continue
+        d, v = row[di].strip(), row[vi].strip()
         if d >= since and v not in ("", "N/A"):
-            out[d] = float(v)
+            try:
+                out[d] = float(v)
+            except ValueError:
+                pass
     return out
+
+
+def fetch_ecb_gbp(log=print, since: str = GBP_FROM) -> dict[str, float]:
+    """GBP per EUR history: ECB Data Portal API, then the reference-rate zip, then the csv. Logs what each answered."""
+    import io
+    import zipfile
+    import requests
+    h = {"User-Agent": "energy-infra-monitor (hobby project)"}
+    for name, url in (("data-api", ECB_API.format(since=since)), ("hist.zip", ECB_HIST_ZIP), ("hist.csv", ECB_HIST)):
+        try:
+            r = requests.get(url, timeout=60, headers=h)
+            r.raise_for_status()
+            if r.content[:2] == b"PK":
+                with zipfile.ZipFile(io.BytesIO(r.content)) as z:
+                    text = z.read(z.namelist()[0]).decode("utf-8", "replace")
+            else:
+                text = r.text
+            out = parse_ecb_gbp(text, since)
+            if out:
+                log(f"fx: ECB {name}: {len(out)} GBP rows")
+                return out
+            log(f"fx: ECB {name}: no GBP rows (HTTP {r.status_code}, {r.headers.get('content-type', '?')}, starts {text[:60]!r})")
+        except Exception as ex:
+            log(f"fx: ECB {name} failed {ex!r}"[:200])
+    return {}
 
 
 def _refresh_gbp(fx: dict, log) -> None:
@@ -205,11 +247,8 @@ def _refresh_gbp(fx: dict, log) -> None:
     g = fx.setdefault("GBP", {"source": "European Central Bank euro foreign exchange reference rate", "unit": "GBP per EUR", "history": {}})
     if g.get("checked") == datetime.now(timezone.utc).date().isoformat():
         return
-    import requests
     try:
-        r = requests.get(ECB_HIST, timeout=60, headers={"User-Agent": "energy-infra-monitor"})
-        r.raise_for_status()
-        h = parse_ecb_gbp(r.text)
+        h = fetch_ecb_gbp(log)
         if not h:
             raise ValueError("no GBP rows")
         g["history"].update(h)

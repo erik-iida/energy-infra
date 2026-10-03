@@ -188,6 +188,16 @@ def main() -> None:
     ga = read(st, "gen_actual", months, a, b)
     if not da.empty:
         d = da[da["seq"] == 1]
+        if (d["currency"] == "GBP").any():  # GB (Elexon Market Index): shown in EUR at the ECB rate of the day, as the metrics are
+            gb = d["currency"] == "GBP"
+            r = M._gbp_rates(d.loc[gb, "ts"])
+            ok = r.notna()
+            d = d.copy()
+            idx = r.index[ok]
+            d.loc[idx, "price"] = d.loc[idx, "price"] / r[ok]
+            d.loc[idx, "currency"] = "EUR"
+            if (~ok).any():
+                print(f"browse: no GBP/EUR rate for {int((~ok).sum())} GB price rows; those stay in GBP")
         for cur, g in d.groupby("currency"):
             for z, w in hourly(g, lambda x: "p|price", "price").items():
                 F.add(z, w, {"p|price": meta("p|price", "Day-ahead price", G_PRICE, "", f"{cur}/MWh")})

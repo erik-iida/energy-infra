@@ -544,6 +544,16 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
   open `#flags/RO/tb4/<day>`. Store assets download with `gh api -H "Accept: application/octet-stream"
   repos/erik-iida/energy-infra/releases/assets/<id>` (gh release download needs GraphQL, blocked in the cloud session).
 
+## GBP/EUR rate fix (Oct 3 2026)
+- GB showed no price on the Market tab and map, and the Data tab showed GBP: `data/fx.json` never got a GBP rate because
+  the ECB history csv download answered without a parsable GBP column (capture_log: `fx: ECB fetch failed ValueError('no GBP rows')`).
+  `entsoe.fetch_ecb_gbp` now tries the ECB Data Portal API (`data-api.ecb.europa.eu`, SDMX csvdata: TIME_PERIOD, OBS_VALUE),
+  then the reference-rate zip, then the csv, and logs status / content type / first bytes of each failure; the parser
+  accepts both formats, padded headers and a BOM. The hourly feed fetches the rate itself when fx.json has none
+  (`market.py`, not committed; capture.yml commits it).
+- Data tab: `build_browse` converts GB prices to EUR at the ECB rate of the day (rows without a rate stay GBP and are logged),
+  so the GB column and the Flags panel are in €/MWh like the GB metrics.
+
 ## Known gaps / next ideas
 - Flags drill-down step 2: cross-border flows per neighbour (diverging bars + net position), neighbour price lines
   (GB labelled Market Index; zones outside the store "price n/a"), neighbour strip with mix bars and click-to-swap

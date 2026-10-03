@@ -11,6 +11,14 @@ def test_parse_ecb_gbp():
     assert h == {"2026-10-02": 0.86, "2026-10-01": 0.85}  # before 2023 and N/A dropped
 
 
+def test_parse_ecb_formats():
+    api = "KEY,FREQ,CURRENCY,CURRENCY_DENOM,EXR_TYPE,EXR_SUFFIX,TIME_PERIOD,OBS_VALUE\nEXR.D.GBP.EUR.SP00.A,D,GBP,EUR,SP00,A,2026-10-02,0.8701\n"
+    assert entsoe.parse_ecb_gbp(api) == {"2026-10-02": 0.8701}
+    padded = "\ufeffDate, USD, GBP, \n2026-10-02, 1.17, 0.8702, \n"  # padded header names, BOM
+    assert entsoe.parse_ecb_gbp(padded) == {"2026-10-02": 0.8702}
+    assert entsoe.parse_ecb_gbp("<html>moved</html>") == {}
+
+
 def test_hourly_prices_convert_gbp(monkeypatch):
     monkeypatch.setattr(entsoe, "fx_table", lambda: {"GBP": {"history": {"2026-10-01": 0.80, "2026-10-02": 0.90}}})
     ts = [pd.Timestamp("2026-10-02T10:00Z"), pd.Timestamp("2026-10-02T10:30Z"), pd.Timestamp("2026-10-03T10:00Z")]  # 3 Oct: last rate (2 Oct)

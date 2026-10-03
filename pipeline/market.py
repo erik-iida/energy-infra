@@ -363,6 +363,8 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
             market["system"][c] = d
         market["source"] += "; Great Britain: Contains BMRS data (c) Elexon Limited copyright and database right " + str(datetime.now(timezone.utc).year) + "; Ireland load: Supported by EirGrid Group Data"
         market.setdefault("diag", {})["gbie"] = {"system": sorted(gl)}
+        if not entsoe.gbp_per_eur():  # data/fx.json has no GBP rate yet (capture.yml refreshes it): fetch it for this run
+            entsoe.refresh_fx(print)
         gp = gbie_live.prices(gf, hours)
         if gp:  # GB has no day-ahead auction series in open data: the Elexon Market Index (APX trades) stands in, published after delivery
             market["prices"]["GB"] = gp[0]

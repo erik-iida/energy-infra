@@ -77,14 +77,23 @@ jobs:
       - id: browsecache
         uses: actions/cache@v4
         with:
-          path: web/data/browse
-          key: browse-${{ steps.bucket.outputs.k }}-${{ hashFiles('scripts/build_browse.py') }}
+          path: |
+            web/data/browse
+            web/data/newsletter
+          key: browse-${{ steps.bucket.outputs.k }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*') }}
       - name: Export store for the Data tab
         if: steps.browsecache.outputs.cache-hit != 'true'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/build_browse.py
+      # Newsletter tab: the daily draft(s) for the last 3 CET days, no fuel prices (public site). newsletter/editorial/<day>.md overrides the generated text.
+      - name: Build the Newsletter tab drafts
+        if: steps.browsecache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/build_newsletter_site.py --days 3
 
       # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.
       - name: Split public / private site

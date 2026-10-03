@@ -128,15 +128,28 @@ table.sortable th{cursor:pointer;user-select:none}table.sortable th:hover{color:
 .seg{display:inline-flex;gap:0;border:1px solid var(--line);border-radius:6px;overflow:hidden}.seg button{width:auto;border:0;border-radius:0;padding:3px 10px;font-size:12px;background:var(--panel);color:var(--mut)}.seg button.on{background:var(--acc);color:var(--panel)}.seg button:disabled{opacity:.45;cursor:default}
 svg.cmp{display:block;width:100%;overflow:visible}
 #live{display:flex;gap:8px;align-items:center;justify-content:flex-start;color:var(--ink)}
+#nws{display:none;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;min-height:62vh;min-width:0}
+#nws .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#nws select{width:auto;padding:5px 8px;font-size:13px}#nws .seg button{font-size:13px;padding:5px 11px}
+#nws .btns button{width:auto;padding:6px 12px;font-size:13px}#nws .btns button.pri{background:var(--acc);color:var(--panel);border-color:var(--acc)}
+#nws .nb{position:relative;padding:6px 118px 6px 10px;border-left:3px solid transparent;border-radius:4px;line-height:1.55;max-width:900px}#nws .nb:hover{background:var(--bg)}
+#nws .nb.up{border-left-color:#2e8b57}#nws .nb.down{border-left-color:var(--uc)}#nws .nb h3{margin:8px 0 0;font-size:19px}
+#nws .nf{position:absolute;right:4px;top:4px;display:flex;gap:2px;opacity:.3}#nws .nb:hover .nf,#nws .nf.set{opacity:1}
+#nws .nf button{width:auto;padding:1px 6px;font-size:13px;background:none;border:1px solid transparent;border-radius:5px}#nws .nf button.on{border-color:var(--acc)}
+#nws textarea{width:100%;box-sizing:border-box;font:13px/1.5 ui-monospace,Consolas,monospace;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:8px}
+#nws .nc{margin-top:4px}#nws .nc textarea{font:13px system-ui,sans-serif;min-height:44px}
+#nws .dw{overflow:auto;max-height:50vh;border:1px solid var(--line);border-radius:6px;margin:4px 0}
+#nws table.dt{width:auto;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums}
+#nws .dt th{position:sticky;top:0;background:var(--panel);padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:600}#nws .dt td{padding:2px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+#nws .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}#nws .hint{font-size:12px;color:var(--mut);max-width:900px}
 </style></head><body><main>
-<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button><button data-t="flg">Flags</button><button data-t="dat">Data</button></div>
+<div id="col"><div id="tabs"><button data-t="map" class="on">Map</button><button data-t="cmp">Compare, ±24 h</button><button data-t="mkt">Market</button><button data-t="sys">System</button><button data-t="flg">Flags</button><button data-t="nws">Newsletter</button><button data-t="dat">Data</button></div>
 <div id="stage"><canvas id="cv"></canvas><div id="attr" style="display:none"></div><div id="bmw"><div id="bmlist" hidden><div class="bmh">Basemap</div><div class="bmrow"><button class="bmo" data-bm="simple"><span class="bmt bm-simple"></span>Simple</button><button class="bmo" data-bm="osm"><span class="bmt" style="background-image:url(https://tile.openstreetmap.org/5/16/9.png)"></span>Map</button><button class="bmo" data-bm="sat"><span class="bmt" style="background-image:url(https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/5/9/16.jpg)"></span>Satellite</button></div><label class="bmhs"><input type="checkbox" id="HS"> Terrain shading</label></div><button id="bmbtn" title="Change basemap" aria-label="Change basemap" aria-expanded="false"><span class="bmt" id="bmcur"></span><span id="bmlab">Basemap</span></button></div><div id="zc"><button id="zin" title="Zoom in" aria-label="Zoom in">+</button><button id="zout" title="Zoom out" aria-label="Zoom out">−</button><button id="zhome" title="Back to the Europe view" aria-label="Back to the Europe view">⌂</button></div><div id="tip"></div><div id="note"></div>
 <div id="leg"><button id="legt" aria-expanded="true" title="Show or hide the legend">Legend <span id="legc">▾</span></button><div id="legb"><span class="lh">Click a heading to switch a layer on or off, an entry to hide it</span><button class="lc" data-c="price">Day-ahead prices</button><div class="lrow"><div class="seg" id="mosel"><button data-mo="now">Now</button><button data-mo="avg">24 h avg</button><button data-mo="next">Tomorrow</button><button data-mo="tb2">TB2</button><button data-mo="tb4">TB4</button></div><div id="mobar"></div></div><button class="lc" data-c="farms">Wind farms</button><div class="lrow"><span><b class="rg"><b></b></b>Ring = capacity, filled radius = capacity factor now</span><button class="lk" data-k="off"><i></i>Offshore wind farm</button><button class="lk" data-k="on" id="lon" style="display:none"><i style="border-top-color:var(--m-won)"></i>Onshore wind farm (demo)</button></div><button class="lc" data-c="zones">Future zones</button><div class="lrow"><button class="lk" data-k="uc"><i style="border-top:2px dashed var(--uc)"></i>Under construction / FID</button><button class="lk" data-k="cs"><i style="border-top:2px dashed var(--cs)"></i>Consented / in consent / leased</button><button class="lk" data-k="pl"><i style="border-top:2px dotted var(--pl)"></i>Concept or zone</button></div><button class="lc" data-c="gas">Gas</button><div class="lrow" id="gasleg"><button class="lk" data-k="gip"><i class="gk gd" style="border-radius:50%"></i>pipeline point</button><button class="lk" data-k="glng"><i class="gk gd" style="transform:rotate(45deg)"></i>LNG</button><button class="lk" data-k="gprod"><i class="gk gd"></i>production</button></div><button class="lc" data-c="grid">High-voltage grid</button><div class="lrow" id="gleg"><button class="lk" data-k="g750"><i class="gk" style="border-top-color:#004da8"></i>750</button><button class="lk" data-k="g500"><i class="gk" style="border-top-color:#b81245"></i>500</button><button class="lk" data-k="g400"><i class="gk" style="border-top-color:#e3262d"></i>380–400</button><button class="lk" data-k="g300"><i class="gk" style="border-top-color:#f29d00"></i>300–330</button><button class="lk" data-k="g220"><i class="gk" style="border-top-color:#38a800"></i>220 kV</button><button class="lk" data-k="gdc"><i class="gk" style="border-top-color:#d660d6"></i>DC</button></div><button class="lc" data-c="depth">Depth</button><div class="lrow"><span><i id="blegc" style="display:inline-block;width:110px;height:10px;vertical-align:middle;border:1px solid var(--line);border-radius:2px"></i> <span id="blegt" style="font-size:11px"></span></span><div id="bys"><label for="BD" style="font-size:11px">Depth colour scale <span id="BDv">0–60 m</span></label><input type="range" id="BD" min="10" max="200" step="5" value="60" style="width:100%"></div></div></div></div></div>
 <div id="dash"><div class="feednote" id="fnote"></div>
 <label style="justify-content:flex-start;gap:10px;max-width:420px;color:var(--ink)">Wake model <select id="FM" style="width:auto;flex:1"></select></label>
 <div class="hero" id="hero"></div>
 <h2>Countries <span class="mut" style="font:13px system-ui">· capacity factor (0–100%) and capacity-weighted hub-height wind (0–25 m/s), last 24 h and next 24 h forecast (dashed)</span></h2><div class="grid" id="cards"></div>
-<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="flg"></div><div id="dat"></div><div id="dtip"></div></div>
+<h2 id="fh">Farms</h2><div class="tw"><table id="ftab"><thead><tr></tr></thead><tbody></tbody></table></div></div><div id="mkt"></div><div id="sys"></div><div id="flg"></div><div id="nws"></div><div id="dat"></div><div id="dtip"></div></div>
 <aside>
 <div class="keep"><h1>GridEconomics</h1><div id="crumb"></div><div class="mut" id="sub"></div></div>
 <select id="C" class="keep" aria-label="Region or country"></select>
@@ -368,7 +381,7 @@ function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat
  const step=n=>{const k=Math.min(1,(n-t0)/ms),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;V.lon=a.lon+(t.lon-a.lon)*e;V.lat=a.lat+(t.lat-a.lat)*e;V.s=Math.exp(Math.log(a.s)+(Math.log(t.s)-Math.log(a.s))*e);clampV();paint();if(k<1)anim=requestAnimationFrame(step)};anim=requestAnimationFrame(step)}
 function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(zMin(),V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat=mercInv(mercY(V.lat)+mercY(lat)-mercY(a2));clampV();repaint()}
 function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
-function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}if(S.tab==="flg"){flagsTab();sidebar();return}if(S.tab==="dat"){dataTab();sidebar();return}paint();sidebar()}
+function draw(){if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}if(S.tab==="flg"){flagsTab();sidebar();return}if(S.tab==="nws"){nwsTab();sidebar();return}if(S.tab==="dat"){dataTab();sidebar();return}paint();sidebar()}
 // Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
 // streaks stay crisp. Colour = one sequential ramp; tiny deficits fully transparent (no box edge).
 const RAMP=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]]; // viridis
@@ -561,7 +574,7 @@ function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filte
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
 function tab(t){S.tab=t;document.body.dataset.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
- $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";$("flg").style.display=t==="flg"?"flex":"none";$("dat").style.display=t==="dat"?"flex":"none";draw()}
+ $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";$("flg").style.display=t==="flg"?"flex":"none";$("nws").style.display=t==="nws"?"flex":"none";$("dat").style.display=t==="dat"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
 
@@ -1075,6 +1088,63 @@ $("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.va
 $("flg").addEventListener("change",e=>{if(e.target.id==="flz"){FL.all=e.target.value==="a";flagsTab()}});
 
 document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
+/* ---------- Newsletter tab: the daily draft (web/data/newsletter/*.md, built by scripts/build_newsletter_site.py), local edits and feedback.
+   Edits and ratings live in this browser (localStorage); "Send to Claude" opens a prefilled GitHub issue labelled newsletter-feedback, which is
+   where a later chat reads them (DEVNOTES: Newsletter tab). ---------- */
+const NW={idx:null,err:0,busy:0,day:null,md:{},mode:"read"};
+function nwLS(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){}return null}
+const nwEsc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const nwInl=s=>nwEsc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/(^|[\s(])_(.+?)_(?=[\s).,;:]|$)/g,"$1<i>$2</i>");
+function nwBlocks(md){const out=[],L=md.split("\n");let i=0;while(i<L.length){const l=L[i];if(!l.trim()){i++;continue}
+ if(l.startsWith("|")){const a=[];while(i<L.length&&L[i].startsWith("|"))a.push(L[i++]);out.push({t:"tb",raw:a.join("\n")});continue}
+ if(l.startsWith("#")){out.push({t:"h",raw:l});i++;continue}
+ const a=[];while(i<L.length&&L[i].trim()&&!L[i].startsWith("|")&&!L[i].startsWith("#"))a.push(L[i++]);out.push({t:"p",raw:a.join("\n")})}return out}
+function nwTable(raw){const r=raw.split("\n").filter(x=>!/^\|[\s:|-]+\|?$/.test(x)).map(x=>x.replace(/^\||\|$/g,"").split("|").map(c=>c.trim()));if(!r.length)return"";
+ return"<div class='dw'><table class='dt'><thead><tr>"+r[0].map((c,j)=>`<th style="text-align:${j?"right":"left"}">${nwEsc(c)}</th>`).join("")+"</tr></thead><tbody>"+r.slice(1).map(x=>"<tr>"+x.map((c,j)=>`<td style="text-align:${j?"right":"left"}">${nwEsc(c)}</td>`).join("")+"</tr>").join("")+"</tbody></table></div>"}
+const nwKey=(k,d)=>"nws:"+k+":"+d;
+const nwText=()=>{const e=nwLS(nwKey("edit",NW.day));return e==null?NW.md[NW.day]:e};
+const nwFb=()=>{try{return JSON.parse(nwLS(nwKey("fb",NW.day))||"{}")}catch(e){return{}}};
+const nwSave=j=>nwLS(nwKey("fb",NW.day),JSON.stringify(j));
+function nwIssue(){const d=NW.day,pub=NW.md[d],cur=nwText(),fb=nwFb(),bl=nwBlocks(cur),src=(NW.idx.days.find(x=>x.day===d)||{}).source;
+ let o=`Newsletter feedback for **${d}** (published as: ${src} draft)\n\n`;if(fb.note)o+=`## Overall\n${fb.note}\n\n`;
+ const rows=Object.entries(fb.b||{}).filter(([k,v])=>v.r||v.c);
+ if(rows.length){o+="## Per section\n";rows.forEach(([k,v])=>{const b=bl[k],ex=(b?b.raw:"").replace(/\s+/g," ").replace(/\*\*/g,"").slice(0,110);o+=`- ${v.r==="up"?"👍 keep / more like this":v.r==="down"?"👎 cut or weak":"•"} "${ex}"${v.c?" — "+v.c:""}\n`});o+="\n"}
+ if(cur!==pub){const a=nwBlocks(pub).map(b=>b.raw),c=bl.map(b=>b.raw),A=new Set(a),C=new Set(c),q=x=>x.length?x.map(t=>"> "+t.replace(/\n/g,"\n> ")).join("\n\n"):"(none)";
+  o+="## My edits to the draft\nRemoved:\n"+q(a.filter(x=>!C.has(x)))+"\n\nAdded:\n"+q(c.filter(x=>!A.has(x)))+"\n"}
+ return o}
+function nwsTab(){const el=$("nws");
+ if(!NW.idx){if(NW.err){el.innerHTML="<div class='feednote'>No newsletter published yet. The deploy job builds the daily draft from the data store (DEVNOTES: Newsletter tab).</div>";return}
+  el.innerHTML="<div class='feednote'>Loading…</div>";if(!NW.busy){NW.busy=1;dbJson("data/newsletter/index.json").then(j=>{NW.idx=j;NW.day=j.latest;NW.busy=0;if(S.tab==="nws")nwsTab()}).catch(()=>{NW.err=1;NW.busy=0;if(S.tab==="nws")nwsTab()})}return}
+ const d=NW.day;if(NW.md[d]==null){el.innerHTML="<div class='feednote'>Loading…</div>";if(!NW.busy){NW.busy=1;fetch("data/newsletter/"+d+".md").then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>{NW.md[d]=t;NW.busy=0;if(S.tab==="nws")nwsTab()}).catch(()=>{NW.md[d]="# No draft for this day\n";NW.busy=0;if(S.tab==="nws")nwsTab()})}return}
+ const cur=nwText(),edited=cur!==NW.md[d],fb=nwFb(),src=(NW.idx.days.find(x=>x.day===d)||{}).source;
+ const nr=Object.values(fb.b||{}).filter(v=>v.r).length,nc=Object.values(fb.b||{}).filter(v=>v.c).length+(fb.note?1:0);
+ let h=`<div class='row'><label style="display:flex;gap:6px;align-items:center;font-size:13px">Day <select id="nwday">${NW.idx.days.map(x=>`<option value="${x.day}"${x.day===d?" selected":""}>${x.day}</option>`).join("")}</select></label>
+  <span class='badge'>${src==="editorial"?"edited draft":"auto draft"}</span>${edited?"<span class='badge' style='color:var(--uc)'>your edits (this browser)</span>":""}
+  <span class='seg'><button data-m="read" class="${NW.mode==="read"?"on":""}">Read &amp; rate</button><button data-m="edit" class="${NW.mode==="edit"?"on":""}">Edit text</button></span></div>`;
+ if(NW.mode==="edit"){h+=`<textarea id="nwta" rows="26" spellcheck="true">${nwEsc(cur)}</textarea><div class='hint'>Markdown. Your changes are kept in this browser and go to Claude with "Send feedback" (only the changed sections).</div>
+  <div class='btns row'><button data-a="reset">Reset to published text</button></div>`}
+ else{const bl=nwBlocks(cur);h+=bl.map((b,i)=>{const x=(fb.b||{})[i]||{};const body=b.t==="h"?`<h3>${nwInl(b.raw.replace(/^#+\s*/,""))}</h3>`:b.t==="tb"?nwTable(b.raw):`<div>${nwInl(b.raw).replace(/\n/g,"<br>")}</div>`;
+   return`<div class="nb ${x.r||""}">${body}<div class="nf${x.r||x.c?" set":""}"><button data-nb="${i}" data-a="up" class="${x.r==="up"?"on":""}" title="Keep / more like this">👍</button><button data-nb="${i}" data-a="down" class="${x.r==="down"?"on":""}" title="Cut or weak">👎</button><button data-nb="${i}" data-a="c" class="${x.c?"on":""}" title="Comment">💬</button></div>${x.open||x.c?`<div class="nc"><textarea class="nwc" data-nb="${i}" placeholder="What should change here?">${nwEsc(x.c||"")}</textarea></div>`:""}</div>`}).join("")}
+ h+=`<h2 style="margin:10px 0 0">Feedback to Claude</h2><textarea id="nwnote" rows="3" placeholder="Overall: what worked, what is missing, what to cut, which signals matter most…">${nwEsc(fb.note||"")}</textarea>
+  <div class='btns row'><button class="pri" data-a="send">Send feedback (opens a GitHub issue)</button><button data-a="copy">Copy as text</button><button data-a="dl">Download current draft (.md)</button><span class='hint' id="nwst">${nr} rated, ${nc} comments${edited?", edited text":""}</span></div>
+  <div class='hint'>Ratings, comments and edits stay in this browser until you send them. Sending opens a prefilled issue (label newsletter-feedback) in the project repo; submit it there and a later chat reads it and updates the format (newsletter/STYLE.md).</div>`;
+ el.innerHTML=h}
+$("nws").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=NW.day;
+ if(b.dataset.m){NW.mode=b.dataset.m;nwsTab();return}
+ if(b.dataset.nb!=null){const fb=nwFb();fb.b=fb.b||{};const x=fb.b[b.dataset.nb]=fb.b[b.dataset.nb]||{};if(b.dataset.a==="c")x.open=!x.open;else x.r=x.r===b.dataset.a?"":b.dataset.a;nwSave(fb);nwsTab();return}
+ const a=b.dataset.a,st=$("nwst");
+ if(a==="reset"){nwLS(nwKey("edit",d),null);nwsTab()}
+ else if(a==="send"){const body=nwIssue(),enc=encodeURIComponent,base=`https://github.com/${NW.idx.repo}/issues/new?labels=newsletter-feedback&title=${enc("Newsletter feedback "+d)}&body=`;let url=base+enc(body);
+  if(url.length>7000){try{navigator.clipboard.writeText(body)}catch(e){}url=base+enc("Too long for a link: the feedback text was copied to your clipboard. Paste it here (Ctrl+V).")}
+  window.open(url,"_blank","noopener")}
+ else if(a==="copy"){navigator.clipboard.writeText(nwIssue()).then(()=>{if(st)st.textContent="Copied."}).catch(()=>{if(st)st.textContent="Copy failed: select the text yourself."})}
+ else if(a==="dl"){const u=URL.createObjectURL(new Blob([nwText()],{type:"text/markdown"})),l=document.createElement("a");l.href=u;l.download="grideconomics-"+d+".md";l.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}});
+$("nws").addEventListener("input",e=>{const t=e.target;
+ if(t.id==="nwta"){if(t.value===NW.md[NW.day])nwLS(nwKey("edit",NW.day),null);else nwLS(nwKey("edit",NW.day),t.value)}
+ else if(t.id==="nwnote"){const fb=nwFb();fb.note=t.value;nwSave(fb)}
+ else if(t.classList.contains("nwc")){const fb=nwFb();fb.b=fb.b||{};const x=fb.b[t.dataset.nb]=fb.b[t.dataset.nb]||{};x.c=t.value;x.open=true;nwSave(fb)}});
+$("nws").addEventListener("change",e=>{if(e.target.id==="nwday"){NW.day=e.target.value;nwsTab()}});
+
 $("tabs").onclick=e=>{const b=e.target.closest("button");if(b)tab(b.dataset.t)};
 $("cards").onclick=e=>{const c=e.target.closest(".card");if(c)go(c.dataset.c===S.c?null:c.dataset.c,null)};
 $("ftab").onclick=e=>{const th=e.target.closest("th");if(th){if(th.dataset.k==="sp"||th.dataset.k==="sw")return;S.sort=[th.dataset.k,S.sort[0]===th.dataset.k?-S.sort[1]:(["n","c"].includes(th.dataset.k)?1:-1)];draw();return}

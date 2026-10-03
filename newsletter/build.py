@@ -266,11 +266,13 @@ def draft_brief(f: dict) -> str:
         lines += [txt, ""]
     if f["notes"]:
         lines += ["_Data notes: " + " ".join(f["notes"]) + "_", ""]
-    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % | Spark top-4 |", "|---|--:|--:|--:|--:|--:|--:|--:|"]
+    sp = any(r.get("spark_top4") is not None for r in t)  # the spark column only exists when fuel prices were available
+    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % |" + (" Spark top-4 |" if sp else ""),
+              "|---|--:|--:|--:|--:|--:|--:|" + ("--:|" if sp else "")]
     g = lambda v: "-" if v is None else f"{v:g}"
     for r in sorted(t, key=lambda r: -(r["tb4"] if r.get("tb4") is not None else -1e9)):
         lines.append(f"| {r['zone']} | {g(r['baseload'])} | {g(r['tb2'])} | {g(r['tb4'])} | {g(r['neg_hours'])} | "
-                     f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} | {g(r.get('spark_top4'))} |")
+                     f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} |" + (f" {g(r.get('spark_top4'))} |" if sp else ""))
     if fr:
         lines += ["", "| Zone | Solar GW | Wind GW | Solar CF 30d % | Wind CF 30d % | Solar+wind / load | Base 30d | TB4 30d | Neg. h 30d |",
                   "|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
@@ -319,6 +321,7 @@ def main(argv=None) -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--day", help="CET delivery day YYYY-MM-DD (default: yesterday)")
     ap.add_argument("--out", default="newsletter/out")
+    ap.add_argument("--no-fuel", action="store_true", help="skip fuel prices / spark spreads (the public site build)")
     a = ap.parse_args(argv)
     today_cet = pd.Timestamp.now(tz=M.CET).tz_localize(None).normalize()
     day = pd.Timestamp(a.day) if a.day else today_cet - pd.Timedelta(days=1)
@@ -327,12 +330,15 @@ def main(argv=None) -> None:
         raise SystemExit("no da_price rows in the store for this window")
     srmc, carbon, fuel_note = None, False, None
     try:
+        if a.no_fuel:
+            raise RuntimeError("fuel prices switched off")
         from . import fuel
         days = pd.date_range(day - pd.Timedelta(days=S.WINDOW_DAYS + 3), day + pd.Timedelta(days=1))
         srmc, carbon = fuel.srmc_by_day(days, fuel.load_ttf(), fuel.load_eua())
     except Exception as e:  # fuel prices are optional: the brief is still useful without spark spreads
-        fuel_note = f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
-        print(fuel_note)
+        fuel_note = None if a.no_fuel else f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
+        if fuel_note:
+            print(fuel_note)
     f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day), ld=ld, fl=fl)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)

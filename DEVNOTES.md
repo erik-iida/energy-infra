@@ -414,6 +414,21 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   to replace the IRENA vintage; A71 forecast generation capacity is another option. Then capacity-by-tech in the Data
   tab, seasonal CF baselines once > 1 year of generation is in the store, and a CF-vs-price signal.
 
+## Newsletter tab and feedback loop (Oct 3 2026)
+- **Tab "Newsletter"** (web/index.html `nwsTab`): shows the daily draft for the last 3 CET days, with Read & rate (👍 keep / 👎 cut /
+  💬 comment per paragraph or table), Edit text (markdown), an overall note, and "Send feedback". Ratings, comments and edits live in the
+  browser (localStorage) until sent. Send = prefilled GitHub issue in this repo, label `newsletter-feedback` (only the changed sections of
+  an edit are included; a long one is copied to the clipboard instead). Copy / download buttons as fallbacks.
+- **Data**: `scripts/build_newsletter_site.py` (deploy step, cached 3 h with the Data tab export, continue-on-error) writes
+  web/data/newsletter/{index.json, <day>.md} (not committed). It runs `newsletter.build --no-fuel`, so no spark data ever reaches the public site.
+  `newsletter/editorial/<day>.md` (hand/chat-written text) replaces the generated text for that day; the generated one stays as `<day>.auto.md`.
+  First editorial draft: 2026-10-02.
+- **Reading feedback in a new chat**: `gh api "repos/erik-iida/energy-infra/issues?labels=newsletter-feedback&state=open"` (REST works from the
+  cloud workspace), apply it to `newsletter/STYLE.md` and to the generator (`newsletter/build.py draft_brief`), comment on the issue with what
+  changed and close it. STYLE.md is the memory of the format; keep it current.
+- Not done: the draft is generated once per deploy from the store (no per-user login, no live comments, feedback is not shown back on the
+  page); an email/LinkedIn export; residual load / net import sentences in the generated brief (listed in STYLE.md).
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

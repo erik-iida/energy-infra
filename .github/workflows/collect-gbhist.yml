@@ -38,4 +38,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BACKFILL_FROM: ${{ vars.BACKFILL_FROM || '2024-01' }}
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '20 14 * * *' && 'daily' || 'backfill') }}
-        run: python -m collector.gbhist "$MODE"
+        run: |
+          set -o pipefail
+          python -m collector.gbhist "$MODE" 2>&1 | tee /tmp/run.log
+      - name: Keep the log of this run (manual runs and failures)
+        if: always() && (failure() || github.event_name == 'workflow_dispatch')
+        run: |
+          mkdir -p data/raw/gbie
+          tail -n 150 /tmp/run.log > data/raw/gbie/last_run_gbhist.txt || true
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/gbie/last_run_gbhist.txt
+          git commit -m "gbhist run log" || echo "no changes"
+          git pull --rebase
+          git push

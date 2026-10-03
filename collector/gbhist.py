@@ -186,16 +186,26 @@ def daily(store: Store) -> None:
     write(store, "gb_forecast", f)
 
 
+MAX_MONTHS = int(os.environ.get("GBHIST_MAX_MONTHS", "60"))  # months written per run (each write costs several GitHub API calls)
+
+
 def backfill(store: Store) -> None:
-    st = store.read_json("gbhist_state.json", {})
+    st = store.read_json("gbhist_state.json", {}) or {}
     fetched = datetime.now(timezone.utc)
     if not st.get("hist"):
         h = hist_frame(None, fetched)
-        log(f"gb_hist full history: {len(h)} rows {h['ts'].min() if len(h) else ''} .. {h['ts'].max() if len(h) else ''}")
         if len(h):
-            write(store, "gb_hist", h)
-            st["hist"] = fetched.strftime("%Y-%m-%d")
-            store.write_json("gbhist_state.json", st)
+            log(f"gb_hist full history: {len(h)} rows {h['ts'].min()} .. {h['ts'].max()}")
+            have = {n[len("gb_hist_"):-len(".parquet")] for n in store.assets() if n.startswith("gb_hist_")}
+            months = h["ts"].dt.strftime("%Y-%m")
+            missing = sorted(set(months) - have, reverse=True)  # newest first; months already in the store are kept as they are
+            todo = missing[:MAX_MONTHS]
+            log(f"gb_hist: {len(missing)} months missing in the store, writing {len(todo)} now")
+            if todo:
+                write(store, "gb_hist", h[months.isin(todo)])
+            if len(missing) <= MAX_MONTHS:
+                st["hist"] = fetched.strftime("%Y-%m-%d")
+                store.write_json("gbhist_state.json", st)
     if not st.get("wind_da"):
         f = neso_wind_da(fetched, True)
         log(f"gb_forecast NESO day-ahead wind archive: {len(f)} rows")

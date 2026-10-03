@@ -1,0 +1,45 @@
+run 2026-10-03 00:53 UTC, 229 calls, 0 errors
+errors: 
+late zones (newest gen_actual older than 6 h): {'RO': 41.4, 'AL': 27.9, 'MK': 27.9}
+seq dropped: {'seq_dropped': {'AT': 672, 'DE-LU': 672, 'DK2': 480, 'ES': 672}}
+
+RO: newest 2026-10-01 07:30:00+00:00 (lag 41.4 h)
+  09-29: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  09-30: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  10-01: 31 distinct timestamps, per psr min 31 max 31; res [np.int16(15)]
+  newest per psr: B01=01 07:30, B02=01 07:30, B04=01 07:30, B05=01 07:30, B11=01 07:30, B12=01 07:30, B14=01 07:30, B16=01 07:30, B19=01 07:30, B25=01 07:30
+
+MK: newest 2026-10-01 21:00:00+00:00 (lag 27.9 h)
+  09-29: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  09-30: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  10-01: 22 distinct timestamps, per psr min 22 max 22; res [np.int16(60)]
+  newest per psr: B02=01 21:00, B04=01 21:00, B06=01 21:00, B12=01 21:00, B16=01 21:00, B19=01 21:00
+
+AL: newest 2026-10-01 21:00:00+00:00 (lag 27.9 h)
+  09-29: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  09-30: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  10-01: 22 distinct timestamps, per psr min 22 max 22; res [np.int16(60)]
+  newest per psr: B06=01 21:00, B11=01 21:00, B12=01 21:00, B16=01 21:00
+
+BG: newest 2026-10-02 19:00:00+00:00 (lag 5.9 h)
+  09-29: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  09-30: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  10-01: 24 distinct timestamps, per psr min 24 max 24; res [np.int16(60)]
+  10-02: 20 distinct timestamps, per psr min 20 max 20; res [np.int16(60)]
+  newest per psr: B01=02 19:00, B02=02 19:00, B04=02 19:00, B05=02 19:00, B10=02 19:00, B11=02 19:00, B12=02 19:00, B14=02 19:00, B16=02 19:00, B17=02 19:00, B19=02 19:00, B25=02 19:00
+
+HU: newest 2026-10-03 00:15:00+00:00 (lag 0.6 h)
+  09-29: 96 distinct timestamps, per psr min 86 max 96; res [np.int16(15)]
+  09-30: 96 distinct timestamps, per psr min 40 max 96; res [np.int16(15)]
+  10-01: 96 distinct timestamps, per psr min 38 max 96; res [np.int16(15)]
+  10-02: 96 distinct timestamps, per psr min 66 max 96; res [np.int16(15)]
+  10-03: 2 distinct timestamps, per psr min 1 max 2; res [np.int16(15)]
+  newest per psr: B01=03 00:15, B02=03 00:15, B04=03 00:15, B05=03 00:15, B06=03 00:15, B09=03 00:15, B11=03 00:15, B12=03 00:15, B14=03 00:15, B15=03 00:15, B16=03 00:15, B17=03 00:15, B19=03 00:15, B20=03 00:15
+
+DE-LU: newest 2026-10-03 00:15:00+00:00 (lag 0.6 h)
+  09-29: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  09-30: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  10-01: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  10-02: 96 distinct timestamps, per psr min 96 max 96; res [np.int16(15)]
+  10-03: 2 distinct timestamps, per psr min 1 max 2; res [np.int16(15)]
+  newest per psr: B01=03 00:00, B02=03 00:00, B03=03 00:15, B04=03 00:00, B05=03 00:00, B06=03 00:00, B09=03 00:00, B10=03 00:00, B11=03 00:00, B12=03 00:00, B15=03 00:00, B16=03 00:00, B17=03 00:00, B18=03 00:00, B19=03 00:00, B20=03 00:00

@@ -40,6 +40,7 @@ ZONE_EIC = {
 # Countries added to the System tab from ENTSO-E: code -> (name, generation/load area EIC, price zones, neighbours)
 # neighbours: code -> EIC of the neighbouring area used for physical flows
 COUNTRIES = {
+    "ie": ("Ireland", "10Y1001A1001A59C", ["IE(SEM)"], {}),  # load and flow to GB are filled by pipeline/gbie_live.py
     "cz": ("Czechia", "10YCZ-CEPS-----N", ["CZ"], {"de": "10Y1001A1001A82H", "pl": "10YPL-AREA-----S", "sk": "10YSK-SEPS-----K", "at": "10YAT-APG------L"}),
     "sk": ("Slovakia", "10YSK-SEPS-----K", ["SK"], {"cz": "10YCZ-CEPS-----N", "pl": "10YPL-AREA-----S", "hu": "10YHU-MAVIR----U", "ua": "10Y1001C--000182"}),
     "hu": ("Hungary", "10YHU-MAVIR----U", ["HU"], {"sk": "10YSK-SEPS-----K", "at": "10YAT-APG------L", "si": "10YSI-ELES-----O", "hr": "10YHR-HEP------M",

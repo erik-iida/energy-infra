@@ -24,6 +24,8 @@ def test_gb_frames(monkeypatch):
     monkeypatch.setattr(G, "fetch_fuelhh", lambda a, b: fh)
     monkeypatch.setattr(G, "fetch_b1630", lambda a, b: ws)
     monkeypatch.setattr(G, "fetch_indo", lambda a, b: nd)
+    sp = pd.DataFrame({"ts": t, "sell": [100.0, 120.0], "buy": [100.0, 120.0], "niv": [50.0, -20.0]})
+    monkeypatch.setattr(G, "fetch_system_prices", lambda a, b: sp)
     f = G.gb_frames(A, B, datetime.now(timezone.utc))
     g = f["gen_actual"]
     assert set(g["psr"]) == {"B04", "B14", "B10", "B16", "B19", "B18"}  # transmission WIND is not double counted
@@ -37,7 +39,8 @@ def test_gb_frames(monkeypatch):
     act = ld[(ld.kind == "actual") & (ld.ts == t[0])]["mw"].iloc[0]
     assert act == 21000 + 8000 + (4000 - 3000)  # national demand + solar + embedded wind (B1630 wind - metered wind)
     assert (ld[ld.kind == "national_demand"]["mw"] == [21000, 21500]).all()
+    assert list(f["imb_price"]["sell"]) == [100.0, 120.0] and set(f["imb_price"]["currency"]) == {"GBP"}
     for ds, df in f.items():
-        assert {"ts", "res_min", "mw", "fetched"} <= set(df.columns)
+        assert {"ts", "res_min", "fetched"} <= set(df.columns)
         assert ({"from_zone", "to_zone"} if ds == "flows" else {"zone"}) <= set(df.columns)
         assert str(df["ts"].dt.tz) == "UTC"

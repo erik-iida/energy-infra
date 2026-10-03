@@ -449,7 +449,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - The System tab's generation table and hover list are ranked by current share; the stack order in the chart stays fixed (baseload to peaking).
 
 ## Great Britain and Ireland (Oct 3 2026)
-- `collector/gbie.py` + `.github/workflows/collect-gbie.yml` (daily 12:50 UTC, backfill every 2 h from BACKFILL_FROM, state `gbie_state.json`, same
+- `collector/gbie.py` + `.github/workflows/collect-gbie.yml` (daily 12:50 UTC, backfill every 2 h from BACKFILL_FROM, state `gbie_state_v2.json`, same
   concurrency group as the ENTSO-E collector). No keys. Probe log: data/raw/gbie/probe_log.txt (scripts/probe_gbie.py).
 - **GB** (zone `GB`, Elexon BMRS Insights `data.elexon.co.uk/bmrs/api/v1`, 30 min): `gen_actual` from FUELHH (CCGT+OCGT -> B04, coal B05, oil B06,
   PS B10, NPSHYD B11, nuclear B14, biomass B01, other B20) and B1630 `/generation/actual/per-type/wind-and-solar` (solar B16, wind on/offshore B19/B18,
@@ -465,8 +465,14 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   and are Elexon's own, an option later.
 - Effects: GB appears in the Data tab and the residual-load / interconnection metrics once the metrics job runs; FR, NL, BE, NO2, DK1 and IE(SEM) gain a GB
   border in the flow metrics (days without it are excluded by the border-set rule until the backfill has filled them).
-- Not done: System / Market tab (live 24 h) for GB and Ireland (needs a pipeline step like pipeline/entsoe.system), capacity vintage for GB/IE in
-  the capacity-factor tables, GB prices.
+- **Live System tab** (24 h): `pipeline/gbie_live.py` (called at the end of `pipeline/market.build`, never blocks the feed) builds the `gb` and `ie`
+  entries from the same Elexon / EirGrid calls (hourly means); IE generation comes from ENTSO-E (`entsoe.COUNTRIES["ie"]`), IE load from EirGrid
+  (read as Europe/Dublin), IE's flow to GB mirrors Elexon's. The page lists them as United Kingdom / Ireland (`SYSN`), credits in the System tab note.
+  Ireland shows the SEM day-ahead price from Energy-Charts; GB shows "n/a".
+- **GB prices**: `imb_price` store dataset (zone GB, ts, res_min 30, sell/buy GBP/MWh, niv MWh) = BMRS system (imbalance) prices, Elexon's own data.
+  The N2EX/APX Market Index (`datasets/MID`) is the only GB wholesale price in BMRS and is third-party data the BMRS licence does not cover: not
+  collected; add it only after Erik decides. The state file is `gbie_state_v2.json` (v1 predates `imb_price`).
+- Not done: Data tab shows `imb_price` (build_browse has no group for it yet); capacity vintage for GB/IE in the capacity-factor tables.
 
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide

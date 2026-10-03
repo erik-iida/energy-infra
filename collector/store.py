@@ -38,6 +38,8 @@ KEYS = {
     "farms_meta": ["farm_id"],
     # derived, one row per zone x CET day x metric (newsletter/registry.py defines the metric ids); `version` = registry.VERSION
     "metrics_daily": ["zone", "day", "metric"],
+    # GB imbalance (system) prices from Elexon BMRS: zone, ts, res_min, sell, buy (GBP/MWh), niv (MWh), currency
+    "imb_price": ["zone", "ts", "res_min"],
 }
 # datasets keyed by month of `ts`; farm_forecast by month of `issued`; farms_meta by month of the snapshot
 MONTH_COL = {"farm_forecast": "issued", "metrics_daily": "day"}

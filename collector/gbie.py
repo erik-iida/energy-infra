@@ -1,13 +1,14 @@
 """Great Britain and Ireland into the data store (zones "GB" and "IE(SEM)"), from open sources without keys.
 
     python -m collector.gbie daily      # last 4 days
-    python -m collector.gbie backfill   # whole months from BACKFILL_FROM, newest first, resumable (gbie_state.json)
+    python -m collector.gbie backfill   # whole months from BACKFILL_FROM, newest first, resumable (gbie_state_v2.json)
 
 Sources and licences (credit on the page):
   Elexon BMRS Insights API  data.elexon.co.uk/bmrs/api/v1   "Contains BMRS data (c) Elexon Limited copyright and database right <year>."
       FUELHH   half-hourly generation by fuel (transmission-metered) and interconnector flows   -> gen_actual, flows
       B1630    wind and solar generation per type, incl. the embedded estimate                  -> gen_actual
       INDO     initial national demand outturn                                                  -> load
+      system prices (SSP / SBP, GBP/MWh, per settlement period)                                 -> imb_price (the GB imbalance price)
   EirGrid Smart Grid Dashboard  smartgriddashboard.com/DashboardService.svc   "Supported by EirGrid Group Data" (EirGrid open data licence)
       demandactual (all-island = the SEM zone)                                                 -> load of IE(SEM)
 Not collected: the BMRS Market Index prices (N2EX / APX): exchange data that the BMRS open licence does not cover. GB has no
@@ -126,8 +127,23 @@ def fetch_indo(a: datetime, b: datetime) -> pd.DataFrame:
     return df[(df["ts"] >= a) & (df["ts"] < b)][["ts", "initialDemandOutturn"]]
 
 
+def fetch_system_prices(a: datetime, b: datetime) -> pd.DataFrame:
+    out = []
+    d = (a - timedelta(days=1)).replace(hour=0, minute=0)
+    while d < b:
+        out += _rows(_get(f"{EL}/balancing/settlement/system-prices/{d:%Y-%m-%d}", {"format": "json"}))
+        d += timedelta(days=1)
+    df = pd.DataFrame(out)
+    if df.empty:
+        return df
+    df["ts"] = pd.to_datetime(df["startTime"], utc=True)
+    df = df.drop_duplicates("ts", keep="last")
+    df = df[(df["ts"] >= a) & (df["ts"] < b)]
+    return df.rename(columns={"systemSellPrice": "sell", "systemBuyPrice": "buy", "netImbalanceVolume": "niv"})[["ts", "sell", "buy", "niv"]]
+
+
 def gb_frames(a: datetime, b: datetime, fetched: datetime) -> dict[str, pd.DataFrame]:
-    fh, ws, nd = fetch_fuelhh(a, b), fetch_b1630(a, b), fetch_indo(a, b)
+    fh, ws, nd, sp = fetch_fuelhh(a, b), fetch_b1630(a, b), fetch_indo(a, b), fetch_system_prices(a, b)
     gen, flows, load = [], [], []
     if not fh.empty:
         g = fh[fh["fuelType"].isin(FUEL_PSR)].copy()
@@ -164,7 +180,10 @@ def gb_frames(a: datetime, b: datetime, fetched: datetime) -> dict[str, pd.DataF
                 act["zone"], act["res_min"], act["kind"] = "GB", 30, "actual"
                 load.append(act)
     cat = lambda xs: pd.concat(xs, ignore_index=True).assign(fetched=fetched) if xs else pd.DataFrame()
-    return {"gen_actual": cat(gen), "flows": cat(flows), "load": cat(load)}
+    imb = pd.DataFrame()
+    if not sp.empty:
+        imb = sp.assign(zone="GB", res_min=30, currency="GBP", fetched=fetched)
+    return {"gen_actual": cat(gen), "flows": cat(flows), "load": cat(load), "imb_price": imb}
 
 
 # ------------------------------------------------------------------ EirGrid (all-island demand = zone IE(SEM))
@@ -253,7 +272,7 @@ def daily(store: Store, tz: str | None) -> None:
 
 def backfill(store: Store, tz: str | None) -> None:
     t0 = time.time()
-    st = store.read_json("gbie_state.json", {"done": []})
+    st = store.read_json("gbie_state_v2.json", {"done": []})
     done = set(st.get("done", []))
     now = datetime.now(timezone.utc)
     months = []
@@ -273,7 +292,7 @@ def backfill(store: Store, tz: str | None) -> None:
         if nxt <= now - timedelta(days=2):  # a finished month: never fetch again
             done.add(key)
             st["done"] = sorted(done)
-            store.write_json("gbie_state.json", st)
+            store.write_json("gbie_state_v2.json", st)
     log(f"backfill: {len(done)} months done, {len(months) - len(done)} to go")
 
 

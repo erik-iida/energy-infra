@@ -355,6 +355,17 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
         except Exception as ex:  # never block the feed
             market.setdefault("diag", {})["entsoe"] = {"error": repr(ex)[:300]}
             print(f"entsoe: failed {ex!r}")
+    try:  # Great Britain and Ireland: open sources without keys (Elexon BMRS, EirGrid); never blocks the feed
+        from . import gbie_live
+        gl = gbie_live.system(hours, market["system"].get("ie"))
+        for c, d in gl.items():
+            market["system"][c] = d
+        market["source"] += "; Great Britain: Contains BMRS data (c) Elexon Limited copyright and database right " + str(datetime.now(timezone.utc).year) + "; Ireland load: Supported by EirGrid Group Data"
+        market.setdefault("diag", {})["gbie"] = {"system": sorted(gl)}
+        print(f"gbie: system {sorted(gl)}")
+    except Exception as ex:
+        market.setdefault("diag", {})["gbie"] = {"error": repr(ex)[:300]}
+        print(f"gbie: failed {ex!r}")
     hist_pub = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
                 "note": "Capture price = generation-weighted day-ahead price using ACTUAL national offshore wind "
                         "output (Energy-Charts). DK blends DK1/DK2 prices by installed offshore MW per zone.",

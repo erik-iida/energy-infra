@@ -105,6 +105,20 @@ aside>*{flex-shrink:0}
 #flg .dt td{padding:3px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
 #flg .dt th:first-child,#flg .dt td:first-child{position:sticky;left:0;text-align:left;background:var(--panel);z-index:1;border-right:1px solid var(--line)}#flg .dt th:first-child{z-index:3}
 #flg .dt td.nu{color:var(--mut)}#flg .dt td.sh{color:var(--mut)}#flg .dt td.fd{font-weight:700;outline:2px solid var(--ink);outline-offset:-2px}
+#flg tr.fr{cursor:pointer}#flg tr.fr:hover td,#flg tr.fr.on td{background:var(--bg)}#flg tr.fr:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}#flg .chev{display:inline-block;width:14px;color:var(--mut);font-size:11px}
+#flg .dt td.fxc{position:static;padding:0;text-align:left;white-space:normal;border-right:0;background:var(--panel)}#flg .fxsolo{max-height:none;overflow:visible}
+#flg .fxp{position:sticky;left:0;box-sizing:border-box;padding:12px 14px 14px;display:flex;flex-direction:column;gap:10px;border-left:3px solid var(--acc);background:var(--panel);white-space:normal}
+#flg .fxhd{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:flex-start;position:relative;padding-right:34px}#flg .fxz{font-size:13px;color:var(--mut)}#flg .fxz b{color:var(--ink)}#flg .fxn{font-size:15px;font-weight:600}
+#flg .fxv .big{font-size:28px}#flg .fxs2{font-size:12.5px;line-height:1.4}#flg .fxx{position:absolute;right:0;top:0;width:28px;height:28px;padding:0;text-align:center;font-size:14px}
+#flg .fxq{display:inline-block;width:17px;height:17px;line-height:15px;text-align:center;border:1px solid var(--line);border-radius:50%;font-size:11px;color:var(--mut);cursor:help;font-weight:400}
+#flg .fxbad{background:rgba(234,179,8,.14);border:1px solid rgba(202,138,4,.6);border-radius:6px;padding:7px 10px;font-size:13px}
+#flg .fxch{overflow:hidden}#flg .fxch svg{display:block;max-width:100%;height:auto}#flg .fxlg{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--mut)}
+#flg .fxk{display:inline-flex;align-items:center;gap:5px}#flg .fxk i{display:inline-block;width:14px;height:10px;border-radius:2px}#flg .fxcap{font-size:13.5px}
+#flg .fxh4{font-size:14px;margin:4px 0 0}#flg .fxh4 .mut{font-size:12px;font-weight:400}#flg table.fxu{min-width:0;width:100%}#flg .fxu td,#flg .fxu th{position:static!important;border-right:0!important}
+#flg .fxu tr.ex td{background:var(--bg)}#flg .fxu tr.me td:first-child{font-weight:600}#flg .fxbar{display:inline-block;position:relative;width:56px;height:6px;border-radius:3px;background:linear-gradient(90deg,rgba(31,95,153,.45) 0 10%,var(--line) 10% 90%,rgba(194,65,12,.45) 90%);vertical-align:middle;margin-right:4px}
+#flg .fxbar i{position:absolute;top:-3px;width:2px;height:12px;background:var(--ink);margin-left:-1px}#flg .fxsrc{font-size:11.5px}
+#flg .fxuw{overflow-x:auto}#flg .fxu td:first-child{white-space:normal}
+@media(max-width:620px){#flg .fxv .big{font-size:22px}#flg .fxu{font-size:12px}#flg .fxu th:nth-child(4),#flg .fxu td:nth-child(4),#flg .fxu th:nth-child(5),#flg .fxu td:nth-child(5){display:none}#flg .fxu td,#flg .fxu th{padding:3px 6px}}
 #flg .pc{display:block;font-size:10px;color:var(--mut);font-weight:400}#flg .fh{color:#c2410c}#flg .fl{color:#1f5f99}
 #dat .vg{display:flex;flex-direction:column;gap:4px;margin-bottom:2px}#dat .vgh{display:flex;gap:8px;align-items:center;font-size:12px}
 #dat .vgh button{width:auto;padding:2px 8px;font-size:12px;border-radius:99px}#dat .vgh .gtog{font-weight:600;border:0;background:none;padding:2px 0;color:var(--ink)}
@@ -598,7 +612,7 @@ function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filte
  const cols=[["n","Farm"],["c","Country"],["inst","Installed"],["now","Now"],["cf","CF now"],["wl","Wake loss"],["cp","Capture 24 h"],["wc","Wake cost 24 h"],["u","Wind now"],["sp","Output ±24 h"],["sw","Wind ±24 h"],["avg","Last 24 h"],["nx","Next 24 h"]];
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
-function tab(t){S.tab=t;document.body.dataset.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+function tab(t){if(t!=="flg"&&/^#flags/.test(location.hash)){try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}}S.tab=t;document.body.dataset.tab=t;if(t!=="map")S.farm=null;document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
  $("stage").style.display=t==="map"?"block":"none";$("dash").style.display=t==="cmp"?"flex":"none";$("mkt").style.display=t==="mkt"?"flex":"none";$("sys").style.display=t==="sys"?"flex":"none";$("flg").style.display=t==="flg"?"flex":"none";$("nws").style.display=t==="nws"?"flex":"none";$("dat").style.display=t==="dat"?"flex":"none";draw()}
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
@@ -1023,16 +1037,24 @@ function flFmt(v,u){if(v==null)return"–";return v.toLocaleString("en",{maximum
 function flagsTab(){const el=$("flg");
  if(!FL.j){if(FL.err){el.innerHTML="<div class='feednote'>No flags published yet. This tab reads the signals computed from the data store (last 90 days per zone), which the deploy job exports once the collector has run (see DEVNOTES: Data store, Newsletter generator).</div>";return}
   el.innerHTML="<div class='feednote'>Loading…</div>";if(!FL.busy){FL.busy=1;dbJson("data/browse/flags.json").then(j=>{FL.j=j;FL.busy=0;if(S.tab==="flg")flagsTab()}).catch(()=>{FL.err=1;FL.busy=0;if(S.tab==="flg")flagsTab()})}return}
- const j=FL.j,foc=new Set(j.focus),keep=r=>FL.all||foc.has(r.zone),rl={};j.rules.forEach(r=>rl[r.metric]=r);
+ let j=FL.j;
+ if(FX.day&&FX.day!==FL.j.day){
+  if(!(FL.j.days||[]).includes(FX.day)){FX.gone=FX.day;FX.day=null;FX.open=null;fxHash()}
+  else if(FX.dj[FX.day])j=FX.dj[FX.day];
+  else{const d=FX.day;el.innerHTML="<div class='feednote'>Loading the flags for "+fxDayLbl(d,{year:"numeric"})+"…</div>";dbJson("data/browse/flags/"+d+".json").then(x=>{FX.dj[d]=x}).catch(()=>{FX.gone=d;FX.day=null;FX.open=null;fxHash()}).then(()=>{if(S.tab==="flg")flagsTab()});return}}
+ if(FX.open&&FX.open.d!==j.day)FX.open=null;
+ FX.cur=j;const latest=j.day===FL.j.day;
+ const foc=new Set(j.focus),keep=r=>FL.all||foc.has(r.zone),rl={};j.rules.forEach(r=>rl[r.metric]=r);
  const dl=new Date(j.day+"T12:00:00Z").toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric",timeZone:"UTC"});
  const fired=j.scan.filter(r=>r.side&&keep(r)).sort((a,b)=>b.score-a.score);
  const zr=z=>foc.has(z)?j.focus.indexOf(z):100,zones=[...new Set(j.scan.filter(keep).map(r=>r.zone))].sort((a,b)=>zr(a)-zr(b)||a.localeCompare(b));
  const by={};j.scan.forEach(r=>by[r.zone+"|"+r.metric]=r);
  const gate=r=>{const a=[];if(r.hi!=null)a.push("≥ P"+Math.round(r.hi*100));if(r.lo!=null)a.push("≤ P"+Math.round(r.lo*100));return a.join(" or ")+(r.min_abs!=null?" and |value| ≥ "+r.min_abs+" "+r.unit:"")};
- let h="<div class='feednote'>Flags for <b>"+dl+"</b>, the latest complete CET day. A flag fires when a zone's value sits in the tail of its <i>own</i> last "+j.window_days+" days (percentile P: share of those days at or below the value), with at least "+j.min_hist+" days of history and an absolute floor so a tiny number does not flag. The store holds "+j.hist_days+" days of prices so far, so percentiles firm up as the history backfills. Rules: "+j.rules.map(r=>r.label+" "+gate(r)).join("; ")+". Same signals as the newsletter (without the private spark spreads). Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>.</div>"
-  +"<div class='row'><label style='gap:6px;align-items:center'>Zones <select id='flz'><option value='f'"+(FL.all?"":" selected")+">CEE / SEE + DE-LU</option><option value='a'"+(FL.all?" selected":"")+">all zones in the store</option></select></label></div>";
+ let h=(FX.gone?"<div class='fxbad'>Context for <b>"+fxDayLbl(FX.gone,{year:"numeric"})+"</b> is no longer available: the Flags tab keeps the last "+((FL.j.days||[]).length||14)+" days. Showing the latest day instead.</div>":"")+"<div class='feednote'>Flags for <b>"+dl+"</b>"+(latest?", the latest complete CET day.":" (an earlier day; the latest is "+fxDayLbl(FL.j.day)+").")+" Click a signal to see the day behind it. A flag fires when a zone's value sits in the tail of its <i>own</i> last "+j.window_days+" days (percentile P: share of those days at or below the value), with at least "+j.min_hist+" days of history and an absolute floor so a tiny number does not flag. The store holds "+j.hist_days+" days of prices so far, so percentiles firm up as the history backfills. Rules: "+j.rules.map(r=>r.label+" "+gate(r)).join("; ")+". Same signals as the newsletter (without the private spark spreads). Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>.</div>"
+  +"<div class='row'>"+((FL.j.days||[]).length>1?"<label style='gap:6px;align-items:center'>Day <select id='fld'>"+FL.j.days.map((d,i)=>"<option value='"+d+"'"+(d===j.day?" selected":"")+">"+fxDayLbl(d,{weekday:"short"})+(i?"":" (latest)")+"</option>").join("")+"</select></label>":"")+"<label style='gap:6px;align-items:center'>Zones <select id='flz'><option value='f'"+(FL.all?"":" selected")+">CEE / SEE + DE-LU</option><option value='a'"+(FL.all?" selected":"")+">all zones in the store</option></select></label></div>";
  h+="<h3 class='flh'>Signals fired ("+fired.length+")</h3>";
- h+=fired.length?"<div class='dw' style='max-height:none'><table class='dt ft'><thead><tr><th>Zone</th><th style='text-align:left'>Signal</th><th>Value</th><th>Percentile</th><th>Typical (median · P10–P90)</th><th>Days in window</th></tr></thead><tbody>"+fired.map(r=>"<tr><td>"+r.zone+"</td><td style='text-align:left'>"+rl[r.metric].label+" — "+(r.side==="high"?"unusually <b class='fh'>high</b>":"unusually <b class='fl'>low</b>")+"</td><td>"+flFmt(r.value)+" <span class='mut'>"+rl[r.metric].unit+"</span></td><td>P"+Math.round(r.pct*100)+"</td><td>"+flFmt(r.median)+" · "+flFmt(r.p10)+"–"+flFmt(r.p90)+"</td><td>"+r.n_hist+"</td></tr>").join("")+"</tbody></table></div>":"<div class='feednote'>No metric left its own normal range for these zones on this day.</div>";
+ if(FX.open&&!fired.some(r=>r.zone===FX.open.z&&r.metric===FX.open.m))h+="<div class='dw fxsolo'><div class='fxp' id='fxp' role='region' aria-label='Context for "+FX.open.z+"'></div></div>";
+ h+=fired.length?"<div class='dw' style='max-height:none'><table class='dt ft'><thead><tr><th>Zone</th><th style='text-align:left'>Signal</th><th>Value</th><th>Percentile</th><th>Typical (median · P10–P90)</th><th>Days in window</th></tr></thead><tbody>"+fired.map(r=>{const o=!!(FX.open&&FX.open.z===r.zone&&FX.open.m===r.metric);return"<tr class='fr"+(o?" on":"")+"' tabindex='0' role='button' aria-expanded='"+o+"' data-z='"+r.zone+"' data-m='"+r.metric+"'><td><span class='chev' aria-hidden='true'>"+(o?"▾":"▸")+"</span>"+r.zone+"</td><td style='text-align:left'>"+rl[r.metric].label+" — "+(r.side==="high"?"unusually <b class='fh'>high</b>":"unusually <b class='fl'>low</b>")+"</td><td>"+flFmt(r.value)+" <span class='mut'>"+rl[r.metric].unit+"</span></td><td>P"+Math.round(r.pct*100)+"</td><td>"+flFmt(r.median)+" · "+flFmt(r.p10)+"–"+flFmt(r.p90)+"</td><td>"+r.n_hist+"</td></tr>"+(o?"<tr class='fxr'><td colspan='6' class='fxc'><div class='fxp' id='fxp' role='region' aria-label='Context for "+r.zone+" "+rl[r.metric].label+"'></div></td></tr>":"")}).join("")+"</tbody></table></div>":"<div class='feednote'>No metric left its own normal range for these zones on this day.</div>";
  h+="<h3 class='flh'>Overview, all metrics <span class='mut'>shade = percentile vs the zone's own last "+j.window_days+" days (orange high, blue low); bold = flag fired; grey = under "+j.min_hist+" days of history</span></h3>"
   +"<div class='dw'><table class='dt ft'><thead><tr><th>Zone</th>"+j.rules.map(r=>"<th>"+r.label+" <span class='mut'>"+r.unit+"</span></th>").join("")+"</tr></thead><tbody>"
   +zones.map(z=>"<tr><td>"+z+"</td>"+j.rules.map(r=>{const c=by[z+"|"+r.metric];if(!c)return"<td class='nu'>–</td>";
@@ -1040,7 +1062,169 @@ function flagsTab(){const el=$("flg");
     if(c.side)cl+=" fd";const tip=c.pct==null?"under "+j.min_hist+" days of history ("+c.n_hist+")":"P"+Math.round(c.pct*100)+" of the last "+c.n_hist+" days · median "+flFmt(c.median)+" · P10–P90 "+flFmt(c.p10)+"–"+flFmt(c.p90)+(c.status==="gated"?" · below the absolute floor, no flag":"");
     return"<td class='"+cl.trim()+"' style='"+st+"' title='"+tip+"'>"+flFmt(c.value)+(c.pct!=null?"<span class='pc'>P"+Math.round(c.pct*100)+"</span>":"")+"</td>"}).join("")+"</tr>").join("")+"</tbody></table></div>"
   +"<div class='mut' style='font-size:12px'>Capture rate = generation-weighted day-ahead price ÷ baseload; only the low side flags. TB2 / TB4: mean of the 2 / 4 highest minus the 2 / 4 lowest hourly day-ahead prices of the CET day. Generated "+j.generated.slice(0,16).replace("T"," ")+" UTC.</div>";
- el.innerHTML=h}
+ el.innerHTML=h;fxFill()}
+
+/* ---------- Flags drill-down: click a fired signal to see the CET day behind it (spec 1, step 1) ---------- */
+/* Hourly series: web/data/browse/ts/<zone>.json (the Data tab export). Older days: browse/flags/<day>.json (FLAG_DAYS kept). */
+const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0};
+const FXTECH=[["nuc","Nuclear"],["coal","Coal & lignite"],["bio","Biomass & waste"],["hyd","Hydro"],["oth","Other"],["gas","Gas"],["oil","Oil"],["won","Onshore wind"],["woff","Offshore wind"],["sol","Solar"]];
+const FXPLAIN={
+ tb4:"Average of the 4 priciest hours minus the 4 cheapest hours of the day: roughly what a 4-hour battery could earn from one charge-discharge cycle, before losses.",
+ tb2:"Average of the 2 priciest hours minus the 2 cheapest hours of the day: roughly what a 2-hour battery could earn from one cycle, before losses.",
+ neg_hours:"Hours with a day-ahead price below zero: generators paid to produce, usually because wind and solar exceeded what the zone could use or export.",
+ baseload:"The average day-ahead price over all hours of the day.",
+ top4:"The average of the 4 most expensive hours of the day.",
+ price_max:"The most expensive hour of the day.",price_min:"The cheapest hour of the day.",
+ cr_solar:"What solar earned per MWh (generation-weighted price) as a share of the day's average price. Low means solar produced mostly when power was cheap.",
+ cr_wind_onshore:"What onshore wind earned per MWh (generation-weighted price) as a share of the day's average price. Low means the wind blew mostly in cheap hours.",
+ cr_wind_offshore:"What offshore wind earned per MWh (generation-weighted price) as a share of the day's average price. Low means the wind blew mostly in cheap hours.",
+ res_peak:"Residual load is demand minus wind and solar. Its peak is the hour in which the rest of the system (gas, coal, hydro, imports, storage) had to cover the most.",
+ res_min:"The lowest residual load (demand minus wind and solar) of the day. Low or negative means wind and solar nearly covered, or exceeded, demand.",
+ res_ramp3:"The steepest 3-hour rise in residual load (demand minus wind and solar), typically in the evening when solar fades and other plants must ramp up.",
+ res_mean:"Average demand minus wind and solar: what the rest of the system had to cover.",
+ import_share:"Net imports as a share of demand. High means the zone leaned on its neighbours; negative means it exported.",
+ net_import:"Average net physical import over the zone's borders in the data store (negative = net export).",
+ gen_wind_onshore:"Average onshore wind output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
+ gen_wind_offshore:"Average offshore wind output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
+ gen_solar:"Average solar output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
+ vre_share:"Wind and solar generation as a share of demand.",
+ gas_share:"Gas-fired generation as a share of all generation.",
+ load_mean:"Average electricity demand over the day."};
+const FXUNU=["baseload","price_max","price_min","neg_hours","tb4","gen_wind_onshore","gen_wind_offshore","gen_solar","vre_share","gas_share","load_mean","res_mean","res_peak","res_min","import_share","net_import"];
+const FXCET=new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
+function fxHash(){const o=FX.open;try{history.replaceState(null,"",location.pathname+location.search+(o?"#flags/"+encodeURIComponent(o.z)+"/"+o.m+"/"+o.d:"#flags"))}catch(e){}}
+function fxFromHash(){const m=/^#flags(?:\/([^/]+)\/([a-z0-9_]+)\/(\d{4}-\d{2}-\d{2}))?$/.exec(location.hash);if(!m)return;
+ if(m[1]){FX.open={z:decodeURIComponent(m[1]),m:m[2],d:m[3]};FX.day=m[3];FX.gone=null}tab("flg")}
+function fxDayLbl(d,o){return new Date(d+"T12:00:00Z").toLocaleDateString("en-GB",Object.assign({day:"numeric",month:"short",timeZone:"UTC"},o||{}))}
+function fxN(v,d){if(v==null||!isFinite(v))return"–";if(Math.abs(v)<.05)v=0;return v.toLocaleString("en",{maximumFractionDigits:d!=null?d:Math.abs(v)>=100?0:1})}
+function fxPrep(t){const n=t.v.length?t.v[0].length:0,c={};t.cols.forEach((m,k)=>c[m.id]={m,v:t.v[k]});
+ const day=[],hr=[];for(let i=0;i<n;i++){const s=FXCET.format(new Date((t.t0+i*t.step)*1000));day.push(s.slice(0,10));hr.push(s.slice(11,13))}
+ return{t0:t.t0,step:t.step,n,c,day,hr}}
+function fxLast(T,ids){let L=-1;ids.forEach(id=>{const v=T.c[id].v;for(let i=v.length-1;i>L;i--)if(v[i]!=null){L=i;break}});return L}
+function fxWhen(T,i){const t=T.t0+i*T.step,s=FXCET.format(new Date(t*1000));return{lbl:fxDayLbl(s.slice(0,10))+" "+s.slice(11,13)+":00 CET",ago:Math.max(0,Math.round((Date.now()/1000-t-T.step)/3600))}}
+function fxTicks(a,b){if(!(b>a)){b=a+1}const raw=(b-a)/4,p=Math.pow(10,Math.floor(Math.log10(raw))),st=[1,2,2.5,5,10].map(k=>k*p).find(s=>s>=raw);
+ const out=[];for(let v=Math.floor(a/st)*st;v<b+st*.999;v+=st)out.push(+v.toFixed(10));return out}
+function fxPath(v,x,y){let d="",pen=false;v.forEach((q,i)=>{if(q==null){pen=false;return}d+=(pen?"L":"M")+x(i).toFixed(1)+" "+y(q).toFixed(1);pen=true});return d}
+/* which hours to shade for each signal type (spec table); a = hourly values of the CET day */
+function fxEvents(m,P,R){const ix=(a,f)=>a.map((v,i)=>[v,i]).filter(q=>q[0]!=null&&f(q[0]));
+ if(m==="tb4"||m==="tb2"){const k=m==="tb4"?4:2,s=ix(P,()=>1).sort((p,q)=>p[0]-q[0]||p[1]-q[1]);if(s.length<2*k)return{};
+  const lo=s.slice(0,k),hi=s.slice(-k),mh=hi.reduce((a,q)=>a+q[0],0)/k,ml=lo.reduce((a,q)=>a+q[0],0)/k;
+  return{hi:hi.map(q=>q[1]),lo:lo.map(q=>q[1]),hiL:k+" priciest hours",loL:k+" cheapest hours",spread:mh-ml,mh,ml,k}}
+ if(m==="neg_hours")return{lo:ix(P,v=>v<0).map(q=>q[1]),loL:"price below zero"};
+ if(m==="res_peak"||m==="res_min"){const s=ix(R,()=>1);if(!s.length)return{};s.sort((p,q)=>p[0]-q[0]);const i=(m==="res_peak"?s[s.length-1]:s[0])[1];
+  return m==="res_peak"?{hi:[i],hiL:"highest residual load"}:{lo:[i],loL:"lowest residual load"}}
+ if(m==="res_ramp3"){let b=null;for(let i=3;i<R.length;i++)if(R[i]!=null&&R[i-3]!=null&&(b==null||R[i]-R[i-3]>b[0]))b=[R[i]-R[i-3],i];
+  return b?{hi:[b[1]-3,b[1]-2,b[1]-1,b[1]],hiL:"steepest 3-hour rise",rise:b[0]}:{}}
+ return{}}
+function fxSeries(T,idx){const pick=id=>T.c[id]?idx.map(i=>T.c[id].v[i]):null,has=a=>a&&a.some(v=>v!=null);
+ const gen={},fc={};Object.values(T.c).forEach(c=>{const id=c.m.id;
+  if(/^g\|.*\|gen$/.test(id)){const k=c.m.tech||"oth";gen[k]=gen[k]||idx.map(()=>null);idx.forEach((i,j)=>{if(c.v[i]!=null)gen[k][j]=(gen[k][j]||0)+Math.max(0,c.v[i])})}
+  if(/^f\|/.test(id)&&["sol","won","woff"].includes(c.m.tech)){const k=c.m.tech;fc[k]=fc[k]||idx.map(()=>null);idx.forEach((i,j)=>{if(c.v[i]!=null)fc[k][j]=(fc[k][j]||0)+Math.max(0,c.v[i])})}});
+ const ga=Object.values(gen).some(has),src=ga?"actual":Object.values(fc).some(has)?"forecast":null,G=ga?gen:fc;
+ const st=FXTECH.filter(t=>G[t[0]]&&has(G[t[0]])).map(t=>({k:t[0],name:t[1],v:G[t[0]]}));
+ let L=pick("l|actual"),Ls="actual";if(!has(L)){L=pick("l|national_demand");Ls="national demand"}if(!has(L)){L=pick("l|da_forecast");Ls="day-ahead forecast"}if(!has(L))L=null;
+ const vre=j=>["won","woff","sol"].reduce((a,k)=>a+(G[k]&&G[k][j]!=null?G[k][j]:0),0);
+ const R=L&&src?L.map((v,j)=>v==null||!st.some(s=>s.v[j]!=null)?null:v-vre(j)):null;
+ const pc=T.c["p|price"];return{P:pick("p|price"),Pu:pc?pc.m.unit.replace("EUR","€").replace("GBP","£"):"€/MWh",st,src,L,Ls,R,
+  gIds:Object.keys(T.c).filter(id=>/^g\|.*\|gen$/.test(id)),lIds:T.c["l|actual"]?["l|actual"]:[]}}
+function fxChart(X,W){const n=X.lab.length,sm=W<520,H=Math.round(Math.min(340,Math.max(230,W*.38))),ml=sm?40:56,mr=sm?42:58,mt=24,mb=26,iw=W-ml-mr,ih=H-mt-mb,bw=iw/n,fs=sm?10:11;
+ const num=a=>(a||[]).filter(v=>v!=null),tot=X.lab.map((_,i)=>X.st.reduce((a,s)=>a+(s.v[i]||0),0));
+ const Rax=X.showR?num(X.R):[];let lt=fxTicks(Math.min(0,...Rax),Math.max(1,...tot,...num(X.L),...Rax)*1.03);const y0=lt[0],y1=lt[lt.length-1];
+ const pv=num(X.P).concat(X.refs.map(r=>r.v));let pt=pv.length?fxTicks(Math.min(0,...pv),Math.max(...pv)*1.03+.01):[0,1];const p0=pt[0],p1=pt[pt.length-1];
+ const x=i=>ml+(i+.5)*bw,y=v=>mt+ih-(v-y0)/(y1-y0)*ih,yp=v=>mt+ih-(v-p0)/(p1-p0)*ih,mw=v=>Math.abs(v)>=1e4?fxN(v/1000,0)+"k":fxN(v,0);
+ let s="<svg class='fxsv' width='"+W+"' height='"+H+"' viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Hourly generation, load and day-ahead price'>";
+ const shade=(a,c)=>(a||[]).forEach(i=>{s+="<rect x='"+(ml+i*bw).toFixed(1)+"' y='"+mt+"' width='"+bw.toFixed(1)+"' height='"+ih+"' fill='"+c+"'/>"});
+ shade(X.ev.hi,"rgba(194,65,12,.17)");shade(X.ev.lo,"rgba(31,95,153,.17)");
+ lt.forEach(v=>{s+="<line x1='"+ml+"' x2='"+(W-mr)+"' y1='"+y(v).toFixed(1)+"' y2='"+y(v).toFixed(1)+"' stroke='var(--line)' stroke-width='"+(v===0?1:.5)+"'/><text x='"+(ml-5)+"' y='"+(y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='"+fs+"' fill='var(--mut)'>"+mw(v)+"</text>"});
+ pt.forEach(v=>{s+="<text x='"+(W-mr+5)+"' y='"+(yp(v)+3.5).toFixed(1)+"' font-size='"+fs+"' fill='var(--acc)'>"+fxN(v,0)+"</text>"});
+ s+="<text x='"+(ml-5)+"' y='"+(mt-12)+"' text-anchor='end' font-size='"+fs+"' fill='var(--mut)'>MW</text><text x='"+(W-mr+5)+"' y='"+(mt-12)+"' font-size='"+fs+"' fill='var(--acc)'>"+X.Pu+"</text>";
+ const gap=bw>8?1.5:.5,op=X.src==="forecast"?" fill-opacity='.55'":"";
+ X.lab.forEach((_,i)=>{let acc=0;X.st.forEach(q=>{const v=q.v[i];if(!v)return;s+="<rect x='"+(ml+i*bw+gap/2).toFixed(1)+"' y='"+y(acc+v).toFixed(1)+"' width='"+Math.max(.5,bw-gap).toFixed(1)+"' height='"+Math.max(0,y(acc)-y(acc+v)).toFixed(1)+"' fill='var(--m-"+q.k+")'"+op+"/>";acc+=v})});
+ if(X.R&&X.showR)s+="<path d='"+fxPath(X.R,x,y)+"' fill='none' stroke='var(--ink)' stroke-width='1.4' stroke-dasharray='5 3'/>";
+ if(X.L)s+="<path d='"+fxPath(X.L,x,y)+"' fill='none' stroke='var(--ink)' stroke-width='1.8'"+(X.Ls==="day-ahead forecast"?" stroke-dasharray='2 2'":"")+"/>";
+ X.refs.forEach(r=>{s+="<line x1='"+ml+"' x2='"+(W-mr)+"' y1='"+yp(r.v).toFixed(1)+"' y2='"+yp(r.v).toFixed(1)+"' stroke='"+r.c+"' stroke-width='1.3' stroke-dasharray='"+r.dash+"'/><text x='"+(W-mr-4)+"' y='"+(yp(r.v)-4).toFixed(1)+"' text-anchor='end' font-size='"+fs+"' fill='"+r.c+"' paint-order='stroke' stroke='var(--panel)' stroke-width='3'>"+r.l+"</text>"});
+ if(X.P){s+="<path d='"+fxPath(X.P,x,yp)+"' fill='none' stroke='var(--acc)' stroke-width='2.2'/>";X.P.forEach((v,i)=>{if(v!=null&&bw>12)s+="<circle cx='"+x(i).toFixed(1)+"' cy='"+yp(v).toFixed(1)+"' r='2.2' fill='var(--acc)'/>"})}
+ const every=n>30?6:bw<18?3:bw<34?2:1;X.lab.forEach((l,i)=>{if(i%every===0)s+="<text x='"+x(i).toFixed(1)+"' y='"+(H-8)+"' text-anchor='middle' font-size='"+fs+"' fill='var(--mut)'>"+l+"</text>"});
+ s+="<line class='fxcr' x1='0' x2='0' y1='"+mt+"' y2='"+(mt+ih)+"' stroke='var(--mut)' stroke-width='1' visibility='hidden'/>";
+ s+="<rect class='fxov' x='"+ml+"' y='"+mt+"' width='"+iw+"' height='"+ih+"' fill='transparent'/></svg>";
+ FX.X=Object.assign(X,{ml,bw,W});return s}
+function fxHover(e,sv){const X=FX.X;if(!X)return;const r=sv.getBoundingClientRect(),px=(e.clientX-r.left)*X.W/r.width,i=Math.floor((px-X.ml)/X.bw),cr=sv.querySelector(".fxcr");
+ if(i<0||i>=X.lab.length){cr.setAttribute("visibility","hidden");$("dtip").style.display="none";return}
+ const cx=(X.ml+(i+.5)*X.bw).toFixed(1);cr.setAttribute("x1",cx);cr.setAttribute("x2",cx);cr.setAttribute("visibility","visible");
+ const t=[fxDayLbl(X.d,{weekday:"short"})+" "+X.lab[i]+":00 CET"+(X.ev.hi&&X.ev.hi.includes(i)?" · "+X.ev.hiL:X.ev.lo&&X.ev.lo.includes(i)?" · "+X.ev.loL:"")];
+ if(X.P)t.push("Day-ahead price "+fxN(X.P[i],1)+" "+X.Pu);if(X.L)t.push("Load "+fxN(X.L[i],0)+" MW"+(X.Ls!=="actual"?" ("+X.Ls+")":""));
+ if(X.R)t.push("Residual load "+fxN(X.R[i],0)+" MW");X.st.slice().reverse().forEach(q=>{if(q.v[i])t.push(q.name+" "+fxN(q.v[i],0)+" MW"+(X.src==="forecast"?" (forecast)":""))});dtip(e,t.join("\n"))}
+function fxHead(j,o){const r=j.scan.find(q=>q.zone===o.z&&q.metric===o.m),ru=(j.rules||[]).find(q=>q.metric===o.m)||{label:o.m,unit:""},u=ru.unit==="EUR/MWh"?"€/MWh":ru.unit;
+ const fl=typeof ZONEFLAG!=="undefined"&&ZONEFLAG[o.z]?flagHTML(ZONEFLAG[o.z],9)+" ":"",name=ru.label.charAt(0).toUpperCase()+ru.label.slice(1);
+ let h="<div class='fxhd'><div class='fxt'><div class='fxz'>"+fl+"<b>"+o.z+"</b> · "+fxDayLbl(o.d,{weekday:"short",year:"numeric"})+"</div><div class='fxn'>"+name
+  +(r&&r.side?" — unusually <b class='"+(r.side==="high"?"fh":"fl")+"'>"+r.side+"</b>":"")+" <span class='fxq' tabindex='0' title='"+(FXPLAIN[o.m]||"").replace(/'/g,"&#39;")+"' aria-label='What this means'>?</span></div></div>";
+ if(r){const pct=r.pct!=null?Math.round(r.pct*100):null;h+="<div class='fxv'><span class='big'>"+fxN(r.value)+"</span> <span class='mut'>"+u+"</span></div><div class='fxs2 mut'>"
+  +(pct==null?"Under "+j.min_hist+" days of history ("+r.n_hist+"), no percentile yet":"P"+pct+": "+(r.side==="low"||(!r.side&&pct<50)?"lower than on "+(100-pct)+" %":"higher than on "+pct+" %")+" of the last "+r.n_hist+" days in "+o.z+"<br>Typical "+fxN(r.median)+" "+u+" (P10–P90 "+fxN(r.p10)+"–"+fxN(r.p90)+")")+"</div>"}
+ else h+="<div class='fxs2 mut'>No value for this metric in "+o.z+" on this day.</div>";
+ return h+"<button class='fxx' aria-label='Close' title='Close (Esc)'>✕</button></div>"}
+function fxUnusual(j,o){const rows=[];const cr={};(j.context_rules||[]).forEach(r=>cr[r.metric]=r);const rl={};(j.rules||[]).forEach(r=>rl[r.metric]=r);
+ FXUNU.forEach(m=>{const r=(j.context||[]).find(q=>q.zone===o.z&&q.metric===m)||j.scan.find(q=>q.zone===o.z&&q.metric===m),d=cr[m]||rl[m];if(r&&d)rows.push([m,r,d])});
+ if(!rows.length)return"<div class='feednote'>No daily metrics for "+o.z+" on this day yet (generation or load not published).</div>";
+ rows.sort((a,b)=>(b[1].pct==null?-1:Math.abs(b[1].pct-.5))-(a[1].pct==null?-1:Math.abs(a[1].pct-.5)));
+ return"<div class='fxuw'><table class='dt fxu'><thead><tr><th style='text-align:left'>Metric</th><th>Value</th><th>Percentile</th><th>Typical (median · P10–P90)</th><th style='text-align:left'>Reading</th></tr></thead><tbody>"
+  +rows.map(([m,r,d])=>{const u=d.unit==="EUR/MWh"?"€/MWh":d.unit,p=r.pct,ext=p!=null&&(p>=.9||p<=.1),cl=p==null?"":p>=.9?"fh":p<=.1?"fl":"";
+   const bar=p==null?"<span class='mut'>–</span>":"<span class='fxbar'><i style='left:"+(p*100).toFixed(0)+"%'></i></span> P"+Math.round(p*100);
+   const rd=p==null?"<span class='mut'>under "+j.min_hist+" days of history</span>":ext?"<b class='"+cl+"'>unusually "+(p>=.9?"high":"low")+"</b>":"<span class='mut'>normal range</span>";
+   return"<tr class='"+(ext?"ex":"")+(m===o.m?" me":"")+"' title='"+(FXPLAIN[m]||"").replace(/'/g,"&#39;")+"'><td style='text-align:left'>"+d.label.charAt(0).toUpperCase()+d.label.slice(1)+(m===o.m?" <span class='mut'>(this flag)</span>":"")+"</td><td>"+fxN(r.value)+" <span class='mut'>"+u+"</span></td><td>"+bar+"</td><td>"+fxN(r.median)+" · "+fxN(r.p10)+"–"+fxN(r.p90)+"</td><td style='text-align:left'>"+rd+"</td></tr>"}).join("")+"</tbody></table></div>"}
+function fxBody(j,o,T,W){let h=fxHead(j,o);if(T.err)return h+"<div class='feednote'>The hourly series for "+o.z+" could not be loaded.</div>";
+ const idx=[];for(let i=0;i<T.n;i++)if(T.day[i]===o.d)idx.push(i);
+ if(!idx.length)return h+"<div class='feednote'>No hourly data for "+o.z+" on this day in the export (it keeps the last 30 days).</div>"+fxUnusual(j,o);
+ const Q=fxSeries(T,idx),n=idx.length,cov=a=>a?a.filter(v=>v!=null).length:0,bad=[];
+ const gN=Q.src==="actual"?idx.filter((_,k)=>Q.st.some(q=>q.v[k]!=null)).length:0,gl=Q.gIds.length?fxLast(T,Q.gIds):-1;
+ if(gN<n){const w=gl>=0?fxWhen(T,gl):null;bad.push("<b>"+o.z+" generation: "+(gN?gN+" of "+n+" hours published":"not published yet for this day")+"</b>"+(w?" · latest reading "+w.lbl+", <b>"+w.ago+" h old</b>":"")+(Q.src==="forecast"?". The chart shows the day-ahead wind and solar forecast instead (lighter bars).":""))}
+ const lN=Q.Ls==="actual"?cov(Q.L):0;if(lN<n&&o.z!=="GB"){const ll=Q.lIds.length?fxLast(T,Q.lIds):-1,w=ll>=0?fxWhen(T,ll):null;bad.push("<b>Load: "+(lN?lN+" of "+n+" hours":"actual not published yet")+"</b>"+(w?" · latest reading "+w.lbl+", "+w.ago+" h old":"")+(Q.L&&Q.Ls!=="actual"?" (dotted line: "+Q.Ls+")":""))}
+ const pN=cov(Q.P);if(pN<n)bad.push("<b>Day-ahead price: "+pN+" of "+n+" hours</b>");
+ if(bad.length)h+="<div class='fxbad'>"+bad.join("<br>")+"</div>";
+ const ev=Q.P||Q.R?fxEvents(o.m,Q.P||[],Q.R||[]):{},refs=[],dm=cov(Q.P)?Q.P.filter(v=>v!=null).reduce((a,v)=>a+v,0)/cov(Q.P):null,mc=(id,k)=>T.c[id]?T.c[id].v[idx[k||0]]:null;
+ const r=j.scan.find(q=>q.zone===o.z&&q.metric===o.m);
+ if(o.m==="baseload"&&dm!=null){refs.push({v:dm,l:"day mean "+fxN(dm,1),c:"var(--acc)",dash:"6 3"});if(r&&r.median!=null&&Q.Pu==="€/MWh")refs.push({v:r.median,l:"90-day median "+fxN(r.median,1),c:"var(--mut)",dash:"2 3"})}
+ const cap={cr_solar:"capture_solar",cr_wind_onshore:"capture_wind_onshore",cr_wind_offshore:"capture_wind_offshore"}[o.m];
+ if(cap&&dm!=null){const cp=mc("m|"+cap);refs.push({v:dm,l:"baseload "+fxN(dm,1),c:"var(--mut)",dash:"2 3"});if(cp!=null)refs.push({v:cp,l:"capture price "+fxN(cp,1),c:"var(--acc)",dash:"6 3"})}
+ const lab=idx.map((i,k)=>T.hr[i]+(k&&T.hr[idx[k-1]]===T.hr[i]?"′":""));
+ const showR=/^res_/.test(o.m);
+ h+="<div class='fxch'>"+fxChart({d:o.d,lab,st:Q.st,src:Q.src,L:Q.L,Ls:Q.Ls,R:Q.R,showR,P:Q.P,Pu:Q.Pu,ev,refs},W)+"</div>";
+ const chip=(c,l,ln)=>"<span class='fxk'><i style='"+(ln?"height:0;border-top:"+ln+" "+c:"background:"+c)+"'></i>"+l+"</span>";
+ let lg=Q.st.slice().reverse().map(q=>chip("var(--m-"+q.k+")",q.name+(Q.src==="forecast"?" (forecast)":""))).join("");
+ if(Q.L)lg+=chip("var(--ink)","Load"+(Q.Ls!=="actual"?" ("+Q.Ls+")":""),"2px "+(Q.Ls==="day-ahead forecast"?"dotted":"solid"));
+ if(Q.R&&showR)lg+=chip("var(--ink)","Residual load (load − wind − solar)","2px dashed");
+ if(Q.P)lg+=chip("var(--acc)","Day-ahead price ("+Q.Pu+", right axis)","2px solid");
+ if(ev.hi&&ev.hi.length)lg+=chip("rgba(194,65,12,.35)",ev.hiL);if(ev.lo&&ev.lo.length)lg+=chip("rgba(31,95,153,.35)",ev.loL);
+ h+="<div class='fxlg'>"+lg+"</div>";
+ let cap2="";if(ev.k)cap2="The "+ev.k+" priciest hours averaged <b>"+fxN(ev.mh,1)+"</b> "+Q.Pu+", the "+ev.k+" cheapest <b>"+fxN(ev.ml,1)+"</b>: a spread of <b data-chk='"+ev.spread.toFixed(2)+"'>"+fxN(ev.spread,1)+" "+Q.Pu+"</b>"+(Q.Pu!=="€/MWh"?" (the flag itself is computed in €/MWh)":"")+".";
+ else if(o.m==="neg_hours"&&ev.lo)cap2="<b>"+ev.lo.length+"</b> hours below zero"+(ev.lo.length?", from "+lab[ev.lo[0]]+":00 to "+lab[ev.lo[ev.lo.length-1]]+":59 CET":"")+".";
+ else if(o.m==="res_ramp3"&&ev.rise!=null)cap2="Residual load rose by <b>"+fxN(ev.rise,0)+" MW</b> between "+lab[ev.hi[0]]+":00 and "+lab[ev.hi[3]]+":00 CET.";
+ else if((o.m==="res_peak"||o.m==="res_min")&&(ev.hi||ev.lo)){const i=(ev.hi||ev.lo)[0];cap2="Residual load "+(o.m==="res_peak"?"peaked":"bottomed out")+" at <b>"+fxN(Q.R[i],0)+" MW</b> at "+lab[i]+":00 CET.";}
+ else if(cap&&dm!=null&&mc("m|"+cap)!=null)cap2=(o.m==="cr_solar"?"Solar":o.m==="cr_wind_onshore"?"Onshore wind":"Offshore wind")+" earned <b>"+fxN(mc("m|"+cap),1)+"</b> "+Q.Pu+" on average (generation-weighted) against a day mean of <b>"+fxN(dm,1)+"</b> "+Q.Pu+": it produced mostly in the "+(mc("m|"+cap)<dm?"cheaper":"pricier")+" hours.";
+ else if(o.m==="baseload"&&dm!=null)cap2="Day mean <b>"+fxN(dm,1)+"</b> "+Q.Pu+(r&&r.median!=null?" against a 90-day median of <b>"+fxN(r.median,1)+"</b> €/MWh":"")+".";
+ else if(o.m==="import_share")cap2="Cross-border flows per neighbour follow in the next step; the net import is in the table below.";
+ if(cap2)h+="<div class='fxcap'>"+cap2+(Q.src==="forecast"&&showR?" Residual load here uses the wind and solar <i>forecast</i>.":"")+"</div>";
+ h+="<h4 class='fxh4'>What else was unusual in "+o.z+" that day <span class='mut'>percentile vs the zone's own last "+j.window_days+" days; ≥ P90 or ≤ P10 highlighted</span></h4>"+fxUnusual(j,o);
+ h+="<div class='mut fxsrc'>Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (day-ahead prices, actual generation per type, actual load, day-ahead wind and solar forecast), hourly means of the native resolution, CET day."
+  +(o.z==="GB"?" Great Britain: Contains BMRS data © Elexon Limited copyright and database right "+new Date().getFullYear()+" (<a href='https://www.elexon.co.uk/data/balancing-mechanism-reporting-agent/copyright-licence-bmrs-data/' style='color:inherit'>BMRS open data licence</a>); price = Market Index Data (APX / EPEX SPOT trades via Elexon BMRS), shown in £/MWh, metrics in €/MWh at the ECB rate.":"")
+  +" Generation is clipped at zero; pumped-storage consumption is not shown.</div>";
+ return h}
+function fxFill(){const p=$("fxp");if(!p||!FX.open||!FX.cur)return;const o=FX.open,z=o.z,j=FX.cur;
+ const dw=p.closest(".dw");p.style.width=dw?Math.max(280,dw.clientWidth-2)+"px":"";
+ const W=Math.max(280,(dw?dw.clientWidth-2:p.clientWidth)-30),T=FX.ts[z];
+ if(!T){p.innerHTML=fxHead(j,o)+"<div class='feednote'>Loading the hourly series for "+z+"…</div>";
+  if(!FX.busy[z]){FX.busy[z]=1;dbJson("data/browse/ts/"+encodeURIComponent(z)+".json").then(t=>{FX.ts[z]=fxPrep(t)}).catch(()=>{FX.ts[z]={err:1}}).then(()=>{FX.busy[z]=0;if(S.tab==="flg")fxFill()})}return}
+ p.innerHTML=fxBody(j,o,T,W)}
+function fxToggle(z,m,d){const o=FX.open;FX.open=o&&o.z===z&&o.m===m&&o.d===d?null:{z,m,d};fxHash();flagsTab();
+ const row=document.querySelector("#flg tr.fr[data-z='"+z+"'][data-m='"+m+"']");if(row){row.focus({preventScroll:true});if(FX.open)row.scrollIntoView({block:"nearest"})}}
+$("flg").addEventListener("click",e=>{if(e.target.closest(".fxx")){const o=FX.open;FX.open=null;fxHash();flagsTab();if(o){const r=document.querySelector("#flg tr.fr[data-z='"+o.z+"'][data-m='"+o.m+"']");if(r)r.focus()}return}
+ const tr=e.target.closest("tr.fr");if(tr&&FX.cur)fxToggle(tr.dataset.z,tr.dataset.m,FX.cur.day)});
+$("flg").addEventListener("keydown",e=>{const tr=e.target.closest("tr.fr");if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();fxToggle(tr.dataset.z,tr.dataset.m,FX.cur.day)}});
+$("flg").addEventListener("mousemove",e=>{const sv=e.target.closest("svg.fxsv");if(sv)fxHover(e,sv)});
+$("flg").addEventListener("mouseout",e=>{const sv=e.target.closest("svg.fxsv");if(sv&&!sv.contains(e.relatedTarget)){$("dtip").style.display="none";const c=sv.querySelector(".fxcr");if(c)c.setAttribute("visibility","hidden")}});
+$("flg").addEventListener("change",e=>{if(e.target.id==="fld"){FX.day=e.target.value===(FL.j&&FL.j.day)?null:e.target.value;FX.open=null;FX.gone=null;fxHash();flagsTab()}});
+addEventListener("keydown",e=>{if(e.key==="Escape"&&S.tab==="flg"&&FX.open){const o=FX.open;FX.open=null;fxHash();flagsTab();const r=document.querySelector("#flg tr.fr[data-z='"+o.z+"'][data-m='"+o.m+"']");if(r)r.focus()}});
+addEventListener("resize",()=>{if(S.tab==="flg"&&FX.open){clearTimeout(FX.rz);FX.rz=setTimeout(fxFill,150)}});
+addEventListener("hashchange",fxFromHash);setTimeout(fxFromHash,0);  // deep link #flags/<zone>/<metric>/<day>, once main() has set up the page
 
 /* ---------- Data tab: one flexible time-series browser (any variables x any zones) plus the installed-capacity view ---------- */
 /* web/data/browse/{index.json, ts/<zone>.json, capacity.json}, built from the `store` release by scripts/build_browse.py */

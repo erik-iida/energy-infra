@@ -13,6 +13,8 @@ import pandas as pd
 
 CET = "Europe/Brussels"
 TECH = {"B16": "solar", "B18": "wind_offshore", "B19": "wind_onshore"}
+GAS = "B04"      # fossil gas
+TOTAL = "TOTAL"  # synthetic psr: hourly sum over every generation type (slim_gen)
 MIN_PRICE_HOURS = 23
 MIN_CAPTURE_HOURS = 20
 
@@ -51,6 +53,20 @@ def hourly_generation(ga: pd.DataFrame) -> pd.DataFrame:
     d["tech"] = d["psr"].map(TECH)
     d["h"] = d["ts"].dt.floor("h")
     return d.groupby(["zone", "tech", "h"], as_index=False)["mw"].mean()
+
+
+def slim_gen(ga: pd.DataFrame) -> pd.DataFrame:
+    """The gen_actual rows the metrics need: solar, wind and gas at native resolution plus one synthetic `TOTAL` row per
+    zone and UTC hour (hourly mean per generation type, clipped at 0, summed over the types). Keeps the 90-day window
+    small and is idempotent (input that already has TOTAL rows is returned unchanged)."""
+    if ga is None or ga.empty or (ga["psr"] == TOTAL).any():
+        return ga
+    g = ga[ga["dir"] == "gen"]
+    keep = g[g["psr"].isin(list(TECH) + [GAS])]
+    h = g.assign(h=g["ts"].dt.floor("h"), mw=g["mw"].clip(lower=0)).groupby(["zone", "psr", "h"])["mw"].mean()
+    tot = h.groupby(level=["zone", "h"]).sum().reset_index().rename(columns={"h": "ts"})
+    tot = tot.assign(psr=TOTAL, dir="gen", res_min=60)
+    return pd.concat([keep, tot], ignore_index=True)
 
 
 def hourly_load(ld: pd.DataFrame) -> pd.DataFrame:
@@ -163,6 +179,36 @@ def residual_metrics(hl: pd.DataFrame, hg: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=cols)
 
 
+def system_metrics(ga: pd.DataFrame, hg: pd.DataFrame, hl: pd.DataFrame | None) -> pd.DataFrame:
+    """gen_solar / gen_wind_onshore / gen_wind_offshore (daily mean MW), gas_share (gas / all generation, energy) and
+    load_mean per zone and CET day; each needs >= MIN_CAPTURE_HOURS hours of its inputs. These describe the day (the
+    'what else was unusual' table on the Flags tab); no signal rule uses them."""
+    cols = ["zone", "day", "metric", "value"]
+    parts = []
+    if hg is not None and not hg.empty:
+        g = hg.assign(day=_local_day(hg["h"]), mw=hg["mw"].clip(lower=0))
+        a = g.groupby(["zone", "tech", "day"])["mw"].agg(["mean", "count"]).reset_index()
+        a = a[a["count"] >= MIN_CAPTURE_HOURS]
+        parts.append(pd.DataFrame({"zone": a["zone"], "day": a["day"], "metric": "gen_" + a["tech"], "value": a["mean"]}))
+    if ga is not None and not ga.empty and "psr" in ga:
+        d = ga[(ga["dir"] == "gen") & ga["psr"].isin([GAS, TOTAL])]
+        if not d.empty:
+            d = d.assign(h=d["ts"].dt.floor("h"), mw=d["mw"].clip(lower=0))
+            w = d.groupby(["zone", "h", "psr"])["mw"].mean().unstack("psr")
+            if GAS in w and TOTAL in w:
+                w = w.dropna(subset=[GAS, TOTAL]).reset_index()
+                w["day"] = _local_day(w["h"])
+                a = w.groupby(["zone", "day"]).agg(gas=(GAS, "sum"), tot=(TOTAL, "sum"), n=("h", "nunique")).reset_index()
+                a = a[(a["n"] >= MIN_CAPTURE_HOURS) & (a["tot"] > 0)]
+                parts.append(pd.DataFrame({"zone": a["zone"], "day": a["day"], "metric": "gas_share", "value": a["gas"] / a["tot"]}))
+    if hl is not None and not hl.empty:
+        l = hl.assign(day=_local_day(hl["h"])).groupby(["zone", "day"])["mw"].agg(["mean", "count"]).reset_index()
+        l = l[l["count"] >= MIN_CAPTURE_HOURS]
+        parts.append(pd.DataFrame({"zone": l["zone"], "day": l["day"], "metric": "load_mean", "value": l["mean"]}))
+    parts = [p for p in parts if not p.empty]
+    return pd.concat(parts, ignore_index=True)[cols] if parts else pd.DataFrame(columns=cols)
+
+
 def flow_metrics(hf: pd.DataFrame, hl: pd.DataFrame) -> pd.DataFrame:
     """net_import (mean / max / min) and import_share per zone and CET day, import positive. A day counts only when the
     zone's set of borders with >= MIN_CAPTURE_HOURS hours of data equals the set seen on at least half of the days in the
@@ -207,6 +253,7 @@ def all_metrics(da: pd.DataFrame, ga: pd.DataFrame, srmc: pd.Series | None = Non
     hl = hourly_load(ld) if ld is not None else None
     if hl is not None and not hl.empty:
         parts.append(residual_metrics(hl, hg))
+    parts.append(system_metrics(slim_gen(ga), hg, hl))
     if fl is not None and not fl.empty:
         parts.append(flow_metrics(hourly_flows(fl), hl if hl is not None else pd.DataFrame()))
     if srmc is not None:

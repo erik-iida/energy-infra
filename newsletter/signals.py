@@ -44,6 +44,21 @@ RULES = [
 ]
 
 
+# Display-only rows (never fire: no hi / lo): the 'what else was unusual' table under a flag on the site's Flags tab.
+CONTEXT = [
+    Rule("price_max", "highest hourly price", "EUR/MWh", hi=None),
+    Rule("price_min", "lowest hourly price", "EUR/MWh", hi=None),
+    Rule("gen_wind_onshore", "onshore wind output", "MW", hi=None),
+    Rule("gen_wind_offshore", "offshore wind output", "MW", hi=None),
+    Rule("gen_solar", "solar output", "MW", hi=None),
+    Rule("vre_share", "wind + solar share of load", "%", hi=None),
+    Rule("gas_share", "gas share of generation", "%", hi=None),
+    Rule("load_mean", "load, daily mean", "MW", hi=None),
+    Rule("res_mean", "residual load, daily mean", "MW", hi=None),
+    Rule("net_import", "net import, daily mean", "MW", hi=None),
+]
+
+
 def percentile(hist: pd.Series, value: float) -> float:
     return float((hist <= value).mean())
 

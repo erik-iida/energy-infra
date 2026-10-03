@@ -5,6 +5,8 @@
     ts/<zone>.json     {t0: first hour (unix s), step: 3600, cols: [{id, name, grp, tech, unit}], v: [[...] per col]}
     capacity.json      IRENA installed capacity per country + 30-day capacity factor (see capacity_export)
     flags.json         signals and the metric overview for the latest complete CET day (newsletter.signals)
+    flags/<day>.json   the same for each of the last FLAG_DAYS complete CET days (deep links on the Flags tab), plus
+                       flags/index.json listing them; every file also carries `context` (display-only metrics, signals.CONTEXT)
 
 One file per zone holding every variable, so the page can combine any variables and zones: hourly means of the
 native-resolution rows (the store keeps 15/30/60-minute data untouched), UTC hour starts, last 30 days plus the days
@@ -37,10 +39,10 @@ TECH_KEY = {"nuclear": "nuc", "fossil_brown_coal_lignite": "coal", "fossil_hard_
             "fossil_gas": "gas", "fossil_oil": "oil", "wind_onshore": "won", "wind_offshore": "woff", "solar": "sol",
             "hydro_run_of_river": "hyd", "hydro_water_reservoir": "hyd", "hydro_pumped_storage": "hyd",
             "biomass": "bio", "waste": "bio"}
-G_PRICE, G_RES, G_GEN, G_FC, G_LOAD, G_FLOW = (
-    "Prices & daily spreads", "Residual load & interconnection (daily)", "Actual generation",
+G_PRICE, G_RES, G_SYS, G_GEN, G_FC, G_LOAD, G_FLOW = (
+    "Prices & daily spreads", "Residual load & interconnection (daily)", "Generation & load (daily)", "Actual generation",
     "Day-ahead forecast (wind & solar)", "Load", "Cross-border flows")
-GROUPS = [G_PRICE, G_RES, G_GEN, G_FC, G_LOAD, G_FLOW]
+GROUPS = [G_PRICE, G_RES, G_SYS, G_GEN, G_FC, G_LOAD, G_FLOW]
 DEFAULT_ON = {"p|price", "m|tb2", "m|tb4", "l|actual", "g|B16|gen", "g|B19|gen", "g|B18|gen"}
 # daily metrics (newsletter/registry.py) repeated on every hour of the CET day; spark spreads are private and not in the registry export
 PUB = [m for m in R.METRICS if not m.private]
@@ -133,24 +135,39 @@ def capacity_export(ga: pd.DataFrame, now: datetime) -> dict | None:
 FLAG_FOCUS = ["PL", "CZ", "SK", "HU", "RO", "BG", "SI", "HR", "RS", "GR", "BA", "ME", "MK", "EE", "LV", "LT", "DE-LU"]
 
 
-def flags_export(now: datetime) -> dict | None:
-    """Signals of the newsletter framework for the latest complete CET day, plus the overview of every rule metric per
-    zone (value and percentile against the zone's own last 90 days). Spark spreads are never part of this file."""
-    from newsletter import build as NB  # reads the store again, 93 days
-    day = pd.Timestamp(now).tz_convert(M.CET).tz_localize(None).normalize() - pd.Timedelta(days=1)
-    da, ga, ld, fl = NB.load_window_all(day)
+FLAG_DAYS = 14  # how long a deep link (#flags/<zone>/<metric>/<day>) keeps working
+SCAN_KEYS = ("zone", "metric", "side", "value", "pct", "median", "p10", "p90", "n_hist", "status", "score")
+CTX_KEYS = ("zone", "metric", "value", "pct", "median", "p10", "p90", "n_hist", "status")
+
+
+def flags_export(now: datetime, days: int = FLAG_DAYS) -> list[dict]:
+    """Signals of the newsletter framework for each of the last `days` complete CET days (newest first), plus the
+    overview of every rule metric per zone (value and percentile against the zone's own last 90 days) and the
+    display-only context metrics. Spark spreads are never part of these files."""
+    from newsletter import build as NB  # reads the store again: 90-day window + `days`
+    last = pd.Timestamp(now).tz_convert(M.CET).tz_localize(None).normalize() - pd.Timedelta(days=1)
+    da, ga, ld, fl = NB.load_window_all(last, back=SG.WINDOW_DAYS + 3 + days)
     if da.empty:
-        return None
+        return []
     metrics = M.all_metrics(da, ga, None, ld, fl)
     rules = [r for r in SG.RULES if not r.metric.startswith("spark")]
-    scan = SG.scan(metrics, day, rules)
-    hist_days = int(metrics.loc[metrics["metric"] == "baseload", "day"].nunique())
-    return {"day": day.strftime("%Y-%m-%d"), "generated": now.isoformat(timespec="seconds"), "window_days": SG.WINDOW_DAYS,
-            "min_hist": SG.MIN_HIST, "hist_days": hist_days, "focus": FLAG_FOCUS,
-            "rules": [{"metric": r.metric, "label": r.label, "unit": r.unit, "hi": r.hi, "lo": r.lo, "min_abs": r.min_abs}
-                      for r in rules],
-            "scan": [{k: r[k] for k in ("zone", "metric", "side", "value", "pct", "median", "p10", "p90", "n_hist", "status", "score")}
-                     for r in scan]}
+    base = metrics[metrics["metric"] == "baseload"]
+    out = []
+    for k in range(days):
+        day = last - pd.Timedelta(days=k)
+        scan = SG.scan(metrics, day, rules)
+        if not scan:
+            continue
+        ctx = SG.scan(metrics, day, SG.CONTEXT)
+        hist_days = int(base.loc[base["day"] <= day, "day"].nunique())
+        out.append({"day": day.strftime("%Y-%m-%d"), "generated": now.isoformat(timespec="seconds"),
+                    "window_days": SG.WINDOW_DAYS, "min_hist": SG.MIN_HIST, "hist_days": hist_days, "focus": FLAG_FOCUS,
+                    "rules": [{"metric": r.metric, "label": r.label, "unit": r.unit, "hi": r.hi, "lo": r.lo, "min_abs": r.min_abs}
+                              for r in rules],
+                    "scan": [{k2: r[k2] for k2 in SCAN_KEYS} for r in scan],
+                    "context_rules": [{"metric": r.metric, "label": r.label, "unit": r.unit} for r in SG.CONTEXT],
+                    "context": [{k2: r[k2] for k2 in CTX_KEYS} for r in ctx]})
+    return out
 
 
 def main() -> None:
@@ -226,7 +243,7 @@ def main() -> None:
 
     def vkey(m):
         i, g = m["id"], m["grp"]
-        k = (0 if i == "p|price" else 1 + dk.index(i[2:])) if g in (G_PRICE, G_RES) else \
+        k = (0 if i == "p|price" else 1 + dk.index(i[2:])) if g in (G_PRICE, G_RES, G_SYS) else \
             (i.split("|")[1], i.endswith("cons")) if g == G_GEN else \
             (0 if i.endswith("actual") else 1) if g == G_LOAD else m["name"] if g == G_FLOW else i
         return (order[g], str(k) if not isinstance(k, int) else f"{k:03d}")
@@ -238,9 +255,15 @@ def main() -> None:
     if capx:
         (OUT / "capacity.json").write_text(json.dumps(capx, separators=(",", ":")))
     try:
-        fl = flags_export(now)
-        if fl:
-            (OUT / "flags.json").write_text(json.dumps(fl, separators=(",", ":")))
+        fls = flags_export(now)
+        if fls:
+            days = [f["day"] for f in fls]
+            for f in fls:
+                f["days"] = days
+                (OUT / "flags").mkdir(exist_ok=True)
+                (OUT / "flags" / f"{f['day']}.json").write_text(json.dumps(f, separators=(",", ":")))
+            (OUT / "flags.json").write_text(json.dumps(fls[0], separators=(",", ":")))
+            (OUT / "flags" / "index.json").write_text(json.dumps({"days": days, "keep_days": FLAG_DAYS}))
     except Exception as e:  # the flags tab is optional; the data browser must still ship
         print(f"flags export failed: {type(e).__name__}: {e}")
     n = sum(1 for _ in OUT.rglob("*.json"))

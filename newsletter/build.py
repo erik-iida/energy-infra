@@ -34,7 +34,8 @@ def months_between(a: pd.Timestamp, b: pd.Timestamp) -> list[str]:
 
 
 def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """da_price and solar/wind gen_actual for [day-back, day+2) CET days, filtered while reading (gen_actual is big)."""
+    """da_price and gen_actual for [day-back, day+2) CET days, slimmed while reading (gen_actual is big): solar, wind, gas
+    and the hourly total over all types (metrics.slim_gen)."""
     a = (day - pd.Timedelta(days=back)).tz_localize(M.CET).tz_convert("UTC")
     b = (day + pd.Timedelta(days=2)).tz_localize(M.CET).tz_convert("UTC")
     st = Store()
@@ -45,7 +46,7 @@ def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.Da
             da.append(d[(d["ts"] >= a) & (d["ts"] < b)])
         g = st.read("gen_actual", m)
         if g is not None:
-            ga.append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen") & g["psr"].isin(M.TECH)])
+            ga.append(M.slim_gen(g[(g["ts"] >= a) & (g["ts"] < b)]))
     cat = lambda xs: pd.concat(xs, ignore_index=True) if xs else pd.DataFrame()
     return cat(da), cat(ga)
 
@@ -78,7 +79,7 @@ def load_range(a: pd.Timestamp, b: pd.Timestamp):
             out["da"].append(d[(d["ts"] >= a) & (d["ts"] < b)])
         g = st.read("gen_actual", m)
         if g is not None:
-            out["ga"].append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen") & g["psr"].isin(M.TECH)])
+            out["ga"].append(M.slim_gen(g[(g["ts"] >= a) & (g["ts"] < b)]))
         l = st.read("load", m)
         if l is not None:
             out["ld"].append(l[(l["ts"] >= a) & (l["ts"] < b) & (l["kind"] == "actual")])

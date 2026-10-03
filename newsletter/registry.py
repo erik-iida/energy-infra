@@ -12,6 +12,7 @@ Classification (the `family` field):
   capture        what a technology earned                capture price, capture rate (capture price / baseload)
   residual_load  load the dispatchable fleet, storage and imports must cover: load - wind - solar
   interconnection physical cross-border flows of the zone as a whole
+  generation     what ran and how much was used: daily mean wind / solar output, gas share, load (context, no signal rules)
   fuel_spread    PRIVATE (uses yfinance data): never exported, never stored, never published
 
 Each metric states the minimum number of hours a day needs (`min_hours`) so only complete days exist, and `direction`:
@@ -22,7 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-VERSION = 2  # 1 = price + capture metrics, 2 = + residual load + interconnection
+VERSION = 3  # 1 = price + capture metrics, 2 = + residual load + interconnection, 3 = + generation / load / gas share
 
 
 @dataclass(frozen=True)
@@ -97,12 +98,28 @@ METRICS = [
     Metric("import_share", "Net import as share of load", "interconnection", "%", "daily mean net import / daily mean load",
            ("flows", "load"), 20, "zone leans more on imports", scale=100),
 ]
+# --- generation and load: context for the Flags tab ("what else was unusual"). Daily mean output instead of a capacity
+# factor: installed capacity is close to constant over the 90-day window, so its percentile equals the CF percentile.
+G = ("gen_actual",)
+METRICS += [
+    Metric("gen_wind_onshore", "Onshore wind output, daily mean", "generation", "MW", "mean hourly onshore wind (B19) generation",
+           G, 20, "windier day onshore", tech="won"),
+    Metric("gen_wind_offshore", "Offshore wind output, daily mean", "generation", "MW", "mean hourly offshore wind (B18) generation",
+           G, 20, "windier day offshore", tech="woff"),
+    Metric("gen_solar", "Solar output, daily mean", "generation", "MW", "mean hourly solar (B16) generation", G, 20,
+           "sunnier day", tech="sol"),
+    Metric("gas_share", "Gas share of generation", "generation", "%",
+           "fossil gas (B04) generation / generation of all types, energy over the hours with both", G, 20,
+           "gas set more of the supply", scale=100, tech="gas"),
+    Metric("load_mean", "Load, daily mean", "generation", "MW", "mean hourly actual load", ("load",), 20, "higher demand"),
+]
 BY_ID = {m.id: m for m in METRICS}
-FAMILIES = ["price_level", "storage_spread", "price_shape", "capture", "residual_load", "interconnection"]
+FAMILIES = ["price_level", "storage_spread", "price_shape", "capture", "residual_load", "interconnection", "generation"]
 # site grouping of the families in the Data tab
 GROUP_OF = {"price_level": "Prices & daily spreads", "storage_spread": "Prices & daily spreads",
             "price_shape": "Prices & daily spreads", "capture": "Prices & daily spreads",
-            "residual_load": "Residual load & interconnection (daily)", "interconnection": "Residual load & interconnection (daily)"}
+            "residual_load": "Residual load & interconnection (daily)", "interconnection": "Residual load & interconnection (daily)",
+            "generation": "Generation & load (daily)"}
 
 
 def public_ids() -> list[str]:

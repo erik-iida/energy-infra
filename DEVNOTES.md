@@ -512,7 +512,43 @@ sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.t
 - Not done: Data tab group / site layer for unit output and the REPD sites (build_browse), a GB plant map layer, capacity factors per wind farm
   (unit_output / REPD capacity), comparison of B1610 with PyWake output for UK farms.
 
+## Flags drill-down, step 1 (Oct 3 2026)
+Spec: project doc `claude/spec-1-flags-drilldown.md` (rev. 2). Click a row in "Signals fired" (or Enter/Space on it) to
+open a panel under it; Esc, the ✕ or a second click closes it. Deep link `#flags/<zone>/<metric>/<YYYY-MM-DD>` (zone
+URI-encoded, e.g. `IE(SEM)`), kept 14 days; older links show "no longer available" and fall back to the latest day.
+A link to a signal that did not fire, or to a zone outside the zone filter, opens the panel above the table (`.fxsolo`).
+- **Data**: no new export script. The panel reads `browse/ts/<zone>.json` (Data tab, 30 days) and slices the CET day in
+  the browser (Intl, Europe/Brussels; DST days have 23/25 bars, the repeated hour is labelled `02′`).
+  `build_browse.flags_export` now returns the last `FLAG_DAYS` = 14 complete CET days (one store read of 90 + 3 + 14
+  days, one `all_metrics`, one `scan` per day) -> `browse/flags/<day>.json` + `browse/flags/index.json`; `flags.json`
+  stays the latest day. Each file also has `days` (for the Day selector) and `context` / `context_rules`
+  (`signals.CONTEXT`: display-only rules with hi = lo = None, so they never fire). ~120 KB per day raw, ~17 KB gzipped.
+- **Panel**: header (plain signal name, value, percentile sentence, typical range, "?" = `FXPLAIN` one-liner), data-age
+  box (generation / load hours published, latest reading, "N h old"; missing generation -> day-ahead wind and solar
+  forecast as lighter bars; missing actual load -> dotted day-ahead load forecast), main chart (stacked generation by
+  site technology colours, load, residual load for res_* signals, price on the right axis, event shading, hover
+  crosshair via `dtip`), a caption in plain numbers, "What else was unusual" (`FXUNU` order, sorted by distance from
+  P50, ≥ P90 / ≤ P10 highlighted), sources (ENTSO-E; BMRS line for GB).
+- **Shading** (`fxEvents`): TB2/TB4 top/bottom k hourly prices (ties: earliest hour); negative hours; max/min residual
+  hour; the 4 bars of the steepest 3-hour rise; baseload and capture rates draw reference lines instead (day mean,
+  90-day median; capture price from `m|capture_*` in the zone file). Checked: the shaded hours reproduce TB2/TB4 in the
+  flag files for all 1,198 zone-days of a real export (max diff 0.055 €/MWh, rounding) and on a synthetic 25-hour DST day.
+  GB's chart is in £/MWh (ts file), the flag in €/MWh; the caption says so.
+- **New metrics** (registry VERSION 3, family `generation`, Data tab group "Generation & load (daily)"): `gen_solar`,
+  `gen_wind_onshore`, `gen_wind_offshore` (daily mean MW: over 90 days capacity is ~constant, so the percentile equals the
+  capacity-factor percentile), `gas_share` (B04 / all generation, energy), `load_mean`. `metrics.slim_gen` keeps solar,
+  wind, gas and one synthetic `TOTAL` row per zone-hour (hourly mean per type, clipped at 0, summed) while reading
+  gen_actual (`newsletter.build.load_window` / `load_range`), so the 90-day window stays small. No signal rules for them.
+  Run the metrics workflow with mode=all once so `metrics_daily` gets them.
+- Local test: `STORE_DIR=<last 5 months of da_price, gen_actual, load, flows> python scripts/build_browse.py`, serve web/,
+  open `#flags/RO/tb4/<day>`. Store assets download with `gh api -H "Accept: application/octet-stream"
+  repos/erik-iida/energy-infra/releases/assets/<id>` (gh release download needs GraphQL, blocked in the cloud session).
+
 ## Known gaps / next ideas
+- Flags drill-down step 2: cross-border flows per neighbour (diverging bars + net position), neighbour price lines
+  (GB labelled Market Index; zones outside the store "price n/a"), neighbour strip with mix bars and click-to-swap
+  ("back to <zone>"), shared crosshair across charts. Then Phase 2: "copy context as text" first, congestion (NTC),
+  starred candidates. Measure the neighbour load (one ts file is 90-340 KB raw); add `browse/day/<day>.json` if slow.
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).
 - Newsletter: first hand-assembled briefs from `newsletter.build`, then the 15-user test; UA-IPS via data/fx.json.

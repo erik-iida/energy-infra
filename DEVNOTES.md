@@ -444,6 +444,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - The right-hand pane (`aside`) is hidden on every tab except the map; the content uses the full width. A country selector with flag (`#C2`, `#csf`, `csSync()`)
   sits top right of the tab row on those tabs and drives the same `S.c` / `go()` as the map's selector (a globe for World, regions and groups).
   Flags / Newsletter / Data ignore the country (they have their own zone filters).
+- Country pickers (`flagSel`): the map pane's `#C` and the header `#C2` are drawn as a searchable list with flags (native select kept hidden as the source of truth; `.value=` writes resync the button). Regions/groups get a globe. Flags for CN, JP, KR, TW, VN, US, KP added to `FLAGS`/`CFLAG`; a new country needs an entry in both.
 - "Sources and disclaimer" (`#footd`) moved from the pane to the bottom of the page; it is still hidden on the map tab.
 - The System tab's generation table and hover list are ranked by current share; the stack order in the chart stays fixed (baseload to peaking).
 

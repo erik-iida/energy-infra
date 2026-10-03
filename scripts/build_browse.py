@@ -73,6 +73,10 @@ class Frames:
 
     def add(self, zone: str, w: pd.DataFrame, meta: dict) -> None:
         w = w.reindex(self.idx).dropna(axis=1, how="all")
+        unknown = [c for c in w.columns if c not in meta]
+        if unknown:  # a new series kind in the store must not take the whole export down
+            print(f"browse: no metadata for {unknown} ({zone}); skipped")
+            w = w.drop(columns=unknown)
         if w.empty:
             return
         cur = self.frames.get(zone)
@@ -200,6 +204,7 @@ def main() -> None:
     d = read(st, "load", months, a, b)
     if not d.empty:
         mt = {"l|actual": meta("l|actual", "Load, actual", G_LOAD, "", "MW"),
+              "l|national_demand": meta("l|national_demand", "Load, national demand (GB: transmission view)", G_LOAD, "", "MW"),
               "l|da_forecast": meta("l|da_forecast", "Load, day-ahead forecast", G_LOAD, "", "MW")}
         for z, w in hourly(d, lambda x: "l|" + x["kind"], "mw").items():
             F.add(z, w, mt)

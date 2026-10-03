@@ -497,6 +497,10 @@ sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.t
   2018), NESO embedded wind and solar forecast, Elexon day-ahead national demand and wind/solar forecasts. NESO licence: "Supported by National Energy SO Open
   Data" (commercial use and redistribution allowed). Not done: the embedded forecast archive (5 M rows a year), Elexon NDF/TSDF history, Carbon Intensity
   API regional data (CC BY 4.0; regions are DNO areas).
+- **Empty Data / Flags tabs (Oct 3, 15:49 CEST)**: `scripts/build_browse.py` crashed (`KeyError 'l|national_demand'`, the new GB load kind had no metadata) in the 12:06 UTC
+  deploy; the step is `continue-on-error`, so the deploy went on and the 3-hour cache kept the empty export for every later deploy. Fixed: metadata for the
+  kind, unknown series kinds are skipped with a message instead of crashing, and a hourly.yml step drops incomplete output so it is never cached.
+  Lesson: when the store gains a new series kind, run `STORE_DIR=<last 3 months of the store> python scripts/build_browse.py` before pushing.
 - **GitHub API rate limit** (found Oct 3): every monthly store write costs several GitHub API calls, and the Actions token allows ~1000 calls per hour for the
   whole repository (all workflows share it). The first full gb_hist backfill (214 monthly files) exhausted it after ~190 files; further writes (and other jobs)
   then fail with `HTTP 403: API rate limit exceeded for installation`. Hence `GBHIST_MAX_MONTHS` (40 per run, only months missing in the store) and run logs:

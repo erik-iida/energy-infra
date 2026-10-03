@@ -94,6 +94,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python scripts/build_newsletter_site.py --days 3
+      # continue-on-error hides a failed export, and the 3-hour cache would then keep an empty Data tab until the next bucket:
+      # drop incomplete output so it is neither deployed from cache nor saved to it
+      - name: Drop an incomplete Data tab export
+        if: steps.browsecache.outputs.cache-hit != 'true'
+        run: |
+          if [ ! -s web/data/browse/index.json ]; then
+            echo "::warning::Data tab export failed; not caching it"
+            rm -rf web/data/browse web/data/newsletter
+          fi
 
       # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.
       - name: Split public / private site

@@ -585,6 +585,15 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - "What else was unusual": a value only counts as unusual when it is also beyond P90 / P10 (ties: 0 negative hours on a
   zone whose history is all zeros used to read P98 "unusually high").
 
+## CARTO basemap key, newsletter number format (Oct 3 2026)
+- CARTO raster tiles now need a key (keyless tiles carry an "API key required" watermark). Tiles come from
+  `basemaps.cartocdn.com/rastertiles/<style>/{z}/{x}/{y}[@2x].png?key=...` (styles checked from Erik's browser:
+  voyager, voyager_nolabels, light_all, light_nolabels, dark_all, dark_nolabels; positron / dark_matter do not exist there).
+  The key is client-side (visible in the served page) but kept out of git: index.html has `__CARTO_KEY__`, hourly.yml
+  replaces it from the **CARTO_KEY** Actions secret; no secret = old keyless host (watermark). Voyager added as a basemap.
+- Newsletter: whole numbers everywhere (`build._i`, half up), correlations keep two decimals; "Baseload" column is
+  "Avg. power price", "% of load" is "% of consumption" (text too).
+
 ## Known gaps / next ideas
 - Flags drill-down Phase 2: "copy context as text" first, congestion marker once NTC is in the store, starred story
   candidates (browser-only).

@@ -16,6 +16,8 @@ What Erik wants the daily brief to be, and what feedback has taught so far. A ne
   use the highest hourly output in 90 days as the capacity proxy (label it so).
 - Daily table: Zone | Baseload | TB2 | TB4 | Neg. h | Wind % of load | Solar % of load. 30-day table: shares, CF vs peak,
   30-day capture rates, baseload, TB4, negative hours.
+- Whole numbers only (no decimals) in text and tables; correlation coefficients keep two decimals. Say "average power
+  price" (column "Avg. power price"), not baseload; "% of consumption", not "% of load" (Erik, 3 Oct 2026).
 - Lead with the take, only what the data supports. Under five minutes to read. Prices €/MWh.
 - Public text never contains fuel prices or spark spreads (yfinance data is private); the site build runs with `--no-fuel`.
 - CEE/SEE zones first; Western zones only as reference or as the other side of a decoupled border.

@@ -448,6 +448,26 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - "Sources and disclaimer" (`#footd`) moved from the pane to the bottom of the page; it is still hidden on the map tab.
 - The System tab's generation table and hover list are ranked by current share; the stack order in the chart stays fixed (baseload to peaking).
 
+## Great Britain and Ireland (Oct 3 2026)
+- `collector/gbie.py` + `.github/workflows/collect-gbie.yml` (daily 12:50 UTC, backfill every 2 h from BACKFILL_FROM, state `gbie_state.json`, same
+  concurrency group as the ENTSO-E collector). No keys. Probe log: data/raw/gbie/probe_log.txt (scripts/probe_gbie.py).
+- **GB** (zone `GB`, Elexon BMRS Insights `data.elexon.co.uk/bmrs/api/v1`, 30 min): `gen_actual` from FUELHH (CCGT+OCGT -> B04, coal B05, oil B06,
+  PS B10, NPSHYD B11, nuclear B14, biomass B01, other B20) and B1630 `/generation/actual/per-type/wind-and-solar` (solar B16, wind on/offshore B19/B18,
+  incl. the embedded estimate; FUELHH WIND is not used, it would double count); `flows` from FUELHH interconnector fuels (INTFR+INTELEC+INTIFA2 -> FR,
+  INTNED NL, INTNEM BE, INTNSL NO2, INTVKL DK1, INTEW+INTIRL+INTGRNL -> IE(SEM)), directed rows, links to one neighbour summed; `load`: kind `actual`
+  = INDO national demand + embedded solar + embedded wind (B1630 wind - FUELHH WIND), kind `national_demand` = raw INDO. These are estimates.
+- **Ireland** (zone `IE(SEM)`): prices and generation already came from ENTSO-E; `load` actual from the EirGrid Smart Grid Dashboard `demandactual`
+  region ALL (all-island = the SEM zone, 15 min). The dashboard often answers 503: `_get` retries 6 times with backoff. Its time stamps are Irish local
+  time (the collector checks this each run by correlating its wind with ENTSO-E B19 and refuses to write load if neither reading correlates > 0.9).
+- **Licences**: BMRS open data licence, attribution "Contains BMRS data (c) Elexon Limited copyright and database right <year>" (credited in the Data tab);
+  EirGrid open data licence, "Supported by EirGrid Group Data" (credited). **Not collected**: BMRS Market Index (MID, N2EX/APX prices): third-party exchange
+  data outside the BMRS licence. GB therefore has no day-ahead price in the store; system (imbalance) prices exist in BMRS (`balancing/settlement/system-prices`)
+  and are Elexon's own, an option later.
+- Effects: GB appears in the Data tab and the residual-load / interconnection metrics once the metrics job runs; FR, NL, BE, NO2, DK1 and IE(SEM) gain a GB
+  border in the flow metrics (days without it are excluded by the border-set rule until the backfill has filled them).
+- Not done: System / Market tab (live 24 h) for GB and Ireland (needs a pipeline step like pipeline/entsoe.system), capacity vintage for GB/IE in
+  the capacity-factor tables, GB prices.
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

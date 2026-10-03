@@ -429,6 +429,17 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - Not done: the draft is generated once per deploy from the store (no per-user login, no live comments, feedback is not shown back on the
   page); an email/LinkedIn export; residual load / net import sentences in the generated brief (listed in STYLE.md).
 
+## System tab: late TSO data, hover line, residual load (Oct 3 2026)
+- **Late-reporting fix** (`sysData`): hours after a technology's last report are "not yet reported", not zero. `last` = latest hour at which every
+  material technology (>= 3 % of the window's energy) has reported; shares (% of generation / consumption), the stack, the cards and the tables use
+  it. MW mode draws each technology up to its own last report. A technology whose last reported value is ~0 (night solar, omitted zeros) is not
+  treated as lagging. The mix chart shades the hours still awaiting generation ("generation not yet reported"); the load line continues.
+- **Hover**: every System chart (`svg.sx`) now draws a dashed vertical line at the hovered hour, matching the tooltip's timestamp.
+- **Residual load** (load - wind - solar, as newsletter/registry.py; only where load and the technologies have reported): per-country card line,
+  a "Residual load" chart card for the selected country (peak, minimum, steepest 3 h rise, wind + solar share of load), and an option in the
+  "Compare across countries" selector (MW, or % of consumption; the "% of generation" button falls back to consumption for it).
+- Not done: carrying lagging technologies forward (we show gaps instead of estimates); the Market tab charts were not changed.
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

@@ -86,5 +86,27 @@ assert any("HU" in n for n in f["notes"]), f["notes"]
 md = (out / "brief.md").read_text()
 assert "Headline" in md and "RO" in md and "of its last" in md
 assert "<svg" in (out / "brief.html").read_text()
+
+# ---- fuel / spark spreads (synthetic fuel series, no network)
+from newsletter import fuel  # noqa: E402
+days = pd.date_range("2026-06-15", "2026-10-04")
+ttf = pd.Series(53.7137, index=pd.date_range("2026-06-01", "2026-10-02"))  # pretend TTF = 53.7137 EUR/MWh
+sr, carbon = fuel.srmc_by_day(days, ttf)
+assert not carbon and abs(sr[DAY] - 53.7137 / fuel.ETA) < 1e-9 and sr.index.max() == days.max(), "ffill to later days"
+eua = pd.Series([70.0], index=[pd.Timestamp("2026-06-01")])
+sr2, carbon2 = fuel.srmc_by_day(days, ttf, eua)
+assert carbon2 and abs(sr2[DAY] - (53.7137 + fuel.EF_GAS * 70) / fuel.ETA) < 1e-9
+cm2 = M.all_metrics(da, ga, sr)
+t4 = cm2[(cm2.zone == "RO") & (cm2.day == DAY) & (cm2.metric == "top4")].value.iloc[0]
+sp = cm2[(cm2.zone == "RO") & (cm2.day == DAY) & (cm2.metric == "spark_top4")].value.iloc[0]
+assert abs(sp - (t4 - sr[DAY])) < 1e-9
+assert not (cm2.metric == "srmc").any(), "the SRMC (derived from private data) must not be a metric"
+f2 = build.build_facts(da, ga, DAY, sr, False)
+assert any("FUEL ONLY" in n for n in f2["notes"]) and any(r.get("spark_top4") is not None for r in f2["table"])
+blob = json.dumps(f2)
+assert "ttf" not in blob.lower().replace("fuel-only", "") or "TTF front-month" in blob  # only the method note may name TTF
+assert str(round(float(sr[DAY]), 2)) not in blob and "53.71" not in blob, "the reference cost must not leak into facts"
+f3 = build.build_facts(da, ga, DAY, None, False, "Spark spreads unavailable today (x).")
+assert any("unavailable" in n for n in f3["notes"])
 shutil.rmtree(tmp)
 print("newsletter tests passed")

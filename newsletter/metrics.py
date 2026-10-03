@@ -55,6 +55,7 @@ def price_metrics(hp: pd.DataFrame) -> pd.DataFrame:
         rows += [(zone, day, "baseload", sum(v) / n),
                  (zone, day, "tb2", sum(v[-2:]) / 2 - sum(v[:2]) / 2),
                  (zone, day, "tb4", sum(v[-4:]) / 4 - sum(v[:4]) / 4),
+                 (zone, day, "top4", sum(v[-4:]) / 4),
                  (zone, day, "neg_hours", float(sum(1 for x in v if x < 0))),
                  (zone, day, "price_min", v[0]), (zone, day, "price_max", v[-1])]
     return pd.DataFrame(rows, columns=["zone", "day", "metric", "value"])
@@ -82,7 +83,24 @@ def capture_metrics(hp: pd.DataFrame, hg: pd.DataFrame, base: pd.DataFrame) -> p
     return pd.concat(out, ignore_index=True)
 
 
-def all_metrics(da: pd.DataFrame, ga: pd.DataFrame) -> pd.DataFrame:
+def spark_metrics(pm: pd.DataFrame, srmc: pd.Series) -> pd.DataFrame:
+    """spark_base / spark_top4 = baseload / mean of the 4 highest hourly prices minus the reference gas SRMC of the day
+    (fuel-only or clean, see fuel.py). The SRMC itself is deliberately NOT returned: it is derived from private data."""
+    cols = ["zone", "day", "metric", "value"]
+    if srmc is None or srmc.empty or pm.empty:
+        return pd.DataFrame(columns=cols)
+    w = pm[pm["metric"].isin(["baseload", "top4"])].pivot_table(index=["zone", "day"], columns="metric", values="value").reset_index()
+    w["srmc"] = w["day"].map(srmc)
+    w = w.dropna(subset=["srmc"])
+    out = [w.assign(metric="spark_base", value=w["baseload"] - w["srmc"])[cols],
+           w.assign(metric="spark_top4", value=w["top4"] - w["srmc"])[cols]]
+    return pd.concat(out, ignore_index=True)
+
+
+def all_metrics(da: pd.DataFrame, ga: pd.DataFrame, srmc: pd.Series | None = None) -> pd.DataFrame:
     hp, hg = hourly_prices(da), hourly_generation(ga)
     pm = price_metrics(hp)
-    return pd.concat([pm, capture_metrics(hp, hg, pm)], ignore_index=True)
+    parts = [pm, capture_metrics(hp, hg, pm)]
+    if srmc is not None:
+        parts.append(spark_metrics(pm, srmc))
+    return pd.concat(parts, ignore_index=True)

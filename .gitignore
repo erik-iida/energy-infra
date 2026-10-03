@@ -14,3 +14,7 @@ data/raw/gie/*_countries.json
 
 # Data tab export, built by the deploy job from the store release
 web/data/browse/
+
+# manual carbon price input for spark spreads (newsletter/fuel.py)
+newsletter/eua_manual.csv
+newsletter/out/

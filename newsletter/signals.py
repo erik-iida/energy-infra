@@ -30,6 +30,7 @@ RULES = [
     Rule("tb4", "4-hour storage spread (TB4)", "EUR/MWh", hi=0.90, min_abs=40, weight=1.2),
     Rule("tb2", "2-hour storage spread (TB2)", "EUR/MWh", hi=0.90, min_abs=40, weight=1.0),
     Rule("neg_hours", "negative-price hours", "h", hi=0.90, min_abs=3, weight=1.1),
+    Rule("spark_top4", "top-4-hour spark spread", "EUR/MWh", hi=0.90, lo=0.10, weight=1.0),
     Rule("baseload", "baseload price", "EUR/MWh", hi=0.95, lo=0.05, weight=0.9),
     Rule("cr_wind_onshore", "onshore wind capture rate", "%", hi=None, lo=0.10, weight=1.0),
     Rule("cr_wind_offshore", "offshore wind capture rate", "%", hi=None, lo=0.10, weight=1.0),

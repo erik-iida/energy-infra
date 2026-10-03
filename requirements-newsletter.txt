@@ -1,0 +1,2 @@
+-r requirements-collect.txt
+yfinance   # TTF front month for spark spreads (private use, see newsletter/fuel.py)

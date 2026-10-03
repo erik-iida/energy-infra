@@ -25,7 +25,7 @@ from . import signals as S
 # CEE / SEE focus (same set as the site's selector), plus DE-LU as the neighbour everybody compares with
 FOCUS = ["PL", "CZ", "SK", "HU", "RO", "BG", "SI", "HR", "RS", "GR", "BA", "ME", "MK", "EE", "LV", "LT"]
 CONTEXT = ["DE-LU"]
-COLS = ["baseload", "tb2", "tb4", "neg_hours", "cr_wind_onshore", "cr_solar"]
+COLS = ["baseload", "tb2", "tb4", "neg_hours", "cr_wind_onshore", "cr_solar", "spark_top4"]
 
 
 def months_between(a: pd.Timestamp, b: pd.Timestamp) -> list[str]:
@@ -86,8 +86,9 @@ def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, z
     return {"day": nxt.strftime("%Y-%m-%d"), "zones": rows}
 
 
-def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp) -> dict:
-    metrics = M.all_metrics(da, ga)
+def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
+                carbon: bool = False, fuel_note: str | None = None) -> dict:
+    metrics = M.all_metrics(da, ga, srmc)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
     sigs = S.evaluate(metrics, day)
     zones_day = set(metrics.loc[(metrics["day"] == day) & (metrics["metric"] == "baseload"), "zone"])
@@ -100,6 +101,12 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp) -> dict:
     late = [z for z in focus if z in zones_day and z not in have_gen]
     if late:
         notes.append("No capture rates (generation data late or none): " + ", ".join(late))
+    if srmc is not None and day in srmc.index:
+        notes.append("Spark spreads: day-ahead price minus the gas cost of a 55 % efficient CCGT at the TTF front-month "
+                     + ("incl. carbon." if carbon else "price, FUEL ONLY (no carbon), so they read higher than a clean spark spread.")
+                     + " Same reference cost in every zone; local gas premia are not included.")
+    elif fuel_note:
+        notes.append(fuel_note)
     hist_days = metrics.loc[metrics["metric"] == "baseload", "day"].nunique()
     if hist_days < S.MIN_HIST + 1:
         notes.append(f"Only {hist_days} days of price history in the store: percentile signals need {S.MIN_HIST}+ days.")
@@ -165,11 +172,11 @@ def draft_brief(f: dict) -> str:
         lines += ["**Next 24 h.** Tomorrow's day-ahead prices are not in the store yet (results arrive ~12:45 CET).", ""]
     if f["notes"]:
         lines += ["_Data notes: " + " ".join(f["notes"]) + "_", ""]
-    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % |", "|---|--:|--:|--:|--:|--:|--:|"]
+    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % | Spark top-4 |", "|---|--:|--:|--:|--:|--:|--:|--:|"]
     g = lambda v: "-" if v is None else f"{v:g}"
     for r in sorted(t, key=lambda r: -(r["tb4"] if r.get("tb4") is not None else -1e9)):
         lines.append(f"| {r['zone']} | {g(r['baseload'])} | {g(r['tb2'])} | {g(r['tb4'])} | {g(r['neg_hours'])} | "
-                     f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} |")
+                     f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} | {g(r.get('spark_top4'))} |")
     lines += ["", "Prices EUR/MWh. TB2/TB4: mean of the 2/4 highest minus 2/4 lowest hourly day-ahead prices of the CET day. "
               "CR = capture rate (generation-weighted price / baseload). Source: ENTSO-E Transparency Platform."]
     return "\n".join(lines) + "\n"
@@ -216,7 +223,15 @@ def main(argv=None) -> None:
     da, ga = load_window(day)
     if da.empty:
         raise SystemExit("no da_price rows in the store for this window")
-    f = build_facts(da, ga, day)
+    srmc, carbon, fuel_note = None, False, None
+    try:
+        from . import fuel
+        days = pd.date_range(day - pd.Timedelta(days=S.WINDOW_DAYS + 3), day + pd.Timedelta(days=1))
+        srmc, carbon = fuel.srmc_by_day(days, fuel.load_ttf(), fuel.load_eua())
+    except Exception as e:  # fuel prices are optional: the brief is still useful without spark spreads
+        fuel_note = f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
+        print(fuel_note)
+    f = build_facts(da, ga, day, srmc, carbon, fuel_note)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     md = draft_brief(f)

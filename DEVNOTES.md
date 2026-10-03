@@ -297,6 +297,23 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - Next: chart toggle (the page already has svg line charts), native 15-min resolution, longer ranges per month file,
   farm_hourly / farm_forecast per wind farm, capture/TB2/TB4 derived columns (newsletter/metrics.py has them).
 
+## Fuel prices and spark spreads (Oct 3 2026)
+- Gas: yfinance `TTF=F` (Yahoo, ICE Endex front month, EUR/MWh, daily since Oct 2017; probe: scripts/probe_yf.py ->
+  data/raw/fuel/probe_yf_log.txt). Carbon: NO free EUA series on Yahoo (KEUA, EUA=F returned nothing; KRBN is a USD
+  global-carbon ETF, only a rough proxy, not used). Optional manual carbon input: newsletter/eua_manual.csv
+  (date,eua_eur_t; gitignored); without it spreads are FUEL-ONLY and the brief says so.
+- PRIVATE-DATA RULE (Erik): Yahoo's terms don't allow republishing, and the repo is public. The gas price is fetched at
+  run time in newsletter/fuel.py and never written to the repo, the `store` release, facts.json, brief.md/html or the
+  Data tab export. Only derived spreads (spark_base, spark_top4 = baseload / mean of the 4 highest hours minus the
+  reference CCGT cost: 55 % efficiency, 0.202 tCO2/MWh_th) leave it; the SRMC itself is not a metric. Tested in
+  tests/test_newsletter.py. If a paid or licensed feed replaces it, revisit this rule.
+- Same reference cost in every zone: CEE/SEE hubs trade above TTF and some plants have oil-indexed or regulated gas,
+  so zone spreads there are indicative. Idea for later: compare implied gas cost at gas-marginal hours across zones
+  against DE-LU/NL to measure local premia (needs carbon).
+- Not done: dark spreads (no coal price source), implied-gas-cost metric, spark spreads on the site's Data/Signals tabs.
+- newsletter.yml installs requirements-newsletter.txt (collect + yfinance). Yahoo is not reachable from the cloud
+  session: the fuel fetch only runs on Actions; a failed fetch leaves the brief without spark spreads and says so.
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

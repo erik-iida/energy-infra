@@ -26,6 +26,7 @@ def test_gb_frames(monkeypatch):
     monkeypatch.setattr(G, "fetch_indo", lambda a, b: nd)
     sp = pd.DataFrame({"ts": t, "sell": [100.0, 120.0], "buy": [100.0, 120.0], "niv": [50.0, -20.0]})
     monkeypatch.setattr(G, "fetch_system_prices", lambda a, b: sp)
+    monkeypatch.setattr(G, "fetch_mid", lambda a, b: pd.DataFrame({"ts": t, "price": [90.0, 110.0], "volume": [1000.0, 800.0]}))
     f = G.gb_frames(A, B, datetime.now(timezone.utc))
     g = f["gen_actual"]
     assert set(g["psr"]) == {"B04", "B14", "B10", "B16", "B19", "B18"}  # transmission WIND is not double counted
@@ -35,6 +36,8 @@ def test_gb_frames(monkeypatch):
     assert fr("FR", "GB") == 3000 and fr("GB", "FR") == 0  # INTFR + INTELEC, import into GB
     assert fr("GB", "NO2") == 1400 and fr("NO2", "GB") == 0  # export
     assert fr("GB", "IE(SEM)") == 300
+    dp = f["da_price"]
+    assert set(dp["currency"]) == {"GBP"} and set(dp["zone"]) == {"GB"} and (dp["seq"] == 1).all() and dp["price"].tolist() == [90.0, 110.0]
     ld = f["load"]
     act = ld[(ld.kind == "actual") & (ld.ts == t[0])]["mw"].iloc[0]
     assert act == 21000 + 8000 + (4000 - 3000)  # national demand + solar + embedded wind (B1630 wind - metered wind)
@@ -44,3 +47,13 @@ def test_gb_frames(monkeypatch):
         assert {"ts", "res_min", "fetched"} <= set(df.columns)
         assert ({"from_zone", "to_zone"} if ds == "flows" else {"zone"}) <= set(df.columns)
         assert str(df["ts"].dt.tz) == "UTC"
+
+
+def test_mid_volume_weighted_and_da_price_rows(monkeypatch):
+    rows = [{"startTime": "2026-10-03T10:00:00Z", "dataProvider": "APXMIDP", "price": 100.0, "volume": 3000.0},
+            {"startTime": "2026-10-03T10:00:00Z", "dataProvider": "N2EXMIDP", "price": 130.0, "volume": 1000.0},
+            {"startTime": "2026-10-03T10:30:00Z", "dataProvider": "APXMIDP", "price": 90.0, "volume": 0.0},   # no trades: dropped
+            {"startTime": "2026-10-03T10:30:00Z", "dataProvider": "N2EXMIDP", "price": 0.0, "volume": 0.0}]
+    monkeypatch.setattr(G, "_get", lambda *a, **k: type("R", (), {"json": lambda s: rows})())
+    m = G.fetch_mid(A, B)
+    assert len(m) == 1 and abs(m["price"].iloc[0] - 107.5) < 1e-9  # (3000 x 100 + 1000 x 130) / 4000

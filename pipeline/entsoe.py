@@ -167,12 +167,14 @@ def fx_table() -> dict:
         return {}
 
 
-def refresh_fx(log=print) -> dict:
-    """Fetch the latest NBU UAH/EUR rate once a day and store it (with history) in data/fx.json."""
-    fx = fx_table()
+ECB_HIST = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.csv"
+GBP_FROM = "2023-01-01"  # history kept in data/fx.json (daily conversion of stored GB prices)
+
+
+def _refresh_uah(fx: dict, log) -> None:
     u = fx.setdefault("UAH", {"source": "National Bank of Ukraine official rate", "unit": "UAH per EUR", "history": {}})
     if u.get("checked") == datetime.now(timezone.utc).date().isoformat():
-        return fx
+        return
     import requests
     try:
         r = requests.get(NBU_LATEST, timeout=30, headers={"User-Agent": "energy-infra-monitor"})
@@ -184,9 +186,59 @@ def refresh_fx(log=print) -> dict:
         log(f"fx: UAH/EUR {rate} on {d}")
     except Exception as ex:
         log(f"fx: NBU fetch failed {ex!r}"[:200] + (f"; keeping {u.get('rate')} from {u.get('date')}" if u.get("rate") else ""))
+
+
+def parse_ecb_gbp(text: str, since: str = GBP_FROM) -> dict[str, float]:
+    """{date: GBP per EUR} from the ECB reference-rate history csv."""
+    import csv
+    import io
+    out = {}
+    for row in csv.DictReader(io.StringIO(text)):
+        d, v = (row.get("Date") or "").strip(), (row.get("GBP") or "").strip()
+        if d >= since and v not in ("", "N/A"):
+            out[d] = float(v)
+    return out
+
+
+def _refresh_gbp(fx: dict, log) -> None:
+    """GB prices (Elexon, GBP) are shown and used in EUR: ECB euro foreign exchange reference rates, daily history in data/fx.json."""
+    g = fx.setdefault("GBP", {"source": "European Central Bank euro foreign exchange reference rate", "unit": "GBP per EUR", "history": {}})
+    if g.get("checked") == datetime.now(timezone.utc).date().isoformat():
+        return
+    import requests
+    try:
+        r = requests.get(ECB_HIST, timeout=60, headers={"User-Agent": "energy-infra-monitor"})
+        r.raise_for_status()
+        h = parse_ecb_gbp(r.text)
+        if not h:
+            raise ValueError("no GBP rows")
+        g["history"].update(h)
+        d = max(g["history"])
+        g["rate"], g["date"] = g["history"][d], d
+        g["checked"] = datetime.now(timezone.utc).date().isoformat()
+        log(f"fx: GBP/EUR {g['rate']} on {d} ({len(g['history'])} days)")
+    except Exception as ex:
+        log(f"fx: ECB fetch failed {ex!r}"[:200] + (f"; keeping {g.get('rate')} from {g.get('date')}" if g.get("rate") else ""))
+
+
+def refresh_fx(log=print) -> dict:
+    """Fetch the latest NBU UAH/EUR rate and the ECB GBP/EUR history once a day and store them in data/fx.json."""
+    fx = fx_table()
+    _refresh_uah(fx, log)
+    _refresh_gbp(fx, log)
     FX_FILE.parent.mkdir(parents=True, exist_ok=True)
     FX_FILE.write_text(json.dumps(fx, indent=1, sort_keys=True), encoding="utf-8")
     return fx
+
+
+def gbp_per_eur(day: str | None = None) -> float | None:
+    """GBP per EUR for an ISO date (the last rate on or before it; ECB publishes working days only), latest when no date."""
+    g = fx_table().get("GBP", {})
+    h = g.get("history") or {}
+    if day and h:
+        ds = [d for d in h if d <= day]
+        return h[max(ds)] if ds else None
+    return g.get("rate")
 
 
 def price_seq(ts: ET.Element, ns: str) -> int:

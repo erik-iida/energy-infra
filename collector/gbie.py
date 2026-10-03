@@ -1,6 +1,7 @@
 """Great Britain and Ireland into the data store (zones "GB" and "IE(SEM)"), from open sources without keys.
 
     python -m collector.gbie daily      # last 4 days
+    python -m collector.gbie mid        # Market Index only, whole months from BACKFILL_FROM (resumable, gbie_mid_state.json)
     python -m collector.gbie backfill   # whole months from BACKFILL_FROM, newest first, resumable (gbie_state_v2.json)
 
 Sources and licences (credit on the page):
@@ -11,8 +12,11 @@ Sources and licences (credit on the page):
       system prices (SSP / SBP, GBP/MWh, per settlement period)                                 -> imb_price (the GB imbalance price)
   EirGrid Smart Grid Dashboard  smartgriddashboard.com/DashboardService.svc   "Supported by EirGrid Group Data" (EirGrid open data licence)
       demandactual (all-island = the SEM zone)                                                 -> load of IE(SEM)
-Not collected: the BMRS Market Index prices (N2EX / APX): exchange data that the BMRS open licence does not cover. GB has no
-openly licensed day-ahead price series here; Ireland's day-ahead price already comes from ENTSO-E.
+      MID      Market Index Data: half-hourly volume-weighted prices of GB wholesale trades (APXMIDP = EPEX SPOT; N2EXMIDP is
+               usually empty), GBP/MWh                                                           -> da_price (zone GB, seq 1, currency GBP, src elexon_mid)
+Caveats for MID: it is a trade INDEX per half hour (not the day-ahead auction result), published about an hour after delivery (never for
+the future), and the data is supplied by exchanges: the BMRS open licence excludes third-party rights. Included at Erik's request
+(personal, non-commercial monitor), credited as "Market Index Data: APX / EPEX SPOT via Elexon BMRS". Rows with zero volume are dropped.
 
 Store formats are those of collector/entsoe_raw.py (psr = ENTSO-E code, res_min = native resolution, mw, fetched).
 GB load: kind "actual" = national demand + embedded wind and solar (so it is comparable with the other zones' total consumption);
@@ -142,8 +146,27 @@ def fetch_system_prices(a: datetime, b: datetime) -> pd.DataFrame:
     return df.rename(columns={"systemSellPrice": "sell", "systemBuyPrice": "buy", "netImbalanceVolume": "niv"})[["ts", "sell", "buy", "niv"]]
 
 
+def fetch_mid(a: datetime, b: datetime) -> pd.DataFrame:
+    """Half-hourly GB wholesale index: volume-weighted over the providers that traded; zero-volume rows dropped."""
+    out = []
+    for s, e in _windows(a, b, 6):  # the API accepts at most 7 days per request
+        out += _rows(_get(f"{EL}/datasets/MID", {"from": _iso(s), "to": _iso(e), "format": "json"}))
+    df = pd.DataFrame(out)
+    if df.empty:
+        return df
+    df["ts"] = pd.to_datetime(df["startTime"], utc=True)
+    df = df[(df["volume"] > 0) & df["price"].notna()]
+    if df.empty:
+        return df
+    df["pv"] = df["price"] * df["volume"]
+    g = df.groupby("ts", as_index=False)[["pv", "volume"]].sum()
+    g["price"] = g["pv"] / g["volume"]
+    g = g[(g["ts"] >= a) & (g["ts"] < b)]
+    return g[["ts", "price", "volume"]]
+
+
 def gb_frames(a: datetime, b: datetime, fetched: datetime) -> dict[str, pd.DataFrame]:
-    fh, ws, nd, sp = fetch_fuelhh(a, b), fetch_b1630(a, b), fetch_indo(a, b), fetch_system_prices(a, b)
+    fh, ws, nd, sp, mid = fetch_fuelhh(a, b), fetch_b1630(a, b), fetch_indo(a, b), fetch_system_prices(a, b), fetch_mid(a, b)
     gen, flows, load = [], [], []
     if not fh.empty:
         g = fh[fh["fuelType"].isin(FUEL_PSR)].copy()
@@ -183,7 +206,10 @@ def gb_frames(a: datetime, b: datetime, fetched: datetime) -> dict[str, pd.DataF
     imb = pd.DataFrame()
     if not sp.empty:
         imb = sp.assign(zone="GB", res_min=30, currency="GBP", fetched=fetched)
-    return {"gen_actual": cat(gen), "flows": cat(flows), "load": cat(load), "imb_price": imb}
+    da = pd.DataFrame()
+    if not mid.empty:
+        da = mid[["ts", "price"]].assign(zone="GB", res_min=30, seq=1, currency="GBP", src="elexon_mid", fetched=fetched)
+    return {"gen_actual": cat(gen), "flows": cat(flows), "load": cat(load), "imb_price": imb, "da_price": da}
 
 
 # ------------------------------------------------------------------ EirGrid (all-island demand = zone IE(SEM))
@@ -296,12 +322,45 @@ def backfill(store: Store, tz: str | None) -> None:
     log(f"backfill: {len(done)} months done, {len(months) - len(done)} to go")
 
 
+def mid_backfill(store: Store, tz: str | None) -> None:
+    """Market Index only (da_price, zone GB), whole months from BACKFILL_FROM, newest first, resumable (gbie_mid_state.json).
+    Separate from `backfill` so that the other datasets are not rewritten (each store write costs GitHub API calls)."""
+    t0 = time.time()
+    st = store.read_json("gbie_mid_state.json", {"done": []})
+    done = set(st.get("done", []))
+    now = datetime.now(timezone.utc)
+    m = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+    months = []
+    while m.strftime("%Y-%m") >= BACKFILL_FROM:
+        months.append(m)
+        m = (m - timedelta(days=1)).replace(day=1)
+    for m in months:
+        key = m.strftime("%Y-%m")
+        if key in done:
+            continue
+        if time.time() - t0 > BUDGET_S:
+            log("time budget used up; the next run continues")
+            break
+        nxt = (m + timedelta(days=32)).replace(day=1)
+        b = min(nxt, now + timedelta(hours=1))
+        mid = fetch_mid(m, b)
+        log(f"MID {key}: {len(mid)} half hours")
+        if not mid.empty:
+            write(store, {"da_price": mid[["ts", "price"]].assign(zone="GB", res_min=30, seq=1, currency="GBP", src="elexon_mid",
+                                                                  fetched=datetime.now(timezone.utc))})
+        if nxt <= now - timedelta(days=2):
+            done.add(key)
+            st["done"] = sorted(done)
+            store.write_json("gbie_mid_state.json", st)
+    log(f"MID backfill: {len(done)} months done, {len(months) - len(done)} to go")
+
+
 def main(argv=None) -> None:
     mode = (argv or sys.argv[1:] or ["daily"])[0]
     store = Store()
     tz = eirgrid_tz(store)
     log(f"EirGrid time stamps read as: {tz or 'unknown (Ireland load skipped)'}")
-    {"daily": daily, "backfill": backfill}[mode](store, tz)
+    {"daily": daily, "backfill": backfill, "mid": mid_backfill}[mode](store, tz)
     log_name = "collector_log.json"
     lg = store.read_json(log_name, []) or []
     lg.append({"run": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "mode": f"gbie-{mode}", "eirgrid_tz": tz})

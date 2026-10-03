@@ -541,3 +541,10 @@ sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.t
 ## Working from a browser-only session
 The code runs on GitHub, not locally. Clone the repo, edit, push to `main`; the workflow runs the pipeline
 and redeploys the site in ~3 minutes. Check the run in the Actions tab.
+
+## GB day-ahead price (Elexon Market Index) — added 2026-10-03
+- Source: BMRS MID (`collector/gbie.fetch_mid`), APXMIDP volume-weighted (N2EX mostly zero volume). Stored as `da_price`, zone GB, 30 min, currency GBP, src `elexon_mid`. Erik approved it as the GB price.
+- Caveats (also on the page): an index of wholesale trades, not an auction result; third-party data outside the BMRS licence (credited); no tomorrow values; MID API limited to 7-day windows.
+- GBP→EUR: ECB daily rates in data/fx.json (`pipeline/entsoe.refresh_fx`, run by capture.yml); metrics (`newsletter/metrics.py`) and the live page (`pipeline/market.py`) convert at that rate. GB shows no price until capture.yml has run once.
+- History: `python -m collector.gbie mid` (resumable, state gbie_mid_state.json, from BACKFILL_FROM). Then rerun the metrics job for GB baseload/TB2/TB4/capture in metrics_daily.
+- Tests: tests/test_gbie.py (da_price, volume weighting), tests/test_gbp_fx.py. build_browse handles per-currency price groups (checked with a synthetic GBP store).

@@ -357,12 +357,22 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
             print(f"entsoe: failed {ex!r}")
     try:  # Great Britain and Ireland: open sources without keys (Elexon BMRS, EirGrid); never blocks the feed
         from . import gbie_live
-        gl = gbie_live.system(hours, market["system"].get("ie"))
+        gf = gbie_live.fetch(hours)
+        gl = gbie_live.system(hours, market["system"].get("ie"), gf)
         for c, d in gl.items():
             market["system"][c] = d
         market["source"] += "; Great Britain: Contains BMRS data (c) Elexon Limited copyright and database right " + str(datetime.now(timezone.utc).year) + "; Ireland load: Supported by EirGrid Group Data"
         market.setdefault("diag", {})["gbie"] = {"system": sorted(gl)}
-        print(f"gbie: system {sorted(gl)}")
+        gp = gbie_live.prices(gf, hours)
+        if gp:  # GB has no day-ahead auction series in open data: the Elexon Market Index (APX trades) stands in, published after delivery
+            market["prices"]["GB"] = gp[0]
+            market.setdefault("price_source", {})["GB"] = "elexon_mid"
+            market["core_zones"] = sorted(set(market["core_zones"]) | {"GB"})
+            market["restricted_zones"] = sorted(set(market["restricted_zones"]) - {"GB"})
+            market.setdefault("fx", {})["GBP"] = {"rate": gp[1], "date": entsoe.fx_table().get("GBP", {}).get("date"), "source": "ECB reference rate"}
+            market["source"] += "; GB price: Market Index Data (APX / EPEX SPOT trades) via Elexon BMRS"
+        market["diag"]["gbie"]["price"] = bool(gp)
+        print(f"gbie: system {sorted(gl)}, price {'yes' if gp else 'no'}")
     except Exception as ex:
         market.setdefault("diag", {})["gbie"] = {"error": repr(ex)[:300]}
         print(f"gbie: failed {ex!r}")

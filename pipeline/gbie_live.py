@@ -30,13 +30,32 @@ def _net(fl: pd.DataFrame, own: str, nb: str, hours: list[int]) -> list:
     return _hourly(n, "mw", hours)
 
 
-def system(hours: list[int], ie_base: dict | None = None) -> dict[str, dict]:
+def fetch(hours: list[int]) -> dict[str, pd.DataFrame]:
+    """The Elexon frames (generation, flows, load, imbalance price, Market Index) for the 24 past feed hours."""
+    a = datetime.fromtimestamp(hours[:24][0] - 3600, tz=timezone.utc)
+    b = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    return G.gb_frames(a, b, datetime.now(timezone.utc))
+
+
+def prices(f: dict[str, pd.DataFrame], hours: list[int]) -> tuple[list, float] | None:
+    """GB wholesale price per feed hour in EUR/MWh (Elexon Market Index, GBP, at the latest ECB rate) and the GBP per EUR used.
+    Only hours already traded: the index is published after delivery, so the forecast half of the window stays empty."""
+    from . import entsoe
+    d = f.get("da_price")
+    rate = entsoe.gbp_per_eur()
+    if d is None or d.empty or not rate:
+        return None
+    gbp = _hourly(d, "price", hours)
+    return [None if v is None else round(v / rate, 2) for v in gbp], rate
+
+
+def system(hours: list[int], ie_base: dict | None = None, f: dict[str, pd.DataFrame] | None = None) -> dict[str, dict]:
     """hours = epoch seconds of the 48 feed hours (24 past + 24 forecast); returns {"gb": entry, "ie": entry} (entries that worked)."""
     past = hours[:24]
     a = datetime.fromtimestamp(past[0] - 3600, tz=timezone.utc)
     b = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
     fetched = datetime.now(timezone.utc)
-    f = G.gb_frames(a, b, fetched)
+    f = f if f is not None else G.gb_frames(a, b, fetched)
     out = {}
     g, ld, fl = f["gen_actual"], f["load"], f["flows"]
     if not g.empty:
@@ -63,7 +82,7 @@ def system(hours: list[int], ie_base: dict | None = None) -> dict[str, dict]:
                 flows["sum"] = [round(sum(v[i] for v in flows.values() if v[i] is not None), 1)
                                 if any(v[i] is not None for v in flows.values()) else None for i in range(24)]
                 fnames["sum"] = "Net import"
-        out["gb"] = {"series": ser, "names": nm, "flows": flows, "flow_names": fnames, "zones": [], "name": "Great Britain", "src": "elexon"}
+        out["gb"] = {"series": ser, "names": nm, "flows": flows, "flow_names": fnames, "zones": ["GB"], "name": "Great Britain", "src": "elexon"}
     # Ireland: generation from ENTSO-E (pipeline.entsoe.system, "ie"), load from EirGrid, flow to GB mirrored from Elexon
     ie = ie_base if ie_base and ie_base.get("series") else {"series": {}, "names": {}, "flows": {}, "flow_names": {}, "zones": ["IE(SEM)"],
                                                          "name": "Ireland", "src": "entsoe"}

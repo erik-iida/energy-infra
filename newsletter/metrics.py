@@ -1,6 +1,6 @@
 """Daily market metrics from the data store (collector/store.py): one row per zone, CET delivery day and metric.
 
-Prices: ENTSO-E A44 at native resolution, seq 1 only (the auction result), EUR only (UA-IPS is published in UAH and
+Prices: ENTSO-E A44 at native resolution, seq 1 only (the auction result), EUR, plus GB (Elexon Market Index, GBP) converted at the ECB daily rate from data/fx.json (UA-IPS is published in UAH and
 left out until its conversion is wired in), averaged to hours first so TB2/TB4 mean the same as on the site
 (mean of the 2 / 4 highest minus the 2 / 4 lowest hourly prices of the CET day). A day needs >= 23 priced hours
 (23 / 24 / 25 with DST) to count.
@@ -21,9 +21,26 @@ def hourly_prices(da: pd.DataFrame) -> pd.DataFrame:
     """zone, h (UTC hour start), price - from raw da_price rows."""
     if da is None or da.empty:
         return pd.DataFrame(columns=["zone", "h", "price"])
-    d = da[(da["seq"] == 1) & (da["currency"] == "EUR")].copy()
+    d = da[da["seq"] == 1].copy()
+    gbp = d["currency"] == "GBP"
+    if gbp.any():  # GB (Elexon Market Index) is published in GBP: ECB reference rate of the day (last working day on or before it)
+        d.loc[gbp, "price"] = d.loc[gbp, "price"] / _gbp_rates(d.loc[gbp, "ts"])
+    d = d[(d["currency"] == "EUR") | gbp].dropna(subset=["price"])
     d["h"] = d["ts"].dt.floor("h")
     return d.groupby(["zone", "h"], as_index=False)["price"].mean()
+
+
+def _gbp_rates(ts: pd.Series) -> pd.Series:
+    """GBP per EUR for each time stamp (NaN without a stored rate, so the row is dropped rather than shown in the wrong currency)."""
+    from pipeline import entsoe
+    h = entsoe.fx_table().get("GBP", {}).get("history") or {}
+    if not h:
+        return pd.Series(float("nan"), index=ts.index)
+    r = pd.Series(h, dtype=float)
+    r.index = pd.to_datetime(r.index)
+    r = r.sort_index()
+    days = ts.dt.tz_convert(CET).dt.tz_localize(None).dt.normalize()
+    return pd.Series(r.reindex(r.index.union(days.unique())).ffill().reindex(days).values, index=ts.index)
 
 
 def hourly_generation(ga: pd.DataFrame) -> pd.DataFrame:

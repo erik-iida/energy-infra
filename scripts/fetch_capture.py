@@ -35,6 +35,7 @@ MONTHS = 24
 TIME_BUDGET_S = 40 * 60
 WORKERS = 4
 CET = ZoneInfo("Europe/Brussels")
+SEQ2_ZONES = {"AT", "DE-LU", "DK2", "ES"}  # zones with an extra A44 seq-2 series (Oct 3 2026 probe)
 SKIP = {"AL"}  # no day-ahead market data on the platform
 log_lines: list[str] = []
 
@@ -89,6 +90,8 @@ def cell(zone: str, m: str) -> dict:
     cur = "EUR"
     for _ts, _ns, hv in entsoe.series(cl.get(documentType="A44", in_Domain=eic, out_Domain=eic,
                                          periodStart=fmt(a), periodEnd=fmt(b)), "price.amount"):
+        if entsoe.price_seq(_ts, _ns) != 1:  # AT, DE-LU, DK2, ES carry a second, non-auction series
+            continue
         cur = entsoe.currency(_ts, _ns)  # stored as published (UA-IPS: UAH); converted to EUR when written out
         for h, v in hv.items():
             if a <= h < b:
@@ -104,7 +107,7 @@ def cell(zone: str, m: str) -> dict:
         for h, v in hv.items():
             if a <= h < b:
                 d[h] = d.get(h, 0) + max(0.0, v)
-    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls, "cur": cur}
+    out = {"day": datetime.now(timezone.utc).date().isoformat(), "calls": cl.calls, "cur": cur, "sq": 1}
     if cl.errors:
         out["err"] = cl.errors[-2:]
     if not price:
@@ -142,6 +145,8 @@ def main() -> None:
         for z in zones:
             c = cells.get(f"{z}|{m}")
             if c is None or (z in entsoe.ZONE_CURRENCY and "cur" not in c):  # non-EUR zones: refetch until stored raw
+                todo.append((z, m))
+            elif c.get("sq") != 1:  # computed before the A44 seq-1 filter (position-2 series were averaged in)
                 todo.append((z, m))
             elif m in ms[:2] and c.get("day") != today.isoformat():
                 todo.append((z, m))
@@ -188,6 +193,8 @@ def main() -> None:
         for m in pub_months:
             c = cells.get(f"{z}|{m}")
             if c and not c.get("none"):
+                if z in SEQ2_ZONES and c.get("sq") != 1:  # known to be contaminated until refetched
+                    continue
                 cur = c.get("cur", "EUR")
                 if z in entsoe.ZONE_CURRENCY and "cur" not in c:  # old cell of unknown currency: skip until refetched
                     continue

@@ -188,6 +188,17 @@ def refresh_fx(log=print) -> dict:
     return fx
 
 
+def price_seq(ts: ET.Element, ns: str) -> int:
+    """A44 classificationSequence position of a TimeSeries (1 when untagged). Position 1 is the auction result; some
+    zones (AT, DE-LU, DK2, ES at the Oct 3 2026 probe) carry an extra position-2 series that is not the auction
+    price and must not be averaged in (see DEVNOTES "Data store")."""
+    el = ts.find(ns + "classificationSequence_AttributeInstanceComponent.position")
+    try:
+        return int(el.text) if el is not None and el.text else 1
+    except ValueError:
+        return 1
+
+
 def currency(ts: ET.Element, ns: str) -> str:
     el = ts.find(ns + "currency_Unit.name")
     return (el.text or "EUR").strip() if el is not None else "EUR"
@@ -246,6 +257,8 @@ def prices(cl: Client, zones: list[str], hours: list[int]) -> dict[str, list]:
         root = cl.get(documentType="A44", in_Domain=eic, out_Domain=eic, periodStart=_fmt(hours[0]),
                       periodEnd=_fmt(hours[-1] + 3600))
         for ts, ns, hv in series(root, "price.amount"):
+            if price_seq(ts, ns) != 1:  # not the auction result (see price_seq)
+                continue
             hv = to_eur(ts, ns, hv, cl.errors)
             # several TimeSeries may exist (e.g. 60- and 15-minute products): average them per hour
             for h, v in hv.items():

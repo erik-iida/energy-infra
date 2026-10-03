@@ -614,6 +614,15 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
   tooltip (`dtipH`, HTML) with each series' flag, value right-aligned, the line under the cursor in bold; the chart draws a
   dot on that line at the hovered hour with a flag + label badge (flips left near the right edge).
 
+## Land-border flow arrows; wake controls only for a selected farm (Oct 3 2026)
+- Grid layer entry "Cross-border flow (land)" (key `gxb`): one arrow per neighbouring country pair on a shared land
+  border. `xbBuild` finds the border from zones.json (vertices of two countries' zones closer than ~5 km, 0.1° buckets;
+  57 pairs), puts the arrow on the shared vertex nearest their middle, and orients it from the exporter's area centroid
+  to the importer's. Flow = `dcFlow(a, b)` (latest hour of the System data, border total); arrow size grows with MW,
+  MW labels from zoom sl() >= 9. Drawn after the grid lines and DC arrows.
+- The wake / forecast controls (#mapctl: forecast-wind checkbox, what-if sliders, wake model, expansion) show only
+  when a farm is selected (S.farm), otherwise the pane starts with the totals and the legend.
+
 ## Known gaps / next ideas
 - DC arrows: per-link flows (ENTSO-E A11 per border is already per zone pair; per cable would need TSO data) and a hover
   tooltip with the link name; time follows "latest hour", not the map's hover hour.

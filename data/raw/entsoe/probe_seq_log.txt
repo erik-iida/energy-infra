@@ -1,0 +1,68 @@
+run 2026-10-03 00:44 UTC, token set: True
+
+=== A44 DE-LU 02 Oct..06 Oct UTC, default: 85087 chars
+  TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')]
+      n=96 01 Oct 22:00..02 Oct 21:45 UTC  min 134.38 max 385.04 mean 208.65
+  TS1 mRID=2 seq=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')]
+      n=96 01 Oct 22:00..02 Oct 21:45 UTC  min 134.72 max 328.58 mean 200.50
+  TS2 mRID=3 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')]
+      n=95 02 Oct 22:00..03 Oct 21:45 UTC  min 28.04 max 239.42 mean 161.21
+  TS3 mRID=4 seq=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')]
+      n=96 02 Oct 22:00..03 Oct 21:45 UTC  min 52.77 max 243.06 mean 169.01
+  TS4 mRID=5 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-03T22:00Z', '2026-10-04T22:00Z', 'PT15M')]
+      n=91 03 Oct 22:00..04 Oct 21:45 UTC  min 33.00 max 230.01 mean 156.91
+  TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
+      n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
+  doc header: 1c708a8b7ee040f5a14fe0fa5530cc10 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:44:26Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+
+=== A44 DE-LU 02 Oct..06 Oct UTC, contract A01: 85087 chars
+  TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')]
+      n=96 01 Oct 22:00..02 Oct 21:45 UTC  min 134.38 max 385.04 mean 208.65
+  TS1 mRID=2 seq=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')]
+      n=96 01 Oct 22:00..02 Oct 21:45 UTC  min 134.72 max 328.58 mean 200.50
+  TS2 mRID=3 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')]
+      n=95 02 Oct 22:00..03 Oct 21:45 UTC  min 28.04 max 239.42 mean 161.21
+  TS3 mRID=4 seq=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')]
+      n=96 02 Oct 22:00..03 Oct 21:45 UTC  min 52.77 max 243.06 mean 169.01
+  TS4 mRID=5 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-03T22:00Z', '2026-10-04T22:00Z', 'PT15M')]
+      n=91 03 Oct 22:00..04 Oct 21:45 UTC  min 33.00 max 230.01 mean 156.91
+  TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
+      periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
+      n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
+  doc header: 738bb06393b84d499aa45d7e932c2887 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:44:27Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+
+=== seq overlap (DE-LU, per timestamp where both exist)
+  seqs ['1', '2']: n1=192 n2=378 overlap=191; seq 2 only: 187, seq 1 only: 1
+  mean |diff| 9.889, max 56.460
+    01 Oct 22:00  seq1 185.11  seq2 189.99
+    01 Oct 22:15  seq1 177.65  seq2 186.50
+    01 Oct 22:30  seq1 169.68  seq2 183.33
+    01 Oct 22:45  seq1 167.69  seq2 179.03
+    01 Oct 23:00  seq1 168.19  seq2 180.77
+    01 Oct 23:15  seq1 164.95  seq2 179.39
+    03 Oct 21:15  seq1 197.36  seq2 191.86
+    03 Oct 21:30  seq1 192.85  seq2 189.31
+    03 Oct 21:45  seq1 184.86  seq2 184.85
+  seq 2-only range 03 Oct 22:00..05 Oct 21:45 sample 03 22:00=202.3, 03 22:15=195.6, 03 22:30=186.5, 03 22:45=180.6
+
+=== live site feed.json, DE-LU day-ahead
+  generated 2026-10-03T00:38:39+00:00, 48 hours, DE-LU price present: True
+  failed: TypeError("'str' object cannot be interpreted as an integer")
+
+=== A75 RO actual generation, last 5 days
+  10 gen TimeSeries; overall 29 Sep 00:00..01 Oct 07:30 UTC
+  2026-09-29: psr types 10, points per type min 1 max 93 (full day = 24 hourly or 96 quarter-hourly)
+  2026-09-30: psr types 9, points per type min 28 max 95 (full day = 24 hourly or 96 quarter-hourly)
+  2026-10-01: psr types 9, points per type min 2 max 31 (full day = 24 hourly or 96 quarter-hourly)
+  per-psr last timestamp: B01=01 07:15, B02=01 07:30, B04=01 07:30, B05=01 07:15, B11=01 07:15, B12=01 07:15, B14=29 00:00, B16=01 07:30, B19=01 07:30, B25=01 07:15

@@ -1,0 +1,52 @@
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+/home/runner/work/energy-infra/energy-infra/collector/gbhist.py:54: UserWarning: Could not infer format, so each element will be parsed individually, falling back to `dateutil`. To ensure parsing is consistent and as-expected, please specify a format.
+  d = pd.to_datetime(date).dt.tz_localize("Europe/London").dt.tz_convert("UTC")
+gb_hist full history: 311257 rows 2009-01-01 00:00:00+00:00 .. 2026-10-03 12:00:00+00:00
+gb_hist: 24 months missing in the store, writing 24 now
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/runner/work/energy-infra/energy-infra/collector/gbhist.py", line 228, in <module>
+    main()
+  File "/home/runner/work/energy-infra/energy-infra/collector/gbhist.py", line 221, in main
+    {"daily": daily, "backfill": backfill}[mode](store)
+  File "/home/runner/work/energy-infra/energy-infra/collector/gbhist.py", line 205, in backfill
+    write(store, "gb_hist", h[months.isin(todo)])
+  File "/home/runner/work/energy-infra/energy-infra/collector/gbhist.py", line 173, in write
+    store.write(dataset, df, log=log)
+  File "/home/runner/work/energy-infra/energy-infra/collector/store.py", line 170, in write
+    self._upload(asset_name(dataset, m), buf.getvalue())
+  File "/home/runner/work/energy-infra/energy-infra/collector/store.py", line 128, in _upload
+    self._gh("release", "upload", TAG, str(tmp), "--repo", self.repo)
+  File "/home/runner/work/energy-infra/energy-infra/collector/store.py", line 76, in _gh
+    raise RuntimeError(f"gh {' '.join(args[:2])}: {err[:300]}")
+RuntimeError: gh release upload: HTTP 403: API rate limit exceeded for installation. If you reach out to GitHub Support for help, please include the request ID 7C40:3876ED:2A155B:4415B1:6AC10667 and timestamp 2026-10-03 13:43:03 UTC. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (

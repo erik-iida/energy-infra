@@ -1,4 +1,4 @@
-run 2026-10-03 00:46 UTC, token set: True
+run 2026-10-03 00:48 UTC, token set: True
 
 === A44 DE-LU 02 Oct..06 Oct UTC, default: 85087 chars
   TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
@@ -19,7 +19,7 @@ run 2026-10-03 00:46 UTC, token set: True
   TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
       periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
       n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
-  doc header: b792f5031a554228b085f95658c0889f 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:46:22Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+  doc header: ab4cb55296f7483f9dbab78005220ebd 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:48:43Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
 
 === A44 DE-LU 02 Oct..06 Oct UTC, contract A01: 85087 chars
   TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
@@ -40,7 +40,7 @@ run 2026-10-03 00:46 UTC, token set: True
   TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
       periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
       n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
-  doc header: a0293fa9839d4ce0bf17df1826b727d0 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:46:24Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+  doc header: 73c5ed680468471eb7433b03966ba56f 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:48:44Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
 
 === seq overlap (DE-LU, per timestamp where both exist)
   seqs ['1', '2']: n1=192 n2=378 overlap=191; seq 2 only: 187, seq 1 only: 1
@@ -57,7 +57,7 @@ run 2026-10-03 00:46 UTC, token set: True
   seq 2-only range 03 Oct 22:00..05 Oct 21:45 sample 03 22:00=202.3, 03 22:15=195.6, 03 22:30=186.5, 03 22:45=180.6
 
 === live site feed.json, DE-LU day-ahead
-  generated 2026-10-03T00:38:39+00:00, 48 hours, DE-LU price present: True
+  generated 2026-10-03T00:45:12+00:00, 48 hours, DE-LU price present: True
   vs seq1: 45 common hours, mean |diff| 0.003, max 0.005
      02 Oct 01:00  site 160.06  entsoe 160.06
      02 Oct 02:00  site 163.13  entsoe 163.13
@@ -116,3 +116,104 @@ run 2026-10-03 00:46 UTC, token set: True
 === DE-LU seq-2 gaps on the first future day (positions missing)
   period 2026-10-02T22:00Z: missing ['03 05:30']
   period 2026-10-03T22:00Z: missing ['04 01:30', '04 01:45', '04 02:00', '04 02:15', '04 02:45']
+
+=== A44 zones with two series per day and no sequence tag: how do the pair differ? (window today-1 .. today+1)
+  FR TS0 mRID=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=96 first4=[185.11, 180.76, 171.32, 168.45]
+  FR TS1 mRID=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=96 first4=[185.11, 180.76, 171.32, 168.45]
+  FR TS2 mRID=3 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=96 first4=[204.51, 200.76, 190.88, 183.13]
+  FR TS3 mRID=4 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=96 first4=[204.51, 200.76, 190.88, 183.13]
+  FR pair 0/1: overlap 96 max|diff| 0.000; only in first 0, only in second 0
+  FR pair 2/3: overlap 96 max|diff| 0.000; only in first 0, only in second 0
+  PL TS0 mRID=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=95 first4=[185.11, 168.42, 164.81, 165.43]
+  PL TS1 mRID=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=95 first4=[185.11, 168.42, 164.81, 165.43]
+  PL TS2 mRID=3 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=96 first4=[151.8, 187.29, 189.96, 182.25]
+  PL TS3 mRID=4 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=96 first4=[151.8, 187.29, 189.96, 182.25]
+  PL pair 0/1: overlap 95 max|diff| 0.000; only in first 0, only in second 0
+  PL pair 2/3: overlap 96 max|diff| 0.000; only in first 0, only in second 0
+  BG TS0 mRID=1 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=93 first4=[185.11, 186.36, 174.27, 169.82]
+  BG TS1 mRID=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-01T22:00Z', '2026-10-02T22:00Z', 'PT15M')] n=93 first4=[185.11, 186.36, 174.27, 169.82]
+  BG TS2 mRID=3 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=94 first4=[204.51, 200.15, 190.09, 182.37]
+  BG TS3 mRID=4 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR periods=[('2026-10-02T22:00Z', '2026-10-03T22:00Z', 'PT15M')] n=94 first4=[204.51, 200.15, 190.09, 182.37]
+  BG pair 0/1: overlap 93 max|diff| 0.000; only in first 0, only in second 0
+  BG pair 2/3: overlap 94 max|diff| 0.000; only in first 0, only in second 0
+
+=== A75 actual generation, latest published timestamp per zone (lag vs now), window today-5 .. today+1
+  UA-IPS: no data
+  RO: newest 01 Oct 07:30 (lag 41.3 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 10 types
+  MK: newest 01 Oct 21:00 (lag 27.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 6 types
+  AL: newest 01 Oct 21:00 (lag 27.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 4 types
+  BG: newest 02 Oct 19:00 (lag 5.8 h), type with oldest data ends 02 Oct 18:00 (6.8 h), 12 types
+  RS: newest 02 Oct 22:00 (lag 2.8 h), type with oldest data ends 02 Oct 16:00 (8.8 h), 8 types
+  PT: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 10 types
+  ME: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 02 Oct 21:00 (3.8 h), 3 types
+  LV: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 02 Oct 13:00 (11.8 h), 6 types
+  CH: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 02 Oct 18:00 (6.8 h), 6 types
+  BE: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 12 types
+  BA: newest 02 Oct 23:00 (lag 1.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 7 types
+  SE4: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 02 Oct 23:15 (1.6 h), 5 types
+  SE3: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 02 Oct 23:00 (1.8 h), 6 types
+  SE2: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 02 Oct 23:00 (1.8 h), 5 types
+  SE1: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 02 Oct 23:15 (1.6 h), 4 types
+  PL: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 15 types
+  IE(SEM): newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 29 Sep 05:00 (91.8 h), 9 types
+  AT: newest 02 Oct 23:30 (lag 1.3 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 13 types
+  SK: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 13 types
+  NO5: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 5 types
+  NO4: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 23:45 (1.1 h), 5 types
+  NO3: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 8 types
+  NO2: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 29 Sep 07:15 (89.6 h), 7 types
+  NO1: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 7 types
+  NL: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 10 types
+  GR: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 18:00 (6.8 h), 8 types
+  FR: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 19:00 (5.8 h), 12 types
+  FI: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 15:15 (9.6 h), 13 types
+  EE: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 12 types
+  DK2: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 22:15 (2.6 h), 7 types
+  DK1: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 02 Oct 23:45 (1.1 h), 8 types
+  CZ: newest 02 Oct 23:45 (lag 1.1 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 15 types
+  IT-South: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 30 Sep 22:00 (50.8 h), 10 types
+  IT-Sicily: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 02 Oct 17:30 (7.3 h), 10 types
+  IT-Sardinia: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 02 Oct 17:00 (7.8 h), 11 types
+  IT-North: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 12 types
+  IT-Centre-South: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 11 types
+  IT-Centre-North: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 9 types
+  IT-Calabria: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 02 Oct 16:30 (8.3 h), 6 types
+  DE-LU: newest 03 Oct 00:00 (lag 0.8 h), type with oldest data ends 30 Sep 22:00 (50.8 h), 16 types
+  SI: newest 03 Oct 00:15 (lag 0.6 h), type with oldest data ends 30 Sep 09:15 (63.6 h), 12 types
+  LT: newest 03 Oct 00:15 (lag 0.6 h), type with oldest data ends 01 Oct 19:00 (29.8 h), 9 types
+  HU: newest 03 Oct 00:15 (lag 0.6 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 14 types
+  ES: newest 03 Oct 00:15 (lag 0.6 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 21 types
+  HR: newest 03 Oct 00:30 (lag 0.3 h), type with oldest data ends 28 Sep 00:00 (120.8 h), 13 types
+
+=== A75 RO completeness, 1 Sep .. today: points per day (all types) and per type
+  2026-09-01: B01:55 B02:84 B04:89 B05:30 B11:76 B12:86 B14:1 B16:54 B19:95 B25:73
+  2026-09-02: B01:51 B02:88 B04:86 B05:12 B11:80 B12:85 B14:1 B16:52 B19:92 B25:88
+  2026-09-03: B01:64 B02:91 B04:88 B05:16 B11:82 B12:82 B16:52 B19:95 B25:91
+  2026-09-04: B01:55 B02:87 B04:86 B05:2 B11:83 B12:82 B14:2 B16:50 B19:85 B25:79
+  2026-09-05: B01:46 B02:91 B04:87 B11:79 B12:90 B16:52 B19:95 B25:74
+  2026-09-06: B01:38 B02:89 B04:83 B11:85 B12:92 B16:52 B19:96 B25:80
+  2026-09-07: B01:50 B02:92 B04:89 B05:7 B11:83 B12:89 B16:52 B19:95 B25:89
+  2026-09-08: B01:44 B02:90 B04:89 B05:15 B11:78 B12:88 B16:52 B19:95 B25:91
+  2026-09-09: B01:63 B02:90 B04:90 B05:12 B11:81 B12:86 B14:2 B16:52 B19:93 B25:89
+  2026-09-10: B01:67 B02:88 B04:91 B05:27 B11:87 B12:90 B16:52 B19:95 B25:85
+  2026-09-11: B01:55 B02:89 B04:90 B05:10 B11:79 B12:90 B16:51 B19:96 B25:88
+  2026-09-12: B01:47 B02:94 B04:89 B11:84 B12:90 B16:51 B19:95 B25:85
+  2026-09-13: B01:54 B02:87 B04:90 B11:80 B12:86 B16:50 B19:96 B25:76
+  2026-09-14: B01:53 B02:93 B04:93 B05:9 B11:85 B12:90 B16:51 B19:94 B25:82
+  2026-09-15: B01:47 B02:91 B04:88 B05:22 B11:75 B12:87 B16:50 B19:93 B25:94
+  2026-09-16: B01:39 B02:86 B04:87 B05:14 B11:86 B12:86 B16:52 B19:94 B25:79
+  2026-09-17: B01:32 B02:90 B04:89 B11:62 B12:81 B16:51 B19:93 B25:79
+  2026-09-18: B01:53 B02:86 B04:87 B11:83 B12:89 B16:51 B19:89 B25:86
+  2026-09-19: B01:45 B02:90 B04:84 B11:71 B12:77 B16:53 B19:73 B25:73
+  2026-09-20: B01:47 B02:80 B04:81 B11:63 B12:87 B16:49 B19:71 B25:74
+  2026-09-21: B01:47 B02:96 B04:88 B11:91 B12:88 B16:49 B19:96 B25:83
+  2026-09-22: B01:65 B02:95 B04:94 B11:87 B12:88 B16:49 B19:94 B25:87
+  2026-09-23: B01:41 B02:86 B04:92 B11:82 B12:89 B16:49 B19:96 B25:85
+  2026-09-24: B01:46 B02:89 B04:89 B11:90 B12:92 B16:49 B19:95 B25:84
+  2026-09-25: B01:59 B02:88 B04:88 B11:81 B12:91 B16:52 B19:95 B25:82
+  2026-09-26: B01:55 B02:84 B04:88 B11:76 B12:77 B16:48 B19:95 B25:79
+  2026-09-27: B01:67 B02:83 B04:86 B11:81 B12:84 B16:48 B19:96 B25:84
+  2026-09-28: B01:50 B02:83 B04:86 B11:76 B12:71 B16:48 B19:92 B25:73
+  2026-09-29: B01:62 B02:89 B04:89 B05:20 B11:79 B12:81 B16:47 B19:93 B25:79
+  2026-09-30: B01:52 B02:91 B04:88 B05:28 B11:84 B12:85 B16:49 B19:95 B25:87
+  2026-10-01: B01:15 B02:29 B04:29 B05:2 B11:24 B12:22 B16:14 B19:31 B25:23

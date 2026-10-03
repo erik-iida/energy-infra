@@ -67,6 +67,22 @@ jobs:
           path: state
           key: state-${{ github.run_id }}
 
+      # Data tab: last 30 days of the data store as small JSON files (scripts/build_browse.py). Rebuilt every 3 h
+      # (cached in between so the hourly runs don't download the store each time); a failure only hides the tab's data.
+      - id: bucket
+        run: echo "k=$(date -u +%Y%m%d)-$(( $(date -u +%-H) / 3 ))" >> "$GITHUB_OUTPUT"
+      - id: browsecache
+        uses: actions/cache@v4
+        with:
+          path: web/data/browse
+          key: browse-${{ steps.bucket.outputs.k }}-${{ hashFiles('scripts/build_browse.py') }}
+      - name: Export store for the Data tab
+        if: steps.browsecache.outputs.cache-hit != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/build_browse.py
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

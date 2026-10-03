@@ -11,3 +11,6 @@ data/raw/gas/flows.json
 data/raw/gas/interconnections.json
 data/raw/gie/*_eu.json
 data/raw/gie/*_countries.json
+
+# Data tab export, built by the deploy job from the store release
+web/data/browse/

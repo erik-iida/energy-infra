@@ -279,6 +279,19 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
   signal fires, the Streamlit/site "Signals" view, e-mail sending.
 - Needs history for percentiles: until the backfill has run, the draft says so in the data notes.
 
+## Data tab (Oct 3 2026)
+- Fifth tab, "Data": browse the stored history like a spreadsheet. Dataset buttons (day-ahead price, actual generation,
+  wind & solar forecast, load, cross-border flows), zone select, range (1-30 days), CET/UTC, newest/oldest first,
+  variable chips to switch columns on/off (technology colours from the --m-* palette; pumping/consumption columns start
+  off), Mean/Min/Max rows on top, negatives red, future (day-ahead) rows marked, CSV download of what is shown.
+  Timestamps run down the rows. The Signals tab (anomaly filters) comes later and will be the sixth.
+- Data path: the site is static and release assets are not CORS-readable, so scripts/build_browse.py (run by hourly.yml,
+  cached for 3 h, continue-on-error) exports the last 30 days of the store to web/data/browse/ (index.json +
+  <dataset>/<zone>.json, hourly means in UTC, seq 1 prices only). Not committed (.gitignore). If the export is missing
+  or the store is empty the tab says so. Local test: STORE_DIR=<folder> python scripts/build_browse.py, then serve web/.
+- Next: chart toggle (the page already has svg line charts), native 15-min resolution, longer ranges per month file,
+  farm_hourly / farm_forecast per wind farm, capture/TB2/TB4 derived columns (newsletter/metrics.py has them).
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

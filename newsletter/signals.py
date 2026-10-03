@@ -35,6 +35,12 @@ RULES = [
     Rule("cr_wind_onshore", "onshore wind capture rate", "%", hi=None, lo=0.10, weight=1.0),
     Rule("cr_wind_offshore", "offshore wind capture rate", "%", hi=None, lo=0.10, weight=1.0),
     Rule("cr_solar", "solar capture rate", "%", hi=None, lo=0.10, weight=0.8),
+    # residual load = load - wind - solar (registry.py): tight evenings, deep surplus, steep ramps
+    Rule("res_peak", "peak residual load", "MW", hi=0.90, min_abs=500, weight=1.0),
+    Rule("res_min", "lowest residual load (wind + solar surplus)", "MW", hi=None, lo=0.10, min_abs=300, weight=0.9),
+    Rule("res_ramp3", "3-hour residual-load ramp", "MW", hi=0.90, min_abs=500, weight=0.9),
+    # physical cross-border flows of the whole zone; min_abs is a ratio (0.05 = 5 % of load)
+    Rule("import_share", "net import share of load", "%", hi=0.90, lo=0.10, min_abs=0.05, weight=1.0),
 ]
 
 

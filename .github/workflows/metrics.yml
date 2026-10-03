@@ -1,0 +1,45 @@
+name: metrics
+
+# Daily metrics (newsletter/registry.py: prices, spreads, capture, residual load, interconnection) computed from the data
+# store and written back to it as `metrics_daily` monthly Parquet assets (one row per zone x CET day x metric).
+#   after every collect run (and daily at 13:10 UTC as a fallback): the last 10 days, plus every month that has prices
+#   but no metrics file yet - so the history fills in by itself while the backfill goes on
+#   manual with mode=all: recompute every month (after bumping registry.VERSION)
+on:
+  workflow_run:
+    workflows: [collect]
+    types: [completed]
+  schedule:
+    - cron: "10 13 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "daily or all"
+        default: daily
+
+permissions:
+  contents: write   # release assets
+
+# the collector and this job write the same release
+concurrency:
+  group: store-entsoe
+  cancel-in-progress: false
+
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements-collect.txt
+      - run: pip install -r requirements-collect.txt
+      - name: Metrics
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'daily' }}
+        run: |
+          if [ "$MODE" = "all" ]; then python scripts/build_metrics.py --all; else python scripts/build_metrics.py; fi

@@ -36,9 +36,11 @@ KEYS = {
     "farm_hourly": ["farm_id", "ts"],
     "farm_forecast": ["issued", "farm_id", "ts"],
     "farms_meta": ["farm_id"],
+    # derived, one row per zone x CET day x metric (newsletter/registry.py defines the metric ids); `version` = registry.VERSION
+    "metrics_daily": ["zone", "day", "metric"],
 }
 # datasets keyed by month of `ts`; farm_forecast by month of `issued`; farms_meta by month of the snapshot
-MONTH_COL = {"farm_forecast": "issued"}
+MONTH_COL = {"farm_forecast": "issued", "metrics_daily": "day"}
 
 
 def asset_name(dataset: str, month: str) -> str:

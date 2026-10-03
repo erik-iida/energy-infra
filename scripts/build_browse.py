@@ -27,6 +27,7 @@ sys.path.insert(0, str(ROOT))
 from collector.store import Store  # noqa: E402
 from newsletter import fundamentals as FU  # noqa: E402
 from newsletter import metrics as M  # noqa: E402
+from newsletter import registry as R  # noqa: E402
 from newsletter import signals as SG  # noqa: E402
 from pipeline.entsoe import PSR  # noqa: E402
 
@@ -36,22 +37,16 @@ TECH_KEY = {"nuclear": "nuc", "fossil_brown_coal_lignite": "coal", "fossil_hard_
             "fossil_gas": "gas", "fossil_oil": "oil", "wind_onshore": "won", "wind_offshore": "woff", "solar": "sol",
             "hydro_run_of_river": "hyd", "hydro_water_reservoir": "hyd", "hydro_pumped_storage": "hyd",
             "biomass": "bio", "waste": "bio"}
-G_PRICE, G_GEN, G_FC, G_LOAD, G_FLOW = ("Prices & daily spreads", "Actual generation", "Day-ahead forecast (wind & solar)",
-                                        "Load", "Cross-border flows")
-GROUPS = [G_PRICE, G_GEN, G_FC, G_LOAD, G_FLOW]
+G_PRICE, G_RES, G_GEN, G_FC, G_LOAD, G_FLOW = (
+    "Prices & daily spreads", "Residual load & interconnection (daily)", "Actual generation",
+    "Day-ahead forecast (wind & solar)", "Load", "Cross-border flows")
+GROUPS = [G_PRICE, G_RES, G_GEN, G_FC, G_LOAD, G_FLOW]
 DEFAULT_ON = {"p|price", "m|tb2", "m|tb4", "l|actual", "g|B16|gen", "g|B19|gen", "g|B18|gen"}
-# daily metrics repeated on every hour of the CET day: id suffix -> (name, unit, factor)
-DAILY = {"baseload": ("Baseload, daily mean", "EUR/MWh", 1), "tb2": ("TB2 storage spread, daily", "EUR/MWh", 1),
-         "tb4": ("TB4 storage spread, daily", "EUR/MWh", 1), "top4": ("Top-4 hours mean, daily", "EUR/MWh", 1),
-         "neg_hours": ("Negative-price hours, daily", "h", 1), "price_min": ("Lowest hourly price, daily", "EUR/MWh", 1),
-         "price_max": ("Highest hourly price, daily", "EUR/MWh", 1),
-         "capture_solar": ("Solar capture price, daily", "EUR/MWh", 1), "cr_solar": ("Solar capture rate, daily", "%", 100),
-         "capture_wind_onshore": ("Onshore wind capture price, daily", "EUR/MWh", 1),
-         "cr_wind_onshore": ("Onshore wind capture rate, daily", "%", 100),
-         "capture_wind_offshore": ("Offshore wind capture price, daily", "EUR/MWh", 1),
-         "cr_wind_offshore": ("Offshore wind capture rate, daily", "%", 100)}
-TECH_OF = {"capture_solar": "sol", "cr_solar": "sol", "capture_wind_onshore": "won", "cr_wind_onshore": "won",
-           "capture_wind_offshore": "woff", "cr_wind_offshore": "woff"}
+# daily metrics (newsletter/registry.py) repeated on every hour of the CET day; spark spreads are private and not in the registry export
+PUB = [m for m in R.METRICS if not m.private]
+DAILY = {m.id: (m.label if "daily" in m.label.lower() else m.label + ", daily", m.unit, m.scale) for m in PUB}
+TECH_OF = {m.id: m.tech for m in PUB if m.tech}
+GROUP_OF = {m.id: R.GROUP_OF[m.family] for m in PUB}
 
 
 def read(st: Store, ds: str, months: list[str], a, b) -> pd.DataFrame:
@@ -139,10 +134,10 @@ def flags_export(now: datetime) -> dict | None:
     zone (value and percentile against the zone's own last 90 days). Spark spreads are never part of this file."""
     from newsletter import build as NB  # reads the store again, 93 days
     day = pd.Timestamp(now).tz_convert(M.CET).tz_localize(None).normalize() - pd.Timedelta(days=1)
-    da, ga = NB.load_window(day)
+    da, ga, ld, fl = NB.load_window_all(day)
     if da.empty:
         return None
-    metrics = M.all_metrics(da, ga)
+    metrics = M.all_metrics(da, ga, None, ld, fl)
     rules = [r for r in SG.RULES if not r.metric.startswith("spark")]
     scan = SG.scan(metrics, day, rules)
     hist_days = int(metrics.loc[metrics["metric"] == "baseload", "day"].nunique())
@@ -175,7 +170,8 @@ def main() -> None:
         for cur, g in d.groupby("currency"):
             for z, w in hourly(g, lambda x: "p|price", "price").items():
                 F.add(z, w, {"p|price": meta("p|price", "Day-ahead price", G_PRICE, "", f"{cur}/MWh")})
-        dm = M.all_metrics(da, ga)
+        ldm, flm = read(st, "load", months, a, b), read(st, "flows", months, a, b)
+        dm = M.all_metrics(da, ga, None, ldm[ldm["kind"] == "actual"] if not ldm.empty else None, flm if not flm.empty else None)
         dm = dm[dm["metric"].isin(DAILY)]
         loc = pd.Series(F.idx.tz_convert(M.CET).tz_localize(None).normalize(), index=F.idx)
         for z, g in dm.groupby("zone"):
@@ -183,7 +179,7 @@ def main() -> None:
             for k, gg in g.groupby("metric"):
                 name, unit, fac = DAILY[k]
                 cols[f"m|{k}"] = loc.map(gg.set_index("day")["value"] * fac)
-                mm[f"m|{k}"] = meta(f"m|{k}", name, G_PRICE, TECH_OF.get(k, ""), unit)
+                mm[f"m|{k}"] = meta(f"m|{k}", name, GROUP_OF[k], TECH_OF.get(k, ""), unit)
             F.add(z, pd.DataFrame(cols, index=F.idx), mm)
     # --- generation
     capx = capacity_export(ga, now) if not ga.empty else capacity_export(None, now)
@@ -221,11 +217,11 @@ def main() -> None:
 
     avail = F.write()
     order = {g: i for i, g in enumerate(GROUPS)}
-    dk = list(DAILY)
+    dk = list(DAILY)  # registry order
 
     def vkey(m):
         i, g = m["id"], m["grp"]
-        k = (0 if i == "p|price" else 1 + dk.index(i[2:])) if g == G_PRICE else \
+        k = (0 if i == "p|price" else 1 + dk.index(i[2:])) if g in (G_PRICE, G_RES) else \
             (i.split("|")[1], i.endswith("cons")) if g == G_GEN else \
             (0 if i.endswith("actual") else 1) if g == G_LOAD else m["name"] if g == G_FLOW else i
         return (order[g], str(k) if not isinstance(k, int) else f"{k:03d}")

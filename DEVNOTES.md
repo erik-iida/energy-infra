@@ -322,6 +322,37 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   data, capacity history (IRENA years 2015+ are already in data/ref/irena_capacity.csv), flags for tomorrow's auction,
   signal history (flags per day) once the store has a year.
 
+## Metric catalogue, residual load, interconnection, stored daily metrics (Oct 3 2026)
+- **Classification first.** `newsletter/registry.py` is the single definition of every daily metric: id, label, family,
+  unit, definition, input datasets, minimum hours per day, what "high" means, display scale. Families: price_level,
+  storage_spread, price_shape, capture, residual_load, interconnection (+ fuel_spread, private, never exported or stored).
+  The metric functions (metrics.py), signal rules (signals.py), the Data-tab export (build_browse.py) and the stored table
+  all use it; test_registry.py checks they stay consistent. `registry.describe()` prints the catalogue as a table.
+  Change a definition = bump `registry.VERSION` (stored rows carry it) and recompute (`metrics` workflow, mode=all).
+- New metrics (version 2): `res_mean`, `res_peak`, `res_min`, `res_ramp3`, `vre_share` (residual load = actual load - solar
+  - onshore - offshore wind, hourly; per day only the technologies the zone reports >= 20 h, only hours that have load and all of
+  them) and `net_import`, `net_import_max`, `net_import_min`, `import_share` (physical flows over the zone's borders that
+  are in the store, import positive; a day counts only when the set of borders equals the set present on most days of the
+  window; borders to zones outside the store - GB, MD, TR, ... - are not included, so it is the net position over the
+  collected borders, not the full one).
+- New signal rules: `res_peak` (high, >= 500 MW), `res_min` (low = surplus, >= 300 MW), `res_ramp3` (high, >= 500 MW),
+  `import_share` (high or low, >= 5 % of load). They show up in the newsletter signals, the Flags tab and the Data tab
+  (new group "Residual load & interconnection (daily)").
+- **Stored daily metrics**: store dataset `metrics_daily` (monthly Parquet assets, key zone+day+metric; columns zone, day
+  (CET date), metric, value, version, fetched). `scripts/build_metrics.py` + `.github/workflows/metrics.yml`: runs after every
+  collect run (and 13:10 UTC fallback), recomputes the last 10 days and fills every month the backfill has finished
+  (`metrics_state.json` remembers which); `--all` / dispatch mode=all recomputes everything. Raw ENTSO-E stays the source of
+  truth; this table is derived and can always be rebuilt.
+- **Why this shape for ML later.** Long format (zone, day, metric, value) with a registry means a new metric is one line, not a
+  schema change; features are pivoted on demand (`df.pivot(index=[zone, day], columns=metric)`). Rules for a model dataset:
+  split by time, not at random (days are autocorrelated); percentiles / signals use only the trailing window so they are
+  leak-free, but any feature computed on the full history is not; keep `version` as a feature of the dataset; missing = day
+  failed its completeness rule, never zero-filled. Targets worth defining before modelling (not built): next-day TB4, next-day
+  negative hours, next-day capture rate (from day-ahead forecasts of wind, solar, load - gen_forecast is already stored).
+  Still missing as inputs: gas / carbon (private), temperature, installed capacity per year (IRENA to 2024), outages (A77/A80).
+- Next: store IRENA capacity as a store dataset too; per-border flow metrics (HU-RO etc.) as their own family; price-setter /
+  marginal technology inference; flags per day history table once metrics_daily has a year.
+
 ## Fuel prices and spark spreads (Oct 3 2026)
 - Gas: yfinance `TTF=F` (Yahoo, ICE Endex front month, EUR/MWh, daily since Oct 2017; probe: scripts/probe_yf.py ->
   data/raw/fuel/probe_yf_log.txt). Carbon: NO free EUA series on Yahoo (KEUA, EUA=F returned nothing; KRBN is a USD

@@ -50,6 +50,45 @@ def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.Da
     return cat(da), cat(ga)
 
 
+def load_window_all(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3):
+    """da_price, solar/wind gen_actual (as load_window) plus actual load and cross-border flows for the same window."""
+    da, ga = load_window(day, back)
+    a = (day - pd.Timedelta(days=back)).tz_localize(M.CET).tz_convert("UTC")
+    b = (day + pd.Timedelta(days=2)).tz_localize(M.CET).tz_convert("UTC")
+    st = Store()
+    ld, fl = [], []
+    for m in months_between(a, b):
+        l = st.read("load", m)
+        if l is not None:
+            ld.append(l[(l["ts"] >= a) & (l["ts"] < b) & (l["kind"] == "actual")])
+        f = st.read("flows", m)
+        if f is not None:
+            fl.append(f[(f["ts"] >= a) & (f["ts"] < b)])
+    cat = lambda xs: pd.concat(xs, ignore_index=True) if xs else pd.DataFrame()
+    return da, ga, cat(ld), cat(fl)
+
+
+def load_range(a: pd.Timestamp, b: pd.Timestamp):
+    """da_price, solar/wind gen_actual, actual load and flows for the UTC range [a, b) (tz-aware)."""
+    st = Store()
+    out = {"da": [], "ga": [], "ld": [], "fl": []}
+    for m in months_between(a, b - pd.Timedelta(seconds=1)):
+        d = st.read("da_price", m)
+        if d is not None:
+            out["da"].append(d[(d["ts"] >= a) & (d["ts"] < b)])
+        g = st.read("gen_actual", m)
+        if g is not None:
+            out["ga"].append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen") & g["psr"].isin(M.TECH)])
+        l = st.read("load", m)
+        if l is not None:
+            out["ld"].append(l[(l["ts"] >= a) & (l["ts"] < b) & (l["kind"] == "actual")])
+        f = st.read("flows", m)
+        if f is not None:
+            out["fl"].append(f[(f["ts"] >= a) & (f["ts"] < b)])
+    cat = lambda xs: pd.concat(xs, ignore_index=True) if xs else pd.DataFrame()
+    return cat(out["da"]), cat(out["ga"]), cat(out["ld"]), cat(out["fl"])
+
+
 def load_fund(day: pd.Timestamp, days: int = 30) -> tuple[pd.DataFrame, pd.DataFrame]:
     """All generation types and actual load for the `days` CET days ending on `day` (for capacity factors)."""
     b = (day + pd.Timedelta(days=1)).tz_localize(M.CET).tz_convert("UTC")
@@ -105,8 +144,9 @@ def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, z
 
 
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
-                carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None) -> dict:
-    metrics = M.all_metrics(da, ga, srmc)
+                carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None,
+                ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None) -> dict:
+    metrics = M.all_metrics(da, ga, srmc, ld, fl)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
     sigs = S.evaluate(metrics, day)
     zones_day = set(metrics.loc[(metrics["day"] == day) & (metrics["metric"] == "baseload"), "zone"])
@@ -282,7 +322,7 @@ def main(argv=None) -> None:
     a = ap.parse_args(argv)
     today_cet = pd.Timestamp.now(tz=M.CET).tz_localize(None).normalize()
     day = pd.Timestamp(a.day) if a.day else today_cet - pd.Timedelta(days=1)
-    da, ga = load_window(day)
+    da, ga, ld, fl = load_window_all(day)
     if da.empty:
         raise SystemExit("no da_price rows in the store for this window")
     srmc, carbon, fuel_note = None, False, None
@@ -293,7 +333,7 @@ def main(argv=None) -> None:
     except Exception as e:  # fuel prices are optional: the brief is still useful without spark spreads
         fuel_note = f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
         print(fuel_note)
-    f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day))
+    f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day), ld=ld, fl=fl)
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     md = draft_brief(f)

@@ -1,0 +1,12 @@
+yfinance 1.7.0
+TTF=F (Dutch TTF gas front month (EUR/MWh expected)): 2250 daily rows 2017-10-23..2026-10-02, max gap 5 d, last close has 2 integer digit(s), non-positive closes 0
+   currency EUR, exchange NYM
+KRBN (KraneShares global carbon ETF (proxy)): 1551 daily rows 2020-07-31..2026-10-02, max gap 4 d, last close has 2 integer digit(s), non-positive closes 0
+   currency USD, exchange PCX
+KEUA (KraneShares European carbon ETF (proxy)): no rows
+EUA=F (guess: EUA futures): no rows
+CFI2Z6.NYB (guess): no rows
+NG=F (Henry Hub gas (control, USD/MMBtu)): 6553 daily rows 2000-08-30..2026-10-02, max gap 5 d, last close has 1 integer digit(s), non-positive closes 0
+   currency USD, exchange NYM
+EURUSD=X (control FX): 5926 daily rows 2003-12-01..2026-10-02, max gap 18 d, last close has 1 integer digit(s), non-positive closes 0
+   currency USD, exchange CCY

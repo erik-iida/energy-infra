@@ -343,6 +343,8 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   collect run (and 13:10 UTC fallback), recomputes the last 10 days and fills every month the backfill has finished
   (`metrics_state.json` remembers which); `--all` / dispatch mode=all recomputes everything. Raw ENTSO-E stays the source of
   truth; this table is derived and can always be rebuilt.
+- Local copy: `python scripts/pull_store.py` downloads `metrics_daily` (or `--datasets ...` / `--all`) from the public release into
+  `~/gridecon-store` (refuses OneDrive folders) and writes `metrics_daily.csv`. `git pull` never brings the store (release assets).
 - **Why this shape for ML later.** Long format (zone, day, metric, value) with a registry means a new metric is one line, not a
   schema change; features are pivoted on demand (`df.pivot(index=[zone, day], columns=metric)`). Rules for a model dataset:
   split by time, not at random (days are autocorrelated); percentiles / signals use only the trailing window so they are

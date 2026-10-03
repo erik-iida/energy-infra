@@ -138,14 +138,14 @@ try:
                 hv = hourly(src)
             diffs, rows = [], []
             for h, p in zip(hrs, pr):
-                t = datetime.fromtimestamp(h, timezone.utc)
+                t = datetime.fromisoformat(h.replace('Z', '+00:00'))
                 if p is not None and t in hv:
                     diffs.append(abs(p - hv[t]))
                     rows.append((t, p, hv[t]))
             P(f"  vs {label}: {len(diffs)} common hours, mean |diff| {sum(diffs)/len(diffs):.3f}, max {max(diffs):.3f}" if diffs else f"  vs {label}: no common hours")
             for t, p, v in rows[:3] + rows[-3:]:
                 P(f"     {t:%d %b %H:%M}  site {p:.2f}  entsoe {v:.2f}")
-        last = [(datetime.fromtimestamp(h, timezone.utc), p) for h, p in zip(hrs, pr) if p is not None][-1]
+        last = [(datetime.fromisoformat(h.replace('Z', '+00:00')), p) for h, p in zip(hrs, pr) if p is not None][-1]
         P(f"  site's last DE-LU price hour: {last[0]:%d %b %H:%M} UTC = {last[1]}")
 except Exception as e:
     P(f"  failed: {e!r}")
@@ -171,6 +171,51 @@ else:
     P("  per-psr last timestamp: " + ", ".join(
         f"{p}={max(t for d in ts_list if d['psrType'] == p for t in d['pts']):%d %H:%M}"
         for p in sorted({d['psrType'] for d in ts_list if d['pts']})))
+
+
+# ---------------------------------------------------------------- 4. seq 2 in the past, other zones, gaps
+P("\n=== A44 DE-LU 18 Sep .. 02 Oct: is there a seq 2 for past days, and how does it relate to seq 1?")
+txt = get(documentType="A44", in_Domain=DE, out_Domain=DE, periodStart=f(today - timedelta(days=15)), periodEnd=f(today))
+if not txt.startswith(("HTTP", "failed")):
+    pd_ = defaultdict(lambda: defaultdict(dict))
+    for d in parse(txt, "price.amount"):
+        sq = d["classificationSequence_AttributeInstanceComponent.position"]
+        for t, v in d["pts"].items():
+            pd_[(t + timedelta(hours=2)).date()][sq][t] = v  # local (CEST) delivery day
+    for day in sorted(pd_):
+        s1, s2 = pd_[day].get("1", {}), pd_[day].get("2", {})
+        both = sorted(set(s1) & set(s2))
+        md = sum(abs(s1[t] - s2[t]) for t in both) / len(both) if both else float("nan")
+        P(f"  {day}: n seq1={len(s1)} seq2={len(s2)}  mean seq1 {sum(s1.values())/max(len(s1),1):.1f} seq2 {sum(s2.values())/max(len(s2),1):.1f}  mean|diff| {md:.1f}")
+    # does seq 2 look like seq 1 shifted by a day?
+    ks1 = {t: v for dd in pd_.values() for t, v in dd.get("1", {}).items()}
+    ks2 = {t: v for dd in pd_.values() for t, v in dd.get("2", {}).items()}
+    for lag in (0, 96, -96, 672, -672):
+        pairs = [(ks1[t], ks2[t + timedelta(minutes=15 * lag)]) for t in ks1 if t + timedelta(minutes=15 * lag) in ks2]
+        if pairs:
+            P(f"  seq1 vs seq2 shifted {lag*15/60:+.0f} h: n={len(pairs)} mean|diff| {sum(abs(x-y) for x,y in pairs)/len(pairs):.1f}")
+
+P("\n=== A44 seq presence per zone, window today-1 .. today+3 (does seq 2 reach days without an auction?)")
+for z, eic in (("FR", "10YFR-RTE------C"), ("PL", "10YPL-AREA-----S"), ("RO", RO), ("HU", "10YHU-MAVIR----U"),
+               ("NL", "10YNL----------L"), ("DK1", "10YDK-1--------W"), ("BG", "10YCA-BULGARIA-R")):
+    t2 = get(documentType="A44", in_Domain=eic, out_Domain=eic, periodStart=f(today - timedelta(days=1)), periodEnd=f(today + timedelta(days=3)))
+    if t2.startswith(("HTTP", "failed")) or "Acknowledgement" in t2[:400]:
+        P(f"  {z}: " + " ".join(re.sub(r"<[^>]+>", " ", t2).split())[:160])
+        continue
+    rows = []
+    for d in parse(t2, "price.amount"):
+        k = sorted(d["pts"])
+        rows.append(f"seq{d['classificationSequence_AttributeInstanceComponent.position']} {d['periods'][0][2]} n={len(k)} {k[0]:%d %H:%M}..{k[-1]:%d %H:%M}")
+    P(f"  {z}: " + " | ".join(rows))
+
+P("\n=== DE-LU seq-2 gaps on the first future day (positions missing)")
+for d in parse(get(documentType="A44", in_Domain=DE, out_Domain=DE, periodStart=f(today + timedelta(hours=-2)), periodEnd=f(today + timedelta(days=3))), "price.amount"):
+    if d["classificationSequence_AttributeInstanceComponent.position"] == "2" and d["pts"]:
+        ks = sorted(d["pts"])
+        a0 = datetime.fromisoformat(d["periods"][0][0].replace("Z", "+00:00"))
+        miss = [a0 + timedelta(minutes=15 * i) for i in range(96) if a0 + timedelta(minutes=15 * i) not in d["pts"]]
+        if miss:
+            P(f"  period {d['periods'][0][0]}: missing {[m.strftime('%d %H:%M') for m in miss]}")
 
 LOG.parent.mkdir(parents=True, exist_ok=True)
 LOG.write_text("\n".join(out) + "\n", encoding="utf-8")

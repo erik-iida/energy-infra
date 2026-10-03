@@ -487,7 +487,7 @@ function moScale(){if(!MZ.d)return null;const v=Object.keys(MZ.d).map(z=>moVal(z
  const top=v[Math.floor((v.length-1)*.97)],lo=v[0]<0?0:Math.floor(v[0]/10)*10;return{top:Math.max(lo+10,top),lo,low:Math.min(0,v[0]),min:v[0],max:v[v.length-1]}}
 const moCol=(v,sc)=>v<0?lerpC(HMNEG,sc.low<0?v/sc.low:1):lerpC(HMPOS,(v-sc.lo)/(sc.top-sc.lo));
 function moBar(sc){const b=$("mobar");if(MO==="off"||!sc){b.innerHTML="";return}
- b.innerHTML="<span>"+MOL[MO]+"</span><br>"+(sc.low<0?"<i style='width:36px;background:linear-gradient(90deg,rgb("+HMNEG[1].join(",")+"),rgb("+HMNEG[0].join(",")+"))'></i>"+Math.round(sc.low):"")+"<span>"+Math.round(sc.lo)+"</span><i style='background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></i><span>"+Math.round(sc.top)+"+ €/MWh</span>"}
+ b.innerHTML="<span>"+MOL[MO]+"</span><br>"+(sc.low<0?"<i style='width:36px;background:linear-gradient(90deg,rgb("+HMNEG[1].join(",")+"),rgb("+HMNEG[0].join(",")+"))'></i>"+Math.round(sc.low):"")+"<span>"+Math.round(sc.lo)+"</span><i style='background:linear-gradient(90deg,"+HMPOS.map(c=>"rgb("+c.join(",")+")").join(",")+")'></i><span>"+Math.round(sc.top)+"+ €/MWh</span>"+(MK&&MK.price_source&&MK.price_source.GB?"<br><span>GB: Elexon Market Index (traded-price index, converted from GBP)</span>":"")}
 function moDraw(){MZ.paths=[];if(MO==="off"||!MK){moBar(null);return}mzLoad();if(!MZ.d)return;const sc=moScale();moBar(sc);if(!sc){$("mobar").innerHTML="<span>"+MOL[MO]+": not published yet</span>";return}const v=viewBox(),lab=[];
  cx.save();cx.lineJoin="round";
  for(const[z,Z_]of Object.entries(MZ.d)){const b=Z_.b;if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;const val=moVal(z);

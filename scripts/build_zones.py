@@ -31,7 +31,7 @@ EP_ZONES = {"AT": "AT", "BE": "BE", "BG": "BG", "CH": "CH", "CZ": "CZ", "DE-LU":
             "IT-Sicily": "IT_SICI", "IT-South": "IT_SUD", "LT": "LT", "LV": "LV", "NL": "NL", "NO1": "NO_1", "NO2": "NO_2",
             "NO3": "NO_3", "NO4": "NO_4", "NO5": "NO_5", "PL": "PL", "PT": "PT", "RO": "RO", "RS": "RS", "SE1": "SE_1",
             "SE2": "SE_2", "SE3": "SE_3", "SE4": "SE_4", "SI": "SI", "SK": "SK"}
-NE_ZONES = {"IE(SEM)": ["Ireland", "Northern Ireland"], "ME": ["Montenegro"], "MK": ["North Macedonia", "Macedonia"],
+NE_ZONES = {"GB": ["England", "Scotland", "Wales"], "IE(SEM)": ["Ireland", "Northern Ireland"], "ME": ["Montenegro"], "MK": ["North Macedonia", "Macedonia"],
             "BA": ["Bosnia and Herz.", "Bosnia and Herzegovina", "Republic Srpska", "Federation of Bosnia and Herzegovina",
                    "Brčko District"],
             "UA-IPS": ["Ukraine"], "AL": ["Albania"]}
@@ -79,7 +79,7 @@ def main() -> None:
         p = g.representative_point()
         out[z] = {"p": rings(g), "c": [round(p.x, 2), round(p.y, 2)]}
         print(f"{z}: {len(out[z]['p'])} rings, {sum(len(r) for r in out[z]['p']) // 2} points")
-    OUT.write_text(json.dumps({"src": "Bidding zones: entsoe-py (EnergieID, MIT); Natural Earth (public domain) for IE(SEM), "
+    OUT.write_text(json.dumps({"src": "Bidding zones: entsoe-py (EnergieID, MIT); Natural Earth (public domain) for GB, IE(SEM), "
                                       "ME, MK, BA, UA-IPS, AL", "zones": out}, separators=(",", ":")), encoding="utf-8")
     print(f"wrote {OUT.relative_to(ROOT)}: {OUT.stat().st_size / 1e3:.0f} kB")
 

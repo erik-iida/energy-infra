@@ -1,0 +1,30 @@
+name: probe-yf
+
+# One-off: which fuel/carbon series yfinance returns (private use, log has no price series); commits its log.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/probe_yf.py]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install yfinance pandas
+      - run: python scripts/probe_yf.py || true
+      - run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/fuel/probe_yf_log.txt
+          git commit -m "yfinance probe log" || echo "no changes"
+          git pull --rebase
+          git push

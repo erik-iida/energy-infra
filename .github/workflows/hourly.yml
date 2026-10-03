@@ -59,6 +59,7 @@ jobs:
           ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
           COLLECT_FARMS: "1"
           GH_TOKEN: ${{ github.token }}
+          SPARK_PUBLIC: ${{ vars.SPARK_PUBLIC }}   # "1" publishes spark spreads on the Market tab (see pipeline/spark.py)
         run: python -m pipeline.run
 
       - uses: actions/cache/save@v4

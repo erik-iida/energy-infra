@@ -8,3 +8,5 @@ shapely
 # data store (collector/)
 pandas
 pyarrow
+# spark spreads on the Market tab (pipeline/spark.py, only with SPARK_PUBLIC=1)
+yfinance

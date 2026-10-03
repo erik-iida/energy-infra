@@ -311,6 +311,12 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   so zone spreads there are indicative. Idea for later: compare implied gas cost at gas-marginal hours across zones
   against DE-LU/NL to measure local premia (needs carbon).
 - Not done: dark spreads (no coal price source), implied-gas-cost metric, spark spreads on the site's Data/Signals tabs.
+- Market tab (Oct 3 2026): optional "Spark" column and sort in the "All bidding zones" heatmap (feed.market.spark, built by
+  pipeline/spark.py: top-4-hour price minus the reference gas cost, past 24 h and tomorrow). OFF by default: set the repo
+  variable SPARK_PUBLIC=1 (Settings > Secrets and variables > Actions > Variables) to publish. Reason: the page also
+  shows the hourly prices, so baseload minus spark gives the reference cost back and with it the TTF price - publishing
+  the spreads publishes the gas price de facto (Erik chose "derived only" before this was clear; confirm before
+  switching on). The gas cost is cached in state/fuel_cache.json (Actions cache, 6 h), never in the feed.
 - newsletter.yml installs requirements-newsletter.txt (collect + yfinance). Yahoo is not reachable from the cloud
   session: the fuel fetch only runs on Actions; a failed fetch leaves the brief without spark spreads and says so.
 

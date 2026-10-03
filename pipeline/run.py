@@ -146,6 +146,14 @@ def main(argv=None) -> None:
             mk, hist = market.build(farms, feed["hours"] + feed["fc_hours"])
             farms_block = feed.pop("farms")
             feed["market"] = mk
+            if os.environ.get("SPARK_PUBLIC") == "1":  # off by default: see pipeline/spark.py
+                try:
+                    from . import spark
+                    sp = spark.build(mk.get("prices", {}), len(feed["hours"]))
+                    if sp:
+                        mk["spark"] = sp
+                except Exception as e:
+                    print(f"spark spreads: skipped ({type(e).__name__})")
             feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read
             (config.FEED_JSON.parent / "market_history.json").write_text(
                 json.dumps(hist, separators=(",", ":")), encoding="utf-8")

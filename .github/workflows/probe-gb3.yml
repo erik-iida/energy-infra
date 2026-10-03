@@ -1,0 +1,30 @@
+name: probe-gb3
+
+# One-off: shapes, units and licence hints of the open GB / Ireland sources; commits its log (data/raw/gbie/probe3_log.txt).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/probe_gb3.py]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - run: python scripts/probe_gb3.py || true
+      - run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/gbie/probe3_log.txt
+          git commit -m "GB open-source probe 3 log" || echo "no changes"
+          git pull --rebase
+          git push

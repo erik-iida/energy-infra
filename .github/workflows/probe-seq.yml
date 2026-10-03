@@ -1,0 +1,32 @@
+name: probe-seq
+
+# One-off diagnostics for the data store (A44 classificationSequence, RO A75 lateness); commits its log.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [scripts/probe_seq.py]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install requests
+      - env:
+          ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
+        run: python scripts/probe_seq.py || true
+      - run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/raw/entsoe/probe_seq_log.txt
+          git commit -m "ENTSO-E seq/RO probe log" || echo "no changes"
+          git pull --rebase
+          git push

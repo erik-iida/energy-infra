@@ -1,0 +1,95 @@
+=== last 3 days: 200 45671 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2026-09-30T13%3A00Z&to=2026-10-03T13%3A00Z&format=json
+    rows 284; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    N2EXMIDP: rows 144, with volume 0, price min/mean/max None/None/None, first 2026-09-30T13:00:00Z last 2026-10-03T13:00:00Z
+    APXMIDP: rows 140, with volume 140, price min/mean/max 96.37/151.82928571428565/210.4, first 2026-09-30T13:00:00Z last 2026-10-03T12:00:00Z
+      APX {"dataset": "MID", "startTime": "2026-09-30T13:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 29, "price": 132.27, "volume": 4078.2}
+      APX {"dataset": "MID", "startTime": "2026-09-30T13:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 30, "price": 108.54, "volume": 4488.35}
+      APX {"dataset": "MID", "startTime": "2026-09-30T14:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 31, "price": 106.15, "volume": 3763.95}
+      APX {"dataset": "MID", "startTime": "2026-09-30T14:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 32, "price": 96.37, "volume": 3679.55}
+      APX {"dataset": "MID", "startTime": "2026-09-30T15:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 33, "price": 108.13, "volume": 4945.6}
+      APX {"dataset": "MID", "startTime": "2026-09-30T15:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 34, "price": 135.13, "volume": 5380.45}
+      APX {"dataset": "MID", "startTime": "2026-09-30T16:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 35, "price": 145.93, "volume": 5246.65}
+      APX {"dataset": "MID", "startTime": "2026-09-30T16:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 36, "price": 165.19, "volume": 4599.65}
+    APX hours with equal :00/:30 price: 0 of 71
+=== up to tomorrow (is the next day there?): 200 45830 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2026-09-30T13%3A00Z&to=2026-10-04T13%3A00Z&format=json
+    rows 285; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    N2EXMIDP: rows 145, with volume 0, price min/mean/max None/None/None, first 2026-09-30T13:00:00Z last 2026-10-03T13:30:00Z
+    APXMIDP: rows 140, with volume 140, price min/mean/max 96.37/151.82928571428565/210.4, first 2026-09-30T13:00:00Z last 2026-10-03T12:00:00Z
+      APX {"dataset": "MID", "startTime": "2026-09-30T13:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 29, "price": 132.27, "volume": 4078.2}
+      APX {"dataset": "MID", "startTime": "2026-09-30T13:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 30, "price": 108.54, "volume": 4488.35}
+      APX {"dataset": "MID", "startTime": "2026-09-30T14:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 31, "price": 106.15, "volume": 3763.95}
+      APX {"dataset": "MID", "startTime": "2026-09-30T14:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 32, "price": 96.37, "volume": 3679.55}
+      APX {"dataset": "MID", "startTime": "2026-09-30T15:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 33, "price": 108.13, "volume": 4945.6}
+      APX {"dataset": "MID", "startTime": "2026-09-30T15:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 34, "price": 135.13, "volume": 5380.45}
+      APX {"dataset": "MID", "startTime": "2026-09-30T16:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 35, "price": 145.93, "volume": 5246.65}
+      APX {"dataset": "MID", "startTime": "2026-09-30T16:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2026-09-30", "settlementPeriod": 36, "price": 165.19, "volume": 4599.65}
+    APX hours with equal :00/:30 price: 0 of 71
+=== history 2018-02-01: 200 15533 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2018-02-01T00%3A00Z&to=2018-02-02T00%3A00Z&format=json
+    rows 97; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    APXMIDP: rows 49, with volume 49, price min/mean/max 38.44/47.3561224489796/66.4, first 2018-02-01T00:00:00Z last 2018-02-02T00:00:00Z
+    N2EXMIDP: rows 48, with volume 0, price min/mean/max None/None/None, first 2018-02-01T00:00:00Z last 2018-02-02T00:00:00Z
+      APX {"dataset": "MID", "startTime": "2018-02-01T00:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 1, "price": 44.0, "volume": 491.1}
+      APX {"dataset": "MID", "startTime": "2018-02-01T00:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 2, "price": 49.05, "volume": 422.7}
+      APX {"dataset": "MID", "startTime": "2018-02-01T01:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 3, "price": 50.86, "volume": 601.5}
+      APX {"dataset": "MID", "startTime": "2018-02-01T01:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 4, "price": 45.47, "volume": 573.75}
+      APX {"dataset": "MID", "startTime": "2018-02-01T02:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 5, "price": 47.06, "volume": 539.4}
+      APX {"dataset": "MID", "startTime": "2018-02-01T02:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 6, "price": 47.81, "volume": 759.45}
+      APX {"dataset": "MID", "startTime": "2018-02-01T03:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 7, "price": 44.45, "volume": 827.5}
+      APX {"dataset": "MID", "startTime": "2018-02-01T03:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2018-02-01", "settlementPeriod": 8, "price": 41.89, "volume": 740.8}
+    APX hours with equal :00/:30 price: 1 of 25
+=== history 2019-06-03: 200 15702 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2019-06-03T00%3A00Z&to=2019-06-04T00%3A00Z&format=json
+    rows 98; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    APXMIDP: rows 49, with volume 49, price min/mean/max 18.43/34.4104081632653/46.48, first 2019-06-03T00:00:00Z last 2019-06-04T00:00:00Z
+    N2EXMIDP: rows 49, with volume 0, price min/mean/max None/None/None, first 2019-06-03T00:00:00Z last 2019-06-04T00:00:00Z
+      APX {"dataset": "MID", "startTime": "2019-06-03T00:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 3, "price": 18.43, "volume": 625.35}
+      APX {"dataset": "MID", "startTime": "2019-06-03T00:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 4, "price": 20.07, "volume": 640.4}
+      APX {"dataset": "MID", "startTime": "2019-06-03T01:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 5, "price": 22.42, "volume": 625.2}
+      APX {"dataset": "MID", "startTime": "2019-06-03T01:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 6, "price": 23.87, "volume": 613.45}
+      APX {"dataset": "MID", "startTime": "2019-06-03T02:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 7, "price": 39.66, "volume": 379.45}
+      APX {"dataset": "MID", "startTime": "2019-06-03T02:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 8, "price": 40.79, "volume": 429.75}
+      APX {"dataset": "MID", "startTime": "2019-06-03T03:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 9, "price": 39.02, "volume": 340.95}
+      APX {"dataset": "MID", "startTime": "2019-06-03T03:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2019-06-03", "settlementPeriod": 10, "price": 38.76, "volume": 420.1}
+    APX hours with equal :00/:30 price: 0 of 25
+=== history 2021-01-12: 200 15711 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2021-01-12T00%3A00Z&to=2021-01-13T00%3A00Z&format=json
+    rows 98; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    APXMIDP: rows 49, with volume 49, price min/mean/max 32.83/101.93673469387754/561.65, first 2021-01-12T00:00:00Z last 2021-01-13T00:00:00Z
+    N2EXMIDP: rows 49, with volume 0, price min/mean/max None/None/None, first 2021-01-12T00:00:00Z last 2021-01-13T00:00:00Z
+      APX {"dataset": "MID", "startTime": "2021-01-12T00:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 1, "price": 32.83, "volume": 829.85}
+      APX {"dataset": "MID", "startTime": "2021-01-12T00:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 2, "price": 62.73, "volume": 814.55}
+      APX {"dataset": "MID", "startTime": "2021-01-12T01:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 3, "price": 60.12, "volume": 650.75}
+      APX {"dataset": "MID", "startTime": "2021-01-12T01:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 4, "price": 61.21, "volume": 593.95}
+      APX {"dataset": "MID", "startTime": "2021-01-12T02:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 5, "price": 56.02, "volume": 678.05}
+      APX {"dataset": "MID", "startTime": "2021-01-12T02:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 6, "price": 53.91, "volume": 601.95}
+      APX {"dataset": "MID", "startTime": "2021-01-12T03:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 7, "price": 42.08, "volume": 566.7}
+      APX {"dataset": "MID", "startTime": "2021-01-12T03:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2021-01-12", "settlementPeriod": 8, "price": 37.36, "volume": 634.65}
+    APX hours with equal :00/:30 price: 0 of 25
+=== history 2022-09-05: 200 15761 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2022-09-05T00%3A00Z&to=2022-09-06T00%3A00Z&format=json
+    rows 98; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    APXMIDP: rows 49, with volume 49, price min/mean/max 169.2/297.3297959183673/464.27, first 2022-09-05T00:00:00Z last 2022-09-06T00:00:00Z
+    N2EXMIDP: rows 49, with volume 1, price min/mean/max 450.0/450.0/450.0, first 2022-09-05T00:00:00Z last 2022-09-06T00:00:00Z
+      APX {"dataset": "MID", "startTime": "2022-09-05T00:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 3, "price": 222.87, "volume": 856.9}
+      APX {"dataset": "MID", "startTime": "2022-09-05T00:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 4, "price": 196.4, "volume": 938.7}
+      APX {"dataset": "MID", "startTime": "2022-09-05T01:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 5, "price": 199.81, "volume": 780.95}
+      APX {"dataset": "MID", "startTime": "2022-09-05T01:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 6, "price": 194.73, "volume": 1097.8}
+      APX {"dataset": "MID", "startTime": "2022-09-05T02:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 7, "price": 185.99, "volume": 979.5}
+      APX {"dataset": "MID", "startTime": "2022-09-05T02:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 8, "price": 184.11, "volume": 1127.95}
+      APX {"dataset": "MID", "startTime": "2022-09-05T03:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 9, "price": 188.79, "volume": 922.95}
+      APX {"dataset": "MID", "startTime": "2022-09-05T03:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2022-09-05", "settlementPeriod": 10, "price": 198.94, "volume": 971.05}
+    APX hours with equal :00/:30 price: 0 of 25
+=== history 2024-03-04: 200 15396 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2024-03-04T00%3A00Z&to=2024-03-05T00%3A00Z&format=json
+    rows 96; keys ['dataset', 'startTime', 'dataProvider', 'settlementDate', 'settlementPeriod', 'price', 'volume']
+    APXMIDP: rows 49, with volume 49, price min/mean/max 47.25/64.164693877551/88.12, first 2024-03-04T00:00:00Z last 2024-03-05T00:00:00Z
+    N2EXMIDP: rows 47, with volume 0, price min/mean/max None/None/None, first 2024-03-04T00:00:00Z last 2024-03-05T00:00:00Z
+      APX {"dataset": "MID", "startTime": "2024-03-04T00:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 1, "price": 57.45, "volume": 896.5}
+      APX {"dataset": "MID", "startTime": "2024-03-04T00:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 2, "price": 63.53, "volume": 1217.9}
+      APX {"dataset": "MID", "startTime": "2024-03-04T01:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 3, "price": 54.93, "volume": 649.7}
+      APX {"dataset": "MID", "startTime": "2024-03-04T01:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 4, "price": 55.88, "volume": 786.5}
+      APX {"dataset": "MID", "startTime": "2024-03-04T02:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 5, "price": 60.77, "volume": 1109.1}
+      APX {"dataset": "MID", "startTime": "2024-03-04T02:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 6, "price": 57.23, "volume": 1101.25}
+      APX {"dataset": "MID", "startTime": "2024-03-04T03:00:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 7, "price": 57.4, "volume": 944.1}
+      APX {"dataset": "MID", "startTime": "2024-03-04T03:30:00Z", "dataProvider": "APXMIDP", "settlementDate": "2024-03-04", "settlementPeriod": 8, "price": 55.22, "volume": 944.95}
+    APX hours with equal :00/:30 price: 0 of 25
+=== 31 days (request size limit?): 400 278 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2026-09-02T13%3A00Z&to=2026-10-03T13%3A00Z&format=json
+    {"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"":["The date range between From and To inclusive must not exceed 7 days"]},"traceId":"00-5c7b348096d2c81f9a57d8172f31c5be-cc1c4de221a3374a-00"}
+=== 95 days: 400 278 B https://data.elexon.co.uk/bmrs/api/v1/datasets/MID?from=2026-06-30T13%3A00Z&to=2026-10-03T13%3A00Z&format=json
+    {"type":"https://tools.ietf.org/html/rfc9110#section-15.5.1","title":"One or more validation errors occurred.","status":400,"errors":{"":["The date range between From and To inclusive must not exceed 7 days"]},"traceId":"00-ba4123974a68f91bae7161ba512c6e5b-e317df9ffeecfe62-00"}

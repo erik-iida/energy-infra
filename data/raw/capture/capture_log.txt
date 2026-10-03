@@ -1,3 +1,4 @@
-24 (zone, month) cells to fetch
-fetched 24 cells with 48 calls in 123 s; 0 left for the next run
+fx: UAH/EUR 50.5333 on 2026-10-05
+90 (zone, month) cells to fetch
+fetched 90 cells with 180 calls in 71 s; 0 left for the next run
 wrote web/data/capture.json: 44 zones, 24 months, 358 kB

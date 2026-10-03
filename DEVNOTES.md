@@ -328,6 +328,26 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - newsletter.yml installs requirements-newsletter.txt (collect + yfinance). Yahoo is not reachable from the cloud
   session: the fuel fetch only runs on Actions; a failed fetch leaves the brief without spark spreads and says so.
 
+## Installed capacity and capacity factors (Oct 3 2026)
+- Source: IRENA Renewable Energy Statistics workbook (IRENA_Stats_Tool_v2.xlsb, sheet "Data"). Licence: free use with
+  attribution "(c) IRENA" + edition year, so it may be published; credit it wherever capacity or CF is shown.
+- `scripts/ingest_irena.py <xlsb>` -> `data/ref/irena_capacity.csv` (iso3, country, year, cls, cap_mw, gen_gwh, 2015+) and
+  `irena_meta.json`. Classes: solar, wind_onshore, wind_offshore, hydro, pumped, nuclear, coal, gas, oil, fossil_nes, bio,
+  geothermal, other. The workbook (18 MB) is not committed. Re-run when IRENA publishes (capacity April/July). This
+  edition: capacity to 2024, generation to 2023.
+- `newsletter/fundamentals.py`: zone -> country map (whole-country zones only; DE-LU = DEU+LUX; no DK/NO/SE/IT zones),
+  ENTSO-E PSR -> class map, `capacity()` (latest year, fossil summed), `capacity_factors()` (>= 90 % hourly coverage of
+  the window), `fundamentals_table()` (solar/wind GW, 30-day CF, solar+wind capacity / mean load, same-window baseload,
+  TB4, negative hours). Wired into `newsletter.build`: `facts.json["fundamentals"]`, a "Fundamentals" sentence (incl. the
+  rank correlation of VRE/load with TB4 and negative hours when >= 8 zones) and a second table in the brief.
+- Known weakness: the capacity is a year-end 2024 figure against 2026 generation, so fast-growing zones read too high.
+  CFs above a physical ceiling (solar 25 %, wind 40 % over 30 days) are withheld and the zone flagged (`stale_cap`;
+  first run: BG solar, MK wind, LV solar+wind). Unusually low values (BA, MK solar) probably mean missing generation
+  or old capacity. ENTSO-E generation can also miss small distributed solar.
+- Next: ENTSO-E A68 (installed capacity per production type, annual) as a collector dataset with current-year values
+  to replace the IRENA vintage; A71 forecast generation capacity is another option. Then capacity-by-tech in the Data
+  tab, seasonal CF baselines once > 1 year of generation is in the store, and a CF-vs-price signal.
+
 ## Known gaps / next ideas
 - Store: identify the A44 seq-2 series (ask ENTSO-E support / read the Transparency API guide if it matters); decide
   whether to keep it separately. After the first backfill, check collector_log.json (`seq_dropped`, `late_gen_actual_h`).

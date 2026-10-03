@@ -1,0 +1,9 @@
+{
+ "source": "IRENA Renewable Energy Statistics (statistics tool workbook, sheet Data)",
+ "licence": "free use with attribution: (c) IRENA",
+ "file": "09d34256-IRENA_Stats_Tool_v2.xlsb",
+ "capacity_last_year": 2024,
+ "generation_last_year": 2023,
+ "countries": 224,
+ "rows": 13165
+}

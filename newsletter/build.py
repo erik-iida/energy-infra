@@ -19,6 +19,7 @@ import pandas as pd
 
 from collector.store import Store
 
+from . import fundamentals as FU
 from . import metrics as M
 from . import signals as S
 
@@ -47,6 +48,23 @@ def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.Da
             ga.append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen") & g["psr"].isin(M.TECH)])
     cat = lambda xs: pd.concat(xs, ignore_index=True) if xs else pd.DataFrame()
     return cat(da), cat(ga)
+
+
+def load_fund(day: pd.Timestamp, days: int = 30) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """All generation types and actual load for the `days` CET days ending on `day` (for capacity factors)."""
+    b = (day + pd.Timedelta(days=1)).tz_localize(M.CET).tz_convert("UTC")
+    a = b - pd.Timedelta(days=days)
+    st = Store()
+    ga, ld = [], []
+    for m in months_between(a, b - pd.Timedelta(seconds=1)):
+        g = st.read("gen_actual", m)
+        if g is not None:
+            ga.append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen") & g["psr"].isin(FU.PSR_CLS)])
+        l = st.read("load", m)
+        if l is not None:
+            ld.append(l[(l["ts"] >= a) & (l["ts"] < b) & (l["kind"] == "actual")])
+    cat = lambda xs: pd.concat(xs, ignore_index=True) if xs else pd.DataFrame()
+    return cat(ga), cat(ld)
 
 
 def _f(x, nd=1):
@@ -87,7 +105,7 @@ def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, z
 
 
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
-                carbon: bool = False, fuel_note: str | None = None) -> dict:
+                carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None) -> dict:
     metrics = M.all_metrics(da, ga, srmc)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
     sigs = S.evaluate(metrics, day)
@@ -117,15 +135,39 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
     table = table_for(metrics, day, focus)
     for r in table:
         r["tb4_p90"] = _f(p90.get(r["zone"])) if len(h4[h4["zone"] == r["zone"]]) >= S.MIN_HIST else None
+    fund, fstats = [], None
+    if fund_data is not None:
+        fund = FU.fundamentals_table(fund_data[0], fund_data[1], metrics, day, focus)
+        fstats = fund_stats(fund)
+        stale = [f"{r['zone']} ({'+'.join(r['stale_cap'])})" for r in fund if r.get("stale_cap")]
+        if stale:
+            notes.append("Capacity factor withheld where it exceeds a physical ceiling (installed capacity in the IRENA edition is older than the fleet): "
+                         + ", ".join(stale) + ".")
+        if not fund:
+            notes.append("No installed-capacity reference (data/ref/irena_capacity.csv) or no generation in the store: fundamentals skipped.")
     return {
         "day": day.strftime("%Y-%m-%d"), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "focus": FOCUS, "context": ctx, "window_days": S.WINDOW_DAYS, "price_zones_in_store": len(prices_seen),
+        "fundamentals": fund, "fundamentals_stats": fstats,
         "table": table, "signals": sigs, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
         "definitions": {"tb2": "mean of the 2 highest minus the 2 lowest hourly day-ahead prices of the CET day",
                         "tb4": "same with 4 hours", "cr": "capture price / baseload, generation-weighted by hour",
                         "pct": "share of the zone's own last days at or below the value"},
-        "source": "ENTSO-E Transparency Platform (day-ahead prices A44, actual generation A75)",
+        "source": "ENTSO-E Transparency Platform (day-ahead prices A44, actual generation A75, load A65); "
+                  "installed capacity: IRENA Renewable Energy Statistics (c) IRENA",
     }
+
+
+def fund_stats(fund: list[dict]) -> dict | None:
+    """How installed VRE relative to load lines up with the window's price levels across zones (rank correlation)."""
+    d = pd.DataFrame([r for r in fund if r.get("vre_to_load") is not None and r.get("tb4") is not None])
+    if len(d) < 8:
+        return None
+    out = {"n": int(len(d)), "window_days": 30}
+    for k in ("tb4", "neg_hours", "baseload"):
+        x = d[["vre_to_load", k]].dropna()
+        out["spearman_vre_" + k] = round(float(x["vre_to_load"].corr(x[k], method="spearman")), 2) if len(x) >= 8 else None
+    return out
 
 
 def _ord(p: float) -> str:
@@ -170,6 +212,18 @@ def draft_brief(f: dict) -> str:
         lines += [txt, ""]
     else:
         lines += ["**Next 24 h.** Tomorrow's day-ahead prices are not in the store yet (results arrive ~12:45 CET).", ""]
+    fr = [r for r in f.get("fundamentals", []) if r.get("vre_to_load") is not None]
+    if fr:
+        hi = sorted(fr, key=lambda r: -r["vre_to_load"])[:3]
+        lo = sorted(fr, key=lambda r: r["vre_to_load"])[:2]
+        txt = ("**Fundamentals (last 30 days).** Installed solar + wind relative to mean load is highest in "
+               + ", ".join(f"{r['zone']} ({r['vre_to_load']:g}x)" for r in hi) + " and lowest in "
+               + ", ".join(f"{r['zone']} ({r['vre_to_load']:g}x)" for r in lo) + ".")
+        st = f.get("fundamentals_stats")
+        if st and st.get("spearman_vre_tb4") is not None:
+            txt += (f" Across {st['n']} zones the rank correlation of that ratio with the mean TB4 is {st['spearman_vre_tb4']:+g}"
+                    + (f" and with negative hours {st['spearman_vre_neg_hours']:+g}." if st.get("spearman_vre_neg_hours") is not None else "."))
+        lines += [txt, ""]
     if f["notes"]:
         lines += ["_Data notes: " + " ".join(f["notes"]) + "_", ""]
     lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % | Spark top-4 |", "|---|--:|--:|--:|--:|--:|--:|--:|"]
@@ -177,6 +231,14 @@ def draft_brief(f: dict) -> str:
     for r in sorted(t, key=lambda r: -(r["tb4"] if r.get("tb4") is not None else -1e9)):
         lines.append(f"| {r['zone']} | {g(r['baseload'])} | {g(r['tb2'])} | {g(r['tb4'])} | {g(r['neg_hours'])} | "
                      f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} | {g(r.get('spark_top4'))} |")
+    if fr:
+        lines += ["", "| Zone | Solar GW | Wind GW | Solar CF 30d % | Wind CF 30d % | Solar+wind / load | Base 30d | TB4 30d | Neg. h 30d |",
+                  "|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
+        for r in sorted(fr, key=lambda r: -r["vre_to_load"]):
+            lines.append(f"| {r['zone']} | {g(r['solar_gw'])} | {g(r['wind_gw'])} | {g(r['solar_cf'])} | {g(r['wind_cf'])} | "
+                         f"{g(r['vre_to_load'])} | {g(r['baseload'])} | {g(r['tb4'])} | {g(r['neg_hours'])} |")
+        lines += ["", "CF = capacity factor: energy generated in the window / (installed capacity x hours). Installed capacity: IRENA "
+                  f"year-end {fr[0]['year']} (c) IRENA, so zones that added capacity since read a higher CF; ENTSO-E generation can miss small distributed solar, which lowers it."]
     lines += ["", "Prices EUR/MWh. TB2/TB4: mean of the 2/4 highest minus 2/4 lowest hourly day-ahead prices of the CET day. "
               "CR = capture rate (generation-weighted price / baseload). Source: ENTSO-E Transparency Platform."]
     return "\n".join(lines) + "\n"
@@ -231,7 +293,7 @@ def main(argv=None) -> None:
     except Exception as e:  # fuel prices are optional: the brief is still useful without spark spreads
         fuel_note = f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
         print(fuel_note)
-    f = build_facts(da, ga, day, srmc, carbon, fuel_note)
+    f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day))
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     md = draft_brief(f)

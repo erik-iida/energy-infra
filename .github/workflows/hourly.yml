@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write   # collector/farms.py uploads farm wind + wake output to the "store" release
   pages: write
   id-token: write
 
@@ -57,6 +57,8 @@ jobs:
           WM_DAILY_CALL_CAP: ${{ vars.WM_DAILY_CALL_CAP || '3000' }}
           WINDY_KEY: ${{ secrets.WINDY_KEY }}
           ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
+          COLLECT_FARMS: "1"
+          GH_TOKEN: ${{ github.token }}
         run: python -m pipeline.run
 
       - uses: actions/cache/save@v4

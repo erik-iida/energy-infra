@@ -210,6 +210,37 @@ Handover notes for whoever (human or Claude) picks this up next. Keep them curre
 - Pending: Balancing Services token (BALANCING_TOKEN secret) for imbalance / aFRR / mFRR; power-plant layer
   (powerplantmatching positions + ENTSO-E A73 per-unit output, CEE/SEE first).
 
+## Data store (Oct 3 2026)
+- Goal: own history for the newsletter / product (the APIs only give "now"). Core product = data + newsletter; the
+  map is the showcase. Free sources only until there is traction. ENTSO-E is the primary source; Energy-Charts is
+  not stored (ENTSO-E covers every zone, and many Energy-Charts series are licensed private-use only).
+- Storage: Parquet assets of ONE GitHub release, tag `store` (prerelease, not "latest"). Release assets are not in
+  git history, so rewriting monthly files doesn't grow the repo. One file per dataset and UTC month:
+  `<dataset>_<YYYY-MM>.parquet` (zstd). Plus `backfill_state.json` and `collector_log.json` (run summaries:
+  calls, errors, rows per file). The repo is public, so the store is public: openly licensed data only.
+  Going private later keeps everything working (assets become private with the repo).
+- collector/store.py: write() merges by the dataset's key; the most recently fetched row wins (TSO revisions);
+  rows are never dropped and a shrinking merge is refused. Upload = new asset `tmp-<name>`, delete old, rename;
+  read() falls back to `tmp-<name>` if a run died in between. STORE_DIR=<folder> switches to a local folder (tests).
+  store.load(dataset, months) concatenates months for analysis.
+- Datasets (all with `fetched` UTC; timestamps UTC; native resolution in `res_min`, nothing averaged):
+  da_price (A44: zone, ts, res_min, seq, price, currency - as published, UA-IPS in UAH),
+  gen_actual (A75: zone, ts, res_min, psr B01..B25, dir gen/cons, mw), gen_forecast (A69 day-ahead wind/solar),
+  load (A65: kind actual / da_forecast), flows (A11 physical, from_zone -> to_zone, both directions of 89 borders
+  in collector/entsoe_raw.BORDERS), farm_hourly (farm_id, ts, ws hub m/s, wd, p_<wake model> MW, nwp),
+  farm_forecast (issued, farm_id, ts, lead_h, same columns; once per new Open-Meteo fetch, ~6 h),
+  farms_meta (farm id -> name, country, position, MW, turbines; monthly snapshot). Farm ids are permanent:
+  never renumber or reuse them, or the farm history no longer lines up.
+- Workflows: collect.yml (concurrency group store-entsoe) - daily 12:35 UTC = last 4 days + today/tomorrow
+  (~410 calls); backfill every 2 h = whole months from BACKFILL_FROM (repo variable, default 2024-01), newest
+  first, ~410 calls per month, 4 threads with a shared 330 req/min limiter; manual `probe` mode prints parsed rows
+  for DE-LU, RO and HU<->RO without writing. hourly.yml runs collector/farms.py at the end of pipeline.run
+  (COLLECT_FARMS=1, GH_TOKEN; needs contents: write); a store failure only prints a warning.
+- Not stored yet: gas (ENTSOG flows, GIE storage/LNG: both have API history, so backfillable later), ERA5 /
+  Open-Meteo archive wind per farm (backfillable), Balancing Services (token pending), A73 per-unit output.
+- Licences: check ENTSO-E reuse terms for derived figures before the first newsletter goes out. Open-Meteo's free
+  tier is non-commercial: farm wind/wake data needs a paid plan or another source once the product earns money.
+
 ## Known gaps / next ideas
 - TO DO: stability-aware hub-height wind. Today pipeline/run.py `hub_wind` scales the ECMWF IFS 100 m wind with a
   neutral log law (z0 = 0.0002 m, offshore) for every farm. Plan: also fetch 10 m wind (Open-Meteo ECMWF endpoint

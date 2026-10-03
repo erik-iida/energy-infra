@@ -5,3 +5,6 @@ requests
 h5py            # PyWake reads its Gaussian-overlap lookup table with it
 # only for scripts/build_site.py
 shapely
+# data store (collector/)
+pandas
+pyarrow

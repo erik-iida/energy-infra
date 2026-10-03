@@ -1,19 +1,10 @@
-resuming: 11489 turbines, 223 plants, done ['cn-shandong-n', 'estonia', 'cn-shandong-s', 'cn-zhejiang-s', 'cn-guangdong-e', 'cn-bohai', 'cn-zhejiang-n', 'taiwan', 'japan-c', 'cn-jiangsu-n', 'cn-guangdong-w', 'japan-sw', 'japan-n', 'us-ne', 'us-va-md', 'cn-fujian', 'cn-jiangsu-s', 'korea']
-cn-hainan-guangxi: 18.0,107.5,21.5,111.5
-  positions: overpass-api.de -> 1440 elements
-  1440 wind generators, 343 at sea or on the coast
-  tags 0: overpass-api.de -> 343 elements
-  plants: overpass-api.de -> 15 elements
+resuming: 11833 turbines, 227 plants, done ['cn-shandong-n', 'estonia', 'cn-shandong-s', 'cn-zhejiang-s', 'cn-guangdong-e', 'cn-bohai', 'cn-zhejiang-n', 'taiwan', 'japan-c', 'cn-jiangsu-n', 'cn-guangdong-w', 'japan-sw', 'japan-n', 'us-ne', 'us-va-md', 'cn-fujian', 'cn-jiangsu-s', 'korea', 'cn-hainan-guangxi', 'us-nj-de']
 vietnam: 8.0,104.0,11.5,109.5
-  positions: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  positions: overpass.kumi.systems -> ReadTimeout(ReadTimeoutError("HTTPSConnectionPool(host='overpass.kumi.systems', port=443): Read timed out. (read timeout=120)"))
-  positions: overpass.private.coffee -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-us-nj-de: 38.5,-75.5,40.5,-73.0
-  positions: overpass-api.de -> 12 elements
-  12 wind generators, 1 at sea or on the coast
-  tags 0: overpass-api.de -> 1 elements
-  plants: overpass-api.de -> HTTP 504 '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"\n    "http://www.w3.org/T'
-  plants: overpass.kumi.systems -> 3 elements
+  positions: overpass-api.de -> 747 elements
+  747 wind generators, 504 at sea or on the coast
+  tags 0: overpass-api.de -> 500 elements
+  tags 500: overpass-api.de -> 4 elements
+  plants: overpass-api.de -> 15 elements
   estonia  Estonia              223
   offshore China                9715
   offshore Hong Kong            58
@@ -23,5 +14,5 @@ us-nj-de: 38.5,-75.5,40.5,-73.0
   offshore South Korea          265
   offshore Taiwan               568
   offshore United States of America 253
-  offshore Vietnam              1
-wrote 11833 turbines, 227 plants -> data/raw/osm/osm_wind.json
+  offshore Vietnam              505
+wrote 12337 turbines, 236 plants -> data/raw/osm/osm_wind.json

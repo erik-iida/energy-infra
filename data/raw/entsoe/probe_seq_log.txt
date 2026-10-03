@@ -1,4 +1,4 @@
-run 2026-10-03 00:44 UTC, token set: True
+run 2026-10-03 00:46 UTC, token set: True
 
 === A44 DE-LU 02 Oct..06 Oct UTC, default: 85087 chars
   TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
@@ -19,7 +19,7 @@ run 2026-10-03 00:44 UTC, token set: True
   TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
       periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
       n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
-  doc header: 1c708a8b7ee040f5a14fe0fa5530cc10 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:44:26Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+  doc header: b792f5031a554228b085f95658c0889f 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:46:22Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
 
 === A44 DE-LU 02 Oct..06 Oct UTC, contract A01: 85087 chars
   TS0 mRID=1 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
@@ -40,7 +40,7 @@ run 2026-10-03 00:44 UTC, token set: True
   TS5 mRID=6 seq=2 auction=A01 biz=A62 contract=A01 curve=A03 cur=EUR
       periods [('2026-10-04T22:00Z', '2026-10-05T22:00Z', 'PT15M')]
       n=96 04 Oct 22:00..05 Oct 21:45 UTC  min 61.75 max 262.37 mean 172.11
-  doc header: 738bb06393b84d499aa45d7e932c2887 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:44:27Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
+  doc header: a0293fa9839d4ce0bf17df1826b727d0 1 A44 10X1001A1001A450 A32 10X1001A1001A450 A33 2026-10-03T00:46:24Z 2026-10-01T22:00Z 2026-10-05T22:00Z 1 A01</
 
 === seq overlap (DE-LU, per timestamp where both exist)
   seqs ['1', '2']: n1=192 n2=378 overlap=191; seq 2 only: 187, seq 1 only: 1
@@ -58,7 +58,21 @@ run 2026-10-03 00:44 UTC, token set: True
 
 === live site feed.json, DE-LU day-ahead
   generated 2026-10-03T00:38:39+00:00, 48 hours, DE-LU price present: True
-  failed: TypeError("'str' object cannot be interpreted as an integer")
+  vs seq1: 45 common hours, mean |diff| 0.003, max 0.005
+     02 Oct 01:00  site 160.06  entsoe 160.06
+     02 Oct 02:00  site 163.13  entsoe 163.13
+     02 Oct 03:00  site 177.87  entsoe 177.87
+     03 Oct 19:00  site 215.19  entsoe 215.19
+     03 Oct 20:00  site 208.44  entsoe 208.44
+     03 Oct 21:00  site 194.97  entsoe 194.97
+  vs all seqs mean: 45 common hours, mean |diff| 4.311, max 15.421
+     02 Oct 01:00  site 160.06  entsoe 166.59
+     02 Oct 02:00  site 163.13  entsoe 167.99
+     02 Oct 03:00  site 177.87  entsoe 182.48
+     03 Oct 19:00  site 215.19  entsoe 214.72
+     03 Oct 20:00  site 208.44  entsoe 207.00
+     03 Oct 21:00  site 194.97  entsoe 192.58
+  site's last DE-LU price hour: 03 Oct 21:00 UTC = 194.97
 
 === A75 RO actual generation, last 5 days
   10 gen TimeSeries; overall 29 Sep 00:00..01 Oct 07:30 UTC
@@ -66,3 +80,39 @@ run 2026-10-03 00:44 UTC, token set: True
   2026-09-30: psr types 9, points per type min 28 max 95 (full day = 24 hourly or 96 quarter-hourly)
   2026-10-01: psr types 9, points per type min 2 max 31 (full day = 24 hourly or 96 quarter-hourly)
   per-psr last timestamp: B01=01 07:15, B02=01 07:30, B04=01 07:30, B05=01 07:15, B11=01 07:15, B12=01 07:15, B14=29 00:00, B16=01 07:30, B19=01 07:30, B25=01 07:15
+
+=== A44 DE-LU 18 Sep .. 02 Oct: is there a seq 2 for past days, and how does it relate to seq 1?
+  2026-09-18: n seq1=93 seq2=95  mean seq1 124.4 seq2 130.0  mean|diff| 11.3
+  2026-09-19: n seq1=94 seq2=94  mean seq1 43.6 seq2 44.7  mean|diff| 13.8
+  2026-09-20: n seq1=92 seq2=92  mean seq1 22.7 seq2 43.9  mean|diff| 24.9
+  2026-09-21: n seq1=91 seq2=96  mean seq1 101.9 seq2 129.5  mean|diff| 38.8
+  2026-09-22: n seq1=96 seq2=92  mean seq1 226.2 seq2 244.3  mean|diff| 21.9
+  2026-09-23: n seq1=96 seq2=94  mean seq1 180.7 seq2 190.1  mean|diff| 15.4
+  2026-09-24: n seq1=96 seq2=95  mean seq1 138.1 seq2 131.1  mean|diff| 12.5
+  2026-09-25: n seq1=96 seq2=94  mean seq1 176.6 seq2 182.4  mean|diff| 10.9
+  2026-09-26: n seq1=96 seq2=93  mean seq1 150.1 seq2 149.5  mean|diff| 7.2
+  2026-09-27: n seq1=91 seq2=95  mean seq1 117.2 seq2 113.7  mean|diff| 8.7
+  2026-09-28: n seq1=96 seq2=90  mean seq1 195.4 seq2 198.5  mean|diff| 12.5
+  2026-09-29: n seq1=96 seq2=95  mean seq1 165.8 seq2 164.3  mean|diff| 9.1
+  2026-09-30: n seq1=96 seq2=96  mean seq1 140.7 seq2 136.7  mean|diff| 9.6
+  2026-10-01: n seq1=96 seq2=96  mean seq1 195.2 seq2 189.1  mean|diff| 9.1
+  2026-10-02: n seq1=96 seq2=96  mean seq1 200.5 seq2 208.6  mean|diff| 10.4
+  2026-10-03: n seq1=96 seq2=95  mean seq1 169.0 seq2 161.2  mean|diff| 9.4
+  seq1 vs seq2 shifted +0 h: n=1489 mean|diff| 14.0
+  seq1 vs seq2 shifted +24 h: n=1396 mean|diff| 56.4
+  seq1 vs seq2 shifted -24 h: n=1397 mean|diff| 54.1
+  seq1 vs seq2 shifted +168 h: n=837 mean|diff| 63.4
+  seq1 vs seq2 shifted -168 h: n=841 mean|diff| 59.9
+
+=== A44 seq presence per zone, window today-1 .. today+3 (does seq 2 reach days without an auction?)
+  FR: seqNone PT15M n=96 01 22:00..02 21:45 | seqNone PT15M n=96 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  PL: seqNone PT15M n=95 01 22:00..02 21:45 | seqNone PT15M n=95 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  RO: seqNone PT15M n=93 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  HU: seqNone PT15M n=96 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  NL: seqNone PT15M n=96 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  DK1: seqNone PT15M n=96 01 22:00..02 21:45 | seqNone PT15M n=96 02 22:00..03 21:45
+  BG: seqNone PT15M n=93 01 22:00..02 21:45 | seqNone PT15M n=93 01 22:00..02 21:45 | seqNone PT15M n=94 02 22:00..03 21:45 | seqNone PT15M n=94 02 22:00..03 21:45
+
+=== DE-LU seq-2 gaps on the first future day (positions missing)
+  period 2026-10-02T22:00Z: missing ['03 05:30']
+  period 2026-10-03T22:00Z: missing ['04 01:30', '04 01:45', '04 02:00', '04 02:15', '04 02:45']

@@ -31,3 +31,15 @@ def test_capacity_sums_fossil_and_countries():
     assert not cap.empty
     de = cap[cap["zone"] == "DE-LU"].set_index("cls")["cap_mw"]
     assert de["solar"] > 50000 and "fossil" in de.index
+
+
+def test_peak_cf_uses_90_day_peak():
+    import pandas as pd
+    from newsletter import fundamentals as FU
+    h = pd.date_range("2026-07-04 22:00", "2026-10-02 22:00", freq="h", tz="UTC", inclusive="left")  # 90 CET days
+    mw = pd.Series(100.0, index=h)
+    mw.iloc[10] = 400.0                                   # one peak hour in July -> capacity proxy 400 MW
+    ga = pd.DataFrame({"zone": "AA", "ts": h, "psr": "B19", "dir": "gen", "mw": mw.values})
+    end = h[-1] + pd.Timedelta(hours=1)
+    r = FU.peak_cf(FU.hourly_by_class(ga), end - pd.Timedelta(days=30), end).set_index("cls")
+    assert abs(r.loc["wind_onshore", "cap_mw"] - 400) < 1e-9 and abs(r.loc["wind_onshore", "cf"] - 0.25) < 1e-9

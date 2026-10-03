@@ -107,29 +107,31 @@ CAP_CLS = [("solar", "Solar"), ("wind_onshore", "Onshore wind"), ("wind_offshore
            ("geothermal", "Geothermal"), ("other", "Other")]
 
 
-def capacity_export(ga: pd.DataFrame, now: datetime) -> dict | None:
-    """Installed capacity for every IRENA country (data/ref, latest year) and, where the store has all of the country's
-    bidding zones, the 30-day capacity factor from ENTSO-E generation."""
+def capacity_export(ga: pd.DataFrame | None, now: datetime) -> dict | None:
+    """Installed capacity for every IRENA country (data/ref, latest year: a reference only, it is older than the fleet)
+    and, where the store has all of the country's bidding zones, the 90-day peak output per class (the capacity proxy)
+    and the 30-day capacity factor against it (newsletter.fundamentals.peak_cf). `ga` covers the last 90 days."""
     cc = FU.country_capacity()
     if cc.empty:
         return None
     end = pd.Timestamp(now).floor("D")
     start = end - pd.Timedelta(days=30)
-    cf = FU.country_capacity_factors(ga, start, end)
+    pc = FU.country_peak_cf(ga, start, end) if ga is not None and not ga.empty else pd.DataFrame(columns=["iso3", "cls", "cap_mw", "cf"])
     zones_of: dict[str, list] = {}
     for z, iso in FU.ZONE_ISO3.items():
         zones_of.setdefault(iso, []).append(z)
     cfm: dict[str, dict] = {}
-    for r in cf.itertuples():
-        v = FU.plausible_cf(r.cls, r.cf)
-        if v is not None:
-            cfm.setdefault(r.iso3, {})[r.cls] = round(100 * v, 1)
+    pkm: dict[str, dict] = {}
+    for r in pc.itertuples():
+        cfm.setdefault(r.iso3, {})[r.cls] = round(100 * r.cf, 1)
+        pkm.setdefault(r.iso3, {})[r.cls] = round(r.cap_mw / 1000, 3)
     rows = []
     for (iso, name, yr), g in cc.groupby(["iso3", "country", "year"]):
         rows.append({"id": iso, "name": name, "year": int(yr), "zones": sorted(zones_of.get(iso, [])),
-                     "gw": {r.cls: round(r.cap_mw / 1000, 3) for r in g.itertuples()}, "cf": cfm.get(iso, {})})
-    return {"classes": [{"id": k, "name": n} for k, n in CAP_CLS], "rows": rows,
-            "cf_window": [start.strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]}
+                     "gw": {r.cls: round(r.cap_mw / 1000, 3) for r in g.itertuples()}, "pk": pkm.get(iso, {}), "cf": cfm.get(iso, {})})
+    return {"classes": [{"id": k, "name": n} for k, n in CAP_CLS], "rows": rows, "cf_method": "peak90",
+            "cf_window": [start.strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")],
+            "peak_window": [(end - pd.Timedelta(days=FU.PEAK_DAYS)).strftime("%Y-%m-%d"), (end - pd.Timedelta(days=1)).strftime("%Y-%m-%d")]}
 
 
 FLAG_FOCUS = ["PL", "CZ", "SK", "HU", "RO", "BG", "SI", "HR", "RS", "GR", "BA", "ME", "MK", "EE", "LV", "LT", "DE-LU"]
@@ -213,7 +215,12 @@ def main() -> None:
                 mm[f"m|{k}"] = meta(f"m|{k}", name, GROUP_OF[k], TECH_OF.get(k, ""), unit)
             F.add(z, pd.DataFrame(cols, index=F.idx), mm)
     # --- generation
-    capx = capacity_export(ga, now) if not ga.empty else capacity_export(None, now)
+    # capacity proxy: the highest hourly output per class in the last 90 days (IRENA year-end capacity is too old)
+    a90 = pd.Timestamp(now - timedelta(days=FU.PEAK_DAYS)).floor("D")
+    g90 = [x[(x["dir"] == "gen") & x["psr"].isin(FU.PSR_CLS)] for x in
+           (read(st, "gen_actual", [str(q) for q in pd.period_range(a90, b, freq="M")], a90, b),) if not x.empty]
+    capx = capacity_export(g90[0] if g90 else None, now)
+    del g90
     if not ga.empty:
         mt = {}
         for psr, (key, name) in PSR.items():

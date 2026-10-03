@@ -26,7 +26,23 @@ from . import signals as S
 # CEE / SEE focus (same set as the site's selector), plus DE-LU as the neighbour everybody compares with
 FOCUS = ["PL", "CZ", "SK", "HU", "RO", "BG", "SI", "HR", "RS", "GR", "BA", "ME", "MK", "EE", "LV", "LT"]
 CONTEXT = ["DE-LU"]
-COLS = ["baseload", "tb2", "tb4", "neg_hours", "cr_wind_onshore", "cr_solar", "spark_top4"]
+COLS = ["baseload", "tb2", "tb4", "neg_hours", "wind_share_load", "solar_share_load", "spark_top4"]
+# full names in the text (feedback #1: always write country names out); multi-zone countries say which part
+ZONE_NAME = {"AL": "Albania", "AT": "Austria", "BA": "Bosnia and Herzegovina", "BE": "Belgium", "BG": "Bulgaria",
+             "CH": "Switzerland", "CZ": "Czechia", "DE-LU": "Germany-Luxembourg", "DK1": "West Denmark", "DK2": "East Denmark",
+             "EE": "Estonia", "ES": "Spain", "FI": "Finland", "FR": "France", "GB": "Great Britain", "GR": "Greece",
+             "HR": "Croatia", "HU": "Hungary", "IE(SEM)": "Ireland (all-island)", "LT": "Lithuania", "LV": "Latvia",
+             "ME": "Montenegro", "MK": "North Macedonia", "NL": "the Netherlands", "PL": "Poland", "PT": "Portugal",
+             "RO": "Romania", "RS": "Serbia", "SI": "Slovenia", "SK": "Slovakia", "UA-IPS": "Ukraine",
+             "NO1": "Norway (Oslo, NO1)", "NO2": "Norway (south-west, NO2)", "NO3": "Norway (central, NO3)",
+             "NO4": "Norway (north, NO4)", "NO5": "Norway (west, NO5)", "SE1": "Sweden (SE1)", "SE2": "Sweden (SE2)",
+             "SE3": "Sweden (Stockholm, SE3)", "SE4": "Sweden (Malmö, SE4)", "IT-North": "Northern Italy",
+             "IT-Centre-North": "Central-Northern Italy", "IT-Centre-South": "Central-Southern Italy", "IT-South": "Southern Italy",
+             "IT-Calabria": "Calabria", "IT-Sicily": "Sicily", "IT-Sardinia": "Sardinia"}
+
+
+def zn(z: str) -> str:
+    return ZONE_NAME.get(z, z)
 
 
 def months_between(a: pd.Timestamp, b: pd.Timestamp) -> list[str]:
@@ -90,8 +106,9 @@ def load_range(a: pd.Timestamp, b: pd.Timestamp):
     return cat(out["da"]), cat(out["ga"]), cat(out["ld"]), cat(out["fl"])
 
 
-def load_fund(day: pd.Timestamp, days: int = 30) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """All generation types and actual load for the `days` CET days ending on `day` (for capacity factors)."""
+def load_fund(day: pd.Timestamp, days: int = FU.PEAK_DAYS) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """All generation types and actual load for the `days` CET days ending on `day` (90 days: the capacity proxy is the
+    highest hourly output in that window)."""
     b = (day + pd.Timedelta(days=1)).tz_localize(M.CET).tz_convert("UTC")
     a = b - pd.Timedelta(days=days)
     st = Store()
@@ -121,9 +138,37 @@ def table_for(metrics: pd.DataFrame, day: pd.Timestamp, zones: list[str]) -> lis
         r = {"zone": z}
         for c in COLS:
             v = w.loc[z].get(c) if c in w.columns else None
-            r[c] = _f(v * 100 if c.startswith("cr_") and v is not None else v, 0 if c.startswith("cr_") else 1)
+            pct = c.endswith("_share_load")
+            r[c] = _f(v * 100 if pct and v is not None else v, 1)
         rows.append(r)
     return rows
+
+
+def decoupling(da: pd.DataFrame, fl: pd.DataFrame | None, day: pd.Timestamp, zones: list[str], top: int = 3) -> list[dict]:
+    """Connected zone pairs (a physical-flow border in the store) with at least one zone in `zones`, ranked by how far
+    apart their baseload prices were on `day`: rel = |a - b| / max(|a|, |b|). Also the hours in which the two hourly
+    prices differed by more than 1 EUR/MWh (in coupled markets prices only split when the border capacity is used up)."""
+    if fl is None or fl.empty or da is None or da.empty:
+        return []
+    hp = M.hourly_prices(da)
+    hp = hp[M._local_day(hp["h"]) == day]
+    pairs = {tuple(sorted(p)) for p in fl[["from_zone", "to_zone"]].drop_duplicates().itertuples(index=False)}
+    pz = {z: g.set_index("h")["price"] for z, g in hp.groupby("zone")}
+    out = []
+    for a, b in pairs:
+        if a not in pz or b not in pz or not ({a, b} & set(zones)):
+            continue
+        j = pd.concat([pz[a].rename("a"), pz[b].rename("b")], axis=1, join="inner")
+        if len(j) < M.MIN_PRICE_HOURS:
+            continue
+        ba, bb = float(j["a"].mean()), float(j["b"].mean())
+        den = max(abs(ba), abs(bb))
+        if den < 5:
+            continue
+        hi, lo = (a, b) if ba >= bb else (b, a)
+        out.append({"high": hi, "low": lo, "base_high": _f(max(ba, bb)), "base_low": _f(min(ba, bb)),
+                    "rel": _f(abs(ba - bb) / den * 100, 0), "hours_apart": int(((j["a"] - j["b"]).abs() > 1).sum()), "hours": int(len(j))})
+    return sorted(out, key=lambda r: -r["rel"])[:top]
 
 
 def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, zones: list[str]) -> dict:
@@ -155,11 +200,11 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
     notes = []
     missing_price = [z for z in focus if z not in zones_day]
     if missing_price:
-        notes.append("No complete day-ahead price day for: " + ", ".join(missing_price))
-    have_gen = set(metrics.loc[(metrics["day"] == day) & metrics["metric"].str.startswith("cr_"), "zone"])
+        notes.append("No complete day-ahead price day for " + ", ".join(zn(z) for z in missing_price) + ".")
+    have_gen = set(metrics.loc[(metrics["day"] == day) & metrics["metric"].str.endswith("_share_load"), "zone"])
     late = [z for z in focus if z in zones_day and z not in have_gen]
     if late:
-        notes.append("No capture rates (generation data late or none): " + ", ".join(late))
+        notes.append("No wind and solar shares for " + ", ".join(zn(z) for z in late) + ": generation or load data is late.")
     if srmc is not None and day in srmc.index:
         notes.append("Spark spreads: day-ahead price minus the gas cost of a 55 % efficient CCGT at the TTF front-month "
                      + ("incl. carbon." if carbon else "price, FUEL ONLY (no carbon), so they read higher than a clean spark spread.")
@@ -178,36 +223,34 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
         r["tb4_p90"] = _f(p90.get(r["zone"])) if len(h4[h4["zone"] == r["zone"]]) >= S.MIN_HIST else None
     fund, fstats = [], None
     if fund_data is not None:
-        fund = FU.fundamentals_table(fund_data[0], fund_data[1], metrics, day, focus)
+        fund = FU.fundamentals_table(fund_data[0], fund_data[1], metrics, day, focus, hp=M.hourly_prices(da))
         fstats = fund_stats(fund)
-        stale = [f"{r['zone']} ({'+'.join(r['stale_cap'])})" for r in fund if r.get("stale_cap")]
-        if stale:
-            notes.append("Capacity factor withheld where it exceeds a physical ceiling (installed capacity in the IRENA edition is older than the fleet): "
-                         + ", ".join(stale) + ".")
         if not fund:
-            notes.append("No installed-capacity reference (data/ref/irena_capacity.csv) or no generation in the store: fundamentals skipped.")
+            notes.append("No generation in the store for the 30-day window: fundamentals skipped.")
+    dec = decoupling(da, fl, day, focus)
     return {
         "day": day.strftime("%Y-%m-%d"), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "focus": FOCUS, "context": ctx, "window_days": S.WINDOW_DAYS, "price_zones_in_store": len(prices_seen),
-        "fundamentals": fund, "fundamentals_stats": fstats,
+        "fundamentals": fund, "fundamentals_stats": fstats, "decoupling": dec, "zone_names": {z: zn(z) for z in focus},
         "table": table, "signals": sigs, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
         "definitions": {"tb2": "mean of the 2 highest minus the 2 lowest hourly day-ahead prices of the CET day",
-                        "tb4": "same with 4 hours", "cr": "capture price / baseload, generation-weighted by hour",
+                        "tb4": "same with 4 hours", "share_load": "wind (onshore + offshore) or solar output / actual load, energy",
+                        "cr_30d": "30-day capture rate: output-weighted price / mean price over the window",
+                        "cf_30d": "mean output over 30 days / highest hourly output in 90 days (capacity proxy)",
                         "pct": "share of the zone's own last days at or below the value"},
-        "source": "ENTSO-E Transparency Platform (day-ahead prices A44, actual generation A75, load A65); "
-                  "installed capacity: IRENA Renewable Energy Statistics (c) IRENA",
+        "source": "ENTSO-E Transparency Platform (day-ahead prices A44, actual generation A75, load A65, physical flows A11)",
     }
 
 
 def fund_stats(fund: list[dict]) -> dict | None:
-    """How installed VRE relative to load lines up with the window's price levels across zones (rank correlation)."""
-    d = pd.DataFrame([r for r in fund if r.get("vre_to_load") is not None and r.get("tb4") is not None])
+    """How the 30-day wind + solar share of load lines up with the window's price levels across zones (rank correlation)."""
+    d = pd.DataFrame([r for r in fund if r.get("vre_share") is not None and r.get("tb4") is not None])
     if len(d) < 8:
         return None
     out = {"n": int(len(d)), "window_days": 30}
     for k in ("tb4", "neg_hours", "baseload"):
-        x = d[["vre_to_load", k]].dropna()
-        out["spearman_vre_" + k] = round(float(x["vre_to_load"].corr(x[k], method="spearman")), 2) if len(x) >= 8 else None
+        x = d[["vre_share", k]].dropna()
+        out["spearman_vre_" + k] = round(float(x["vre_share"].corr(x[k], method="spearman")), 2) if len(x) >= 8 else None
     return out
 
 
@@ -217,73 +260,87 @@ def _ord(p: float) -> str:
     return f"{n}{suf}"
 
 
+# daily capture rates are not quoted (feedback #1: a day is too short to separate them from the baseload); TB spreads
+# only when nothing else fired
+TEXT_SKIP = ("cr_",)
+TB = ("tb2", "tb4")
+
+
 def _sig_text(s: dict) -> str:
-    unit = "%" if s["unit"] == "%" else f" {s['unit']}"
-    where = (f"the {'highest' if s['side'] == 'high' else 'lowest'} of its last {s['n_hist']} days"
-             if s["pct"] >= 0.995 or s["pct"] <= 0.005
-             else f"at the {_ord(s['pct'])} percentile of its last {s['n_hist']} days")
-    return f"{s['zone']}: {s['label']} {s['value']:g}{unit}, {where} (median {s['median']:g}{unit})."
+    unit = "%" if s["unit"] == "%" else f" {s['unit'].replace('EUR/MWh', '€/MWh')}"
+    p = round(s["pct"] * 100)
+    rank = (f"the {'highest' if s['side'] == 'high' else 'lowest'} of its last {s['n_hist']} days" if p in (0, 100)
+            else f"{'higher' if s['side'] == 'high' else 'lower'} than on {p if s['side'] == 'high' else 100 - p} % of its last {s['n_hist']} days")
+    return f"{zn(s['zone'])}: {s['label']} at {s['value']:g}{unit}, {rank}."
 
 
 def draft_brief(f: dict) -> str:
+    """Short on purpose (feedback #1): one signal in the headline, the widest price split between connected zones, the
+    auction for tomorrow, wind and solar as share of load. Country names in full; no daily capture rates."""
     day = datetime.strptime(f["day"], "%Y-%m-%d")
     t = f["table"]
+    g = lambda v: "-" if v is None else f"{v:g}"
     lines = [f"# GridEconomics daily - {day:%a %-d %b %Y}", ""]
-    focus_rows = [r for r in t if r["zone"] in f["focus"] and r.get("tb4") is not None]
-    if focus_rows:
-        top = max(focus_rows, key=lambda r: r["tb4"])
-        med = sorted(r["tb4"] for r in focus_rows)[len(focus_rows) // 2]
-        lines += [f"**Headline.** Storage spreads were widest in {top['zone']} on {day:%-d %b}: TB4 {top['tb4']:g} EUR/MWh "
-                  f"(CEE/SEE median {med:g}), baseload {top['baseload']:g} EUR/MWh.", ""]
+    fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"] and not s["metric"].startswith(TEXT_SKIP)]
+    lead = [s for s in fs if s["metric"] not in TB] or fs
+    if lead:
+        lines += ["**Headline.** " + _sig_text(lead[0]), ""]
     else:
-        lines += [f"**Headline.** No complete day-ahead price day for the CEE/SEE zones on {day:%-d %b} yet.", ""]
-    fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"]]
-    if fs:
-        lines += ["**Outside its normal range.** " + " ".join(_sig_text(s) for s in fs[:2]), ""]
-    else:
-        lines += [f"**Outside its normal range.** No CEE/SEE metric left its own {f['window_days']}-day normal range.", ""]
+        lines += [f"**Headline.** No CEE/SEE metric left its own {f['window_days']}-day normal range on {day:%-d %b}.", ""]
+    dec = f.get("decoupling") or []
+    if dec:
+        d = dec[0]
+        txt = (f"**Price decoupling.** The widest price gap between connected zones was {zn(d['high'])} and {zn(d['low'])}: "
+               f"baseload {d['base_high']:g} against {d['base_low']:g} €/MWh, {d['rel']:g} % apart, with prices split in "
+               f"{d['hours_apart']} of {d['hours']} hours. In coupled markets prices only separate when the cross-border "
+               "capacity is fully used, so the border was the bottleneck in those hours.")
+        if len(dec) > 1:
+            txt += f" Next: {zn(dec[1]['high'])} and {zn(dec[1]['low'])} ({dec[1]['rel']:g} % apart)."
+        lines += [txt, ""]
     tm = f["tomorrow"]
     if tm["zones"]:
         tz = tm["zones"]
         wide = max(tz, key=lambda r: r["tb4"])
-        neg = [r["zone"] for r in tz if r["neg_hours"] > 0]
-        txt = (f"**Next 24 h.** Tomorrow's auction puts {wide['zone']} at the widest TB4, {wide['tb4']:g} EUR/MWh "
+        neg = [zn(r["zone"]) for r in tz if r["neg_hours"] > 0]
+        txt = (f"**Next 24 h.** Tomorrow's auction puts {zn(wide['zone'])} at the widest TB4, {wide['tb4']:g} €/MWh "
                f"(peak {wide['max']:g} at {wide['max_at']} CET, low {wide['min']:g} at {wide['min_at']}).")
         txt += (" Negative hours expected in " + ", ".join(neg) + ".") if neg else " No negative-price hours in the CEE/SEE zones."
         lines += [txt, ""]
     else:
         lines += ["**Next 24 h.** Tomorrow's day-ahead prices are not in the store yet (results arrive ~12:45 CET).", ""]
-    fr = [r for r in f.get("fundamentals", []) if r.get("vre_to_load") is not None]
-    if fr:
-        hi = sorted(fr, key=lambda r: -r["vre_to_load"])[:3]
-        lo = sorted(fr, key=lambda r: r["vre_to_load"])[:2]
-        txt = ("**Fundamentals (last 30 days).** Installed solar + wind relative to mean load is highest in "
-               + ", ".join(f"{r['zone']} ({r['vre_to_load']:g}x)" for r in hi) + " and lowest in "
-               + ", ".join(f"{r['zone']} ({r['vre_to_load']:g}x)" for r in lo) + ".")
+    fr = f.get("fundamentals", [])
+    fw = sorted([r for r in fr if r.get("wind_share") is not None], key=lambda r: -r["wind_share"])
+    fsol = sorted([r for r in fr if r.get("solar_share") is not None], key=lambda r: -r["solar_share"])
+    if fw or fsol:
+        txt = "**Fundamentals (last 30 days).**"
+        if fw:
+            txt += " Wind output covered the largest share of load in " + ", ".join(f"{zn(r['zone'])} ({r['wind_share']:g} %)" for r in fw[:3]) + "."
+        if fsol:
+            txt += " Solar did in " + ", ".join(f"{zn(r['zone'])} ({r['solar_share']:g} %)" for r in fsol[:3]) + "."
         st = f.get("fundamentals_stats")
-        if st and st.get("spearman_vre_tb4") is not None:
-            txt += (f" Across {st['n']} zones the rank correlation of that ratio with the mean TB4 is {st['spearman_vre_tb4']:+g}"
-                    + (f" and with negative hours {st['spearman_vre_neg_hours']:+g}." if st.get("spearman_vre_neg_hours") is not None else "."))
+        if st and st.get("spearman_vre_neg_hours") is not None:
+            txt += (f" Across {st['n']} zones the rank correlation of the wind + solar share with negative hours is "
+                    f"{st['spearman_vre_neg_hours']:+g}" + (f" and with the mean TB4 {st['spearman_vre_tb4']:+g}." if st.get("spearman_vre_tb4") is not None else "."))
         lines += [txt, ""]
     if f["notes"]:
         lines += ["_Data notes: " + " ".join(f["notes"]) + "_", ""]
     sp = any(r.get("spark_top4") is not None for r in t)  # the spark column only exists when fuel prices were available
-    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind on CR % | Solar CR % |" + (" Spark top-4 |" if sp else ""),
+    lines += ["| Zone | Baseload | TB2 | TB4 | Neg. h | Wind % of load | Solar % of load |" + (" Spark top-4 |" if sp else ""),
               "|---|--:|--:|--:|--:|--:|--:|" + ("--:|" if sp else "")]
-    g = lambda v: "-" if v is None else f"{v:g}"
     for r in sorted(t, key=lambda r: -(r["tb4"] if r.get("tb4") is not None else -1e9)):
-        lines.append(f"| {r['zone']} | {g(r['baseload'])} | {g(r['tb2'])} | {g(r['tb4'])} | {g(r['neg_hours'])} | "
-                     f"{g(r.get('cr_wind_onshore'))} | {g(r.get('cr_solar'))} |" + (f" {g(r.get('spark_top4'))} |" if sp else ""))
+        lines.append(f"| {zn(r['zone'])} | {g(r['baseload'])} | {g(r['tb2'])} | {g(r['tb4'])} | {g(r['neg_hours'])} | "
+                     f"{g(r.get('wind_share_load'))} | {g(r.get('solar_share_load'))} |" + (f" {g(r.get('spark_top4'))} |" if sp else ""))
     if fr:
-        lines += ["", "| Zone | Solar GW | Wind GW | Solar CF 30d % | Wind CF 30d % | Solar+wind / load | Base 30d | TB4 30d | Neg. h 30d |",
-                  "|---|--:|--:|--:|--:|--:|--:|--:|--:|"]
-        for r in sorted(fr, key=lambda r: -r["vre_to_load"]):
-            lines.append(f"| {r['zone']} | {g(r['solar_gw'])} | {g(r['wind_gw'])} | {g(r['solar_cf'])} | {g(r['wind_cf'])} | "
-                         f"{g(r['vre_to_load'])} | {g(r['baseload'])} | {g(r['tb4'])} | {g(r['neg_hours'])} |")
-        lines += ["", "CF = capacity factor: energy generated in the window / (installed capacity x hours). Installed capacity: IRENA "
-                  f"year-end {fr[0]['year']} (c) IRENA, so zones that added capacity since read a higher CF; ENTSO-E generation can miss small distributed solar, which lowers it."]
-    lines += ["", "Prices EUR/MWh. TB2/TB4: mean of the 2/4 highest minus 2/4 lowest hourly day-ahead prices of the CET day. "
-              "CR = capture rate (generation-weighted price / baseload). Source: ENTSO-E Transparency Platform."]
+        lines += ["", "| Zone (30 days) | Wind % of load | Solar % of load | Wind CF % | Solar CF % | Wind capture rate % | Solar capture rate % | Baseload | TB4 | Neg. h |",
+                  "|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|"]
+        for r in sorted(fr, key=lambda r: -(r["vre_share"] if r.get("vre_share") is not None else -1)):
+            lines.append(f"| {zn(r['zone'])} | {g(r['wind_share'])} | {g(r['solar_share'])} | {g(r['wind_cf'])} | {g(r['solar_cf'])} | "
+                         f"{g(r['cr_wind'])} | {g(r['cr_solar'])} | {g(r['baseload'])} | {g(r['tb4'])} | {g(r['neg_hours'])} |")
+        lines += ["", "30-day window ending on the brief's day. Wind = onshore + offshore. Share of load = output / actual load (energy). "
+                  "CF = mean output / the highest hourly output in the last 90 days (a proxy for installed capacity, so it reads higher "
+                  "than a nameplate capacity factor). Capture rate = output-weighted day-ahead price / mean day-ahead price."]
+    lines += ["", "Prices €/MWh. TB2/TB4: mean of the 2/4 highest minus 2/4 lowest hourly day-ahead prices of the CET day. "
+              "Source: ENTSO-E Transparency Platform."]
     return "\n".join(lines) + "\n"
 
 

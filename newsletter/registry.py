@@ -23,7 +23,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-VERSION = 3  # 1 = price + capture metrics, 2 = + residual load + interconnection, 3 = + generation / load / gas share
+VERSION = 4  # 1 = price + capture metrics, 2 = + residual load + interconnection, 3 = + generation / load / gas share, 4 = + wind / solar share of load
 
 
 @dataclass(frozen=True)
@@ -112,6 +112,12 @@ METRICS += [
            "fossil gas (B04) generation / generation of all types, energy over the hours with both", G, 20,
            "gas set more of the supply", scale=100, tech="gas"),
     Metric("load_mean", "Load, daily mean", "generation", "MW", "mean hourly actual load", ("load",), 20, "higher demand"),
+    Metric("wind_share_load", "Wind output as share of load", "generation", "%",
+           "onshore + offshore wind generation / actual load, energy over the hours with both", ("gen_actual", "load"), 20,
+           "more of the load met by wind", scale=100, tech="won"),
+    Metric("solar_share_load", "Solar output as share of load", "generation", "%",
+           "solar generation / actual load, energy over the hours with both", ("gen_actual", "load"), 20,
+           "more of the load met by solar", scale=100, tech="sol"),
 ]
 BY_ID = {m.id: m for m in METRICS}
 FAMILIES = ["price_level", "storage_spread", "price_shape", "capture", "residual_load", "interconnection", "generation"]

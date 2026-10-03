@@ -180,8 +180,8 @@ def residual_metrics(hl: pd.DataFrame, hg: pd.DataFrame) -> pd.DataFrame:
 
 
 def system_metrics(ga: pd.DataFrame, hg: pd.DataFrame, hl: pd.DataFrame | None) -> pd.DataFrame:
-    """gen_solar / gen_wind_onshore / gen_wind_offshore (daily mean MW), gas_share (gas / all generation, energy) and
-    load_mean per zone and CET day; each needs >= MIN_CAPTURE_HOURS hours of its inputs. These describe the day (the
+    """gen_solar / gen_wind_onshore / gen_wind_offshore (daily mean MW), gas_share (gas / all generation, energy),
+    wind_share_load / solar_share_load (output / load, energy over the hours with both) and load_mean per zone and CET day; each needs >= MIN_CAPTURE_HOURS hours of its inputs. These describe the day (the
     'what else was unusual' table on the Flags tab); no signal rule uses them."""
     cols = ["zone", "day", "metric", "value"]
     parts = []
@@ -201,6 +201,15 @@ def system_metrics(ga: pd.DataFrame, hg: pd.DataFrame, hl: pd.DataFrame | None) 
                 a = w.groupby(["zone", "day"]).agg(gas=(GAS, "sum"), tot=(TOTAL, "sum"), n=("h", "nunique")).reset_index()
                 a = a[(a["n"] >= MIN_CAPTURE_HOURS) & (a["tot"] > 0)]
                 parts.append(pd.DataFrame({"zone": a["zone"], "day": a["day"], "metric": "gas_share", "value": a["gas"] / a["tot"]}))
+    if hl is not None and not hl.empty and hg is not None and not hg.empty:
+        # wind (onshore + offshore) and solar output as a share of load: energy over the hours that have both
+        g = hg.assign(grp=hg["tech"].map({"solar": "solar", "wind_onshore": "wind", "wind_offshore": "wind"}), mw=hg["mw"].clip(lower=0))
+        g = g.groupby(["zone", "grp", "h"], as_index=False)["mw"].sum()
+        j = g.merge(hl.rename(columns={"mw": "load"})[["zone", "h", "load"]], on=["zone", "h"], how="inner")
+        j["day"] = _local_day(j["h"])
+        a = j.groupby(["zone", "grp", "day"]).agg(gen=("mw", "sum"), load=("load", "sum"), n=("h", "nunique")).reset_index()
+        a = a[(a["n"] >= MIN_CAPTURE_HOURS) & (a["load"] > 0)]
+        parts.append(pd.DataFrame({"zone": a["zone"], "day": a["day"], "metric": a["grp"] + "_share_load", "value": a["gen"] / a["load"]}))
     if hl is not None and not hl.empty:
         l = hl.assign(day=_local_day(hl["h"])).groupby(["zone", "day"])["mw"].agg(["mean", "count"]).reset_index()
         l = l[l["count"] >= MIN_CAPTURE_HOURS]

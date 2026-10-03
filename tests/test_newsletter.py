@@ -82,9 +82,9 @@ build.main(["--day", "2026-10-02", "--out", str(out)])
 f = json.loads((out / "facts.json").read_text())
 assert f["day"] == "2026-10-02" and {r["zone"] for r in f["table"]} >= {"RO", "DE-LU"}
 assert f["tomorrow"]["day"] == "2026-10-03" and any(r["zone"] == "RO" for r in f["tomorrow"]["zones"])
-assert any("HU" in n for n in f["notes"]), f["notes"]
+assert any("Hungary" in n for n in f["notes"]), f["notes"]
 md = (out / "brief.md").read_text()
-assert "Headline" in md and "RO" in md and "of its last" in md
+assert "Headline" in md and "Romania" in md and "of its last" in md and "capture rate" not in md.split("| Zone (30 days)")[0].lower()
 assert "<svg" in (out / "brief.html").read_text()
 
 # ---- fuel / spark spreads (synthetic fuel series, no network)

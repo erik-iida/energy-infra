@@ -554,7 +554,25 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - Data tab: `build_browse` converts GB prices to EUR at the ECB rate of the day (rows without a rate stay GBP and are logged),
   so the GB column and the Flags panel are in €/MWh like the GB metrics.
 
+## Newsletter feedback #1 applied (Oct 3 2026)
+- Issue #1 (newsletter-feedback, 2 Oct editorial): see newsletter/STYLE.md "Format (v2)" and the feedback log.
+- `draft_brief` v2: one signal in the headline (daily capture-rate signals are never quoted; TB signals only when nothing
+  else fired), **Price decoupling** from `build.decoupling` (pairs with a physical-flow border in the store, at least one
+  CEE/SEE zone; rel = |a - b| / max(|a|, |b|) of the day's baseload; hours with > 1 €/MWh difference), Next 24 h,
+  Fundamentals as wind / solar output % of load, full names via `build.ZONE_NAME` / `zn()`.
+- New daily metrics `wind_share_load`, `solar_share_load` (registry VERSION 4, family generation; also in the Flags
+  "unusual" table). Daily table columns: wind % and solar % of load instead of capture rates.
+- **Capacity factors no longer use IRENA** (outdated year-end capacity): `fundamentals.peak_capacity` = highest hourly
+  output per class in the last 90 days (needs >= 30 days of hours), `peak_cf` = 30-day mean / that peak. Newsletter
+  30-day table: shares, CF vs peak, 30-day capture rates (output-weighted price / mean price), baseload, TB4, neg. hours.
+  Data tab capacity view: "30-day capacity factor %" (default, vs peak), "Peak output, 90 days GW", "Installed GW (IRENA)"
+  (reference only); `build_browse` reads 90 days of gen_actual for it. The old IRENA CF functions and ceilings remain in
+  fundamentals.py but nothing on the site uses them.
+- 2 Oct editorial rewritten in the new format (newsletter/editorial/2026-10-02.md).
+
 ## Known gaps / next ideas
+- Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,
+  whether the border was at its limit. Revisit names for multi-zone countries in tables.
 - Flags drill-down step 2: cross-border flows per neighbour (diverging bars + net position), neighbour price lines
   (GB labelled Market Index; zones outside the store "price n/a"), neighbour strip with mix bars and click-to-swap
   ("back to <zone>"), shared crosshair across charts. Then Phase 2: "copy context as text" first, congestion (NTC),

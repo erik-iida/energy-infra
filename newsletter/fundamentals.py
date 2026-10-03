@@ -1,4 +1,10 @@
-"""Regional fundamentals: installed capacity (IRENA, annual) against what the zone actually generated (ENTSO-E A75).
+"""Regional fundamentals from what the zone actually generated (ENTSO-E A75), and the IRENA capacity reference.
+
+Since Oct 3 2026 (newsletter feedback #1) capacity factors no longer use IRENA: its year-end capacity is older than the
+fleet. The capacity proxy is the class's highest hourly output in the last PEAK_DAYS days (peak_capacity), so
+CF = mean output over the window / that peak ("CF vs 90-day peak", higher than a nameplate CF because the fleet never
+runs at 100 % at once). The newsletter reads wind and solar as output share of load instead of installed GW.
+IRENA stays only as the installed-GW reference table on the Data tab.
 
 capacity(zone, cls)   latest year-end MW from data/ref/irena_capacity.csv (scripts/ingest_irena.py), summed over the
                       countries behind the bidding zone (DE-LU = DE + LU). Only zones that are a whole country are mapped.
@@ -101,6 +107,39 @@ def capacity_factors(ga: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, c
     return g[cols]
 
 
+PEAK_DAYS = 90
+MIN_PEAK_HOURS = 24 * 30  # a peak needs at least 30 days of hourly data in the 90-day window
+
+
+def hourly_by_class(ga: pd.DataFrame, key: str = "zone") -> pd.DataFrame:
+    """key, cls, h, mw: hourly mean output per class (types of one class summed within each instant first)."""
+    if ga is None or ga.empty:
+        return pd.DataFrame(columns=[key, "cls", "h", "mw"])
+    d = ga[(ga["dir"] == "gen") & ga["psr"].isin(PSR_CLS)].assign(cls=lambda x: x["psr"].map(PSR_CLS), mw=lambda x: x["mw"].clip(lower=0))
+    inst = d.groupby([key, "cls", "ts"], as_index=False)["mw"].sum()
+    inst["h"] = inst["ts"].dt.floor("h")
+    return inst.groupby([key, "cls", "h"], as_index=False)["mw"].mean()
+
+
+def peak_capacity(hc: pd.DataFrame, end: pd.Timestamp, days: int = PEAK_DAYS, key: str = "zone") -> pd.DataFrame:
+    """key, cls, cap_mw: the highest hourly output in [end - days, end), the capacity proxy (needs MIN_PEAK_HOURS hours)."""
+    w = hc[(hc["h"] >= end - pd.Timedelta(days=days)) & (hc["h"] < end)]
+    g = w.groupby([key, "cls"])["mw"].agg(cap_mw="max", n="size").reset_index()
+    return g[(g["n"] >= MIN_PEAK_HOURS) & (g["cap_mw"] > 0)][[key, "cls", "cap_mw"]]
+
+
+def peak_cf(hc: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp, key: str = "zone") -> pd.DataFrame:
+    """key, cls, mean_mw, cap_mw (90-day peak before `end`), cf (0..1), cover for the window [start, end)."""
+    cap = peak_capacity(hc, end, key=key)
+    w = hc[(hc["h"] >= start) & (hc["h"] < end)]
+    hours = (end - start) / pd.Timedelta(hours=1)
+    g = w.groupby([key, "cls"])["mw"].agg(mean_mw="mean", n="size").reset_index()
+    g["cover"] = g["n"] / hours
+    g = g[g["cover"] >= MIN_COVER].merge(cap, on=[key, "cls"], how="inner")
+    g["cf"] = g["mean_mw"] / g["cap_mw"]
+    return g[[key, "cls", "mean_mw", "cap_mw", "cf", "cover"]]
+
+
 def _mean_load(ld: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.Series:
     if ld is None or ld.empty:
         return pd.Series(dtype=float)
@@ -109,42 +148,56 @@ def _mean_load(ld: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.S
 
 
 def fundamentals_table(ga: pd.DataFrame, ld: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp,
-                       zones: list[str], days: int = 30) -> list[dict]:
-    """Rows for `zones`; `day` is the last CET day of the window (naive timestamp). Missing pieces are None."""
+                       zones: list[str], days: int = 30, hp: pd.DataFrame | None = None) -> list[dict]:
+    """Rows for `zones` over the `days` CET days ending on `day` (naive timestamp); `ga` should cover PEAK_DAYS for the
+    capacity proxy, `hp` = hourly prices (metrics.hourly_prices) for the 30-day capture rates. Missing pieces are None.
+    wind = onshore + offshore. Shares = output / load (energy over the hours with both); CF vs the 90-day peak; capture
+    rate = output-weighted price / mean price over the window (|mean| >= 5 EUR/MWh only)."""
     end = (day + pd.Timedelta(days=1)).tz_localize("Europe/Brussels").tz_convert("UTC")
     start = end - pd.Timedelta(days=days)
-    cap = capacity()
-    cf = capacity_factors(ga, start, end, cap)
-    load = _mean_load(ld, start, end)
+    hc = hourly_by_class(ga)
+    hc["grp"] = hc["cls"].map({"solar": "solar", "wind_onshore": "wind", "wind_offshore": "wind"})
+    v = hc[hc["grp"].notna()]
+    cfc = peak_cf(v, start, end)
+    cfc["grp"] = cfc["cls"].map({"solar": "solar", "wind_onshore": "wind", "wind_offshore": "wind"})
+    cfg = cfc.groupby(["zone", "grp"]).agg(mean_mw=("mean_mw", "sum"), cap_mw=("cap_mw", "sum")).reset_index()
+    vw = v[(v["h"] >= start) & (v["h"] < end)].groupby(["zone", "grp", "h"], as_index=False)["mw"].sum()
+    l = ld[(ld["kind"] == "actual") & (ld["ts"] >= start) & (ld["ts"] < end)] if ld is not None and not ld.empty else pd.DataFrame(columns=["zone", "ts", "mw"])
+    lh = (l.assign(h=l["ts"].dt.floor("h")).groupby(["zone", "h"], as_index=False)["mw"].mean().rename(columns={"mw": "load"})
+          if not l.empty else pd.DataFrame({"zone": pd.Series(dtype=str), "h": pd.Series(dtype="datetime64[ns, UTC]"), "load": pd.Series(dtype=float)}))
+    sh = vw.merge(lh, on=["zone", "h"]).groupby(["zone", "grp"])[["mw", "load"]].sum()
+    cr = pd.Series(dtype=float)
+    if hp is not None and not hp.empty:
+        pw = hp[(hp["h"] >= start) & (hp["h"] < end)]
+        base = pw.groupby("zone")["price"].mean()
+        j = vw.merge(pw, on=["zone", "h"])
+        cap_p = (j.assign(r=j["mw"] * j["price"]).groupby(["zone", "grp"])[["r", "mw"]].sum())
+        cap_p = cap_p[cap_p["mw"] > 0]
+        cr = (cap_p["r"] / cap_p["mw"]).to_frame("cp").join(base.rename("base"), on="zone")
+        cr = cr[cr["base"].abs() >= 5]
+        cr = cr["cp"] / cr["base"]
     w = metrics[(metrics["day"] > day - pd.Timedelta(days=days)) & (metrics["day"] <= day)]
     pm = w.groupby(["zone", "metric"])["value"].mean() if not w.empty else pd.Series(dtype=float)
     nh = w[w["metric"] == "neg_hours"].groupby("zone")["value"].sum() if not w.empty else pd.Series(dtype=float)
+    gi = cfg.set_index(["zone", "grp"]) if not cfg.empty else None
     out = []
     for z in zones:
-        c = cap[cap["zone"] == z].set_index("cls")["cap_mw"] if not cap.empty else pd.Series(dtype=float)
-        f = cf[cf["zone"] == z].set_index("cls")["cf"] if not cf.empty else pd.Series(dtype=float)
-        if c.empty:
+        def share(g):
+            if (z, g) not in sh.index or sh.loc[(z, g), "load"] <= 0:
+                return None
+            return sh.loc[(z, g), "mw"] / sh.loc[(z, g), "load"]
+        def cf(g):
+            return None if gi is None or (z, g) not in gi.index else gi.loc[(z, g), "mean_mw"] / gi.loc[(z, g), "cap_mw"]
+        def pk(g):
+            return None if gi is None or (z, g) not in gi.index else round(gi.loc[(z, g), "cap_mw"] / 1000, 2)
+        ws, ss = share("wind"), share("solar")
+        if ws is None and ss is None and pm.get((z, "baseload")) is None:
             continue
-        wind = float(c.get("wind_onshore", 0) + c.get("wind_offshore", 0))
-        solar = float(c.get("solar", 0))
-        wcf = None
-        if wind > 0:
-            num = sum(f.get(k, float("nan")) * c.get(k, 0) for k in ("wind_onshore", "wind_offshore") if k in c.index)
-            wcf = num / wind if num == num else None
-        stale = []
-        if f.get("solar", 0) > CF_CEILING["solar"]:
-            f = f.drop("solar"); stale.append("solar")
-        if wcf is not None and wcf > CF_CEILING["wind"]:
-            wcf = None; stale.append("wind")
-        ml = load.get(z)
-        r = {"zone": z, "year": int(cap.loc[cap["zone"] == z, "year"].iloc[0]),
-             "solar_gw": round(solar / 1000, 2), "wind_gw": round(wind / 1000, 2),
-             "solar_cf": _pct(f.get("solar")), "wind_cf": _pct(wcf),
-             "vre_to_load": round((solar + wind) / ml, 2) if ml and ml > 0 else None,
-             "mean_load_gw": round(ml / 1000, 2) if ml and ml > 0 else None,
-             "baseload": _r(pm.get((z, "baseload"))), "tb4": _r(pm.get((z, "tb4"))),
-             "neg_hours": _r(nh.get(z), 0), "stale_cap": stale}
-        out.append(r)
+        out.append({"zone": z, "wind_share": _pct(ws), "solar_share": _pct(ss),
+                    "vre_share": _pct((ws or 0) + (ss or 0)) if (ws is not None or ss is not None) else None,
+                    "wind_cf": _pct(cf("wind")), "solar_cf": _pct(cf("solar")), "wind_peak_gw": pk("wind"), "solar_peak_gw": pk("solar"),
+                    "cr_wind": _pct(cr.get((z, "wind"))), "cr_solar": _pct(cr.get((z, "solar"))),
+                    "baseload": _r(pm.get((z, "baseload"))), "tb4": _r(pm.get((z, "tb4"))), "neg_hours": _r(nh.get(z), 0)})
     return out
 
 
@@ -190,3 +243,21 @@ def country_capacity_factors(ga: pd.DataFrame, start: pd.Timestamp, end: pd.Time
         cap = pd.concat([cap, lux]).groupby(["zone", "cls"], as_index=False)["cap_mw"].sum()
     r = capacity_factors(g, start, end, cap)
     return r.rename(columns={"zone": "iso3"})
+
+
+def country_peak_cf(ga: pd.DataFrame, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """iso3, cls, mean_mw, cap_mw (90-day peak output), cf for countries whose bidding zones are ALL in `ga` (zones are
+    summed instant by instant, so a country with a zone missing would read too low and is left out). `ga` should cover
+    PEAK_DAYS before `end`; the CF window is [start, end)."""
+    cols = ["iso3", "cls", "mean_mw", "cap_mw", "cf", "cover"]
+    if ga is None or ga.empty:
+        return pd.DataFrame(columns=cols)
+    have = set(ga["zone"])
+    need: dict[str, set] = {}
+    for z, iso in ZONE_ISO3.items():
+        need.setdefault(iso, set()).add(z)
+    ok = {iso for iso, zs in need.items() if zs <= have}
+    g = ga[ga["zone"].isin([z for z, i in ZONE_ISO3.items() if i in ok])].assign(iso3=lambda x: x["zone"].map(ZONE_ISO3))
+    if g.empty:
+        return pd.DataFrame(columns=cols)
+    return peak_cf(hourly_by_class(g, key="iso3"), start, end, key="iso3")[cols]

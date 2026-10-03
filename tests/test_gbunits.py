@@ -49,11 +49,19 @@ def test_repd_and_matching():
     assert pd.isna(s.loc["1", "lat"])  # no coordinates in the extract
     reg = pd.DataFrame([{"bm_unit": r["elexonBmUnit"], "ngc_id": r["nationalGridBmUnit"], "name": r["bmUnitName"], "party": r["leadPartyName"],
                          "fuel": r["fuelType"], "unit_type": r["bmUnitType"], "capacity_mw": float(r["generationCapacity"])} for r in REG])
-    m = U.match_units(U.select_units(reg), repd).set_index("bm_unit")
+    m = U.match_units(U.select_units(reg), repd, overrides={"T_CRUA-1": ""}).set_index("bm_unit")
     assert m.loc["T_ABRBO-1", "repd_ref"] == "1"                  # via the lead party name
     assert m.loc["E_ABRTW-1", "repd_ref"] == "2" and m.loc["E_ABRTW-1", "lat"] > 55  # via the unit name, supplier party ignored
     assert m.loc["E_BRGG-1", "repd_ref"] == "3"                    # battery matched on the battery site only
     assert m.loc["T_CRUA-1", "repd_ref"] is None                   # no pumped storage site in the sample
+    # numbers must agree: Hornsea 1 is not Hornsea 3; an override fixes a miss and "" blocks a wrong match
+    r2 = pd.DataFrame({"ref": ["10", "11"], "name": ["Hornsea 3", "Hornsea 1 - Heron"], "tech": ["Wind Offshore"] * 2, "mw": [2955.0, 1218.0],
+                       "lat": [53.0, 54.0], "lon": [1.0, 2.0]})
+    u2 = pd.DataFrame([{"bm_unit": "T_HOWAO-1", "name": "HORNSEA_1A", "party": "x", "fuel": "WIND", "unit_type": "T", "capacity_mw": 400.0},
+                       {"bm_unit": "T_X-1", "name": "Nothing Alike", "party": "y", "fuel": "WIND", "unit_type": "T", "capacity_mw": 50.0}])
+    m2 = U.match_units(u2, r2, overrides={"T_X-1": "10"}).set_index("bm_unit")
+    assert m2.loc["T_HOWAO-1", "repd_ref"] is None  # not Hornsea 3 (a long REPD name for Hornsea 1 is left to the overrides)
+    assert m2.loc["T_X-1", "repd_ref"] == "10" and m2.loc["T_X-1", "match_score"] == 1.0
 
 
 def test_b1610_frame(monkeypatch):

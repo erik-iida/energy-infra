@@ -19,6 +19,7 @@ Units: unit_output.mw is the average MW of the half hour, signed (negative = imp
 """
 from __future__ import annotations
 
+import difflib
 import io
 import json
 import os
@@ -26,6 +27,7 @@ import re
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -51,9 +53,12 @@ FUEL_REPD = {
     "OTHER": {"Battery", "Liquid Air Energy Storage", "Compressed Air Energy Storage", "Solar Photovoltaics", "Hydrogen"},
     None: {"Battery", "Liquid Air Energy Storage", "Compressed Air Energy Storage", "Solar Photovoltaics", "Hydrogen"},
 }
-STOP = {"wind", "farm", "farms", "offshore", "onshore", "power", "station", "stations", "ltd", "limited", "plc", "energy",
-        "generation", "generating", "generator", "renewables", "renewable", "uk", "the", "of", "and", "project", "company",
-        "holdings", "hydro", "scheme", "battery", "storage", "bess", "park", "site", "unit", "gb", "ii", "i"}
+# words that carry no identity in BM-unit or REPD names (removed before comparing)
+STOP = {"wind", "windfarm", "farm", "farms", "wf", "bmu", "offshore", "onshore", "power", "station", "stations", "ltd", "limited",
+        "plc", "energy", "generation", "generating", "generator", "renewables", "renewable", "uk", "the", "of", "and", "project",
+        "company", "holdings", "scheme", "gb", "owf", "was", "extension", "phase", "battery", "storage", "bess"}
+NUMBER_WORDS = {"one": "1", "two": "2", "three": "3", "four": "4", "five": "5", "i": "1", "ii": "2", "iii": "3", "iv": "4"}
+OVERRIDES = Path(__file__).resolve().parents[1] / "data" / "gb_unit_overrides.json"  # {bm_unit: repd_ref}, hand-checked
 
 
 # ------------------------------------------------------------------ registry
@@ -125,13 +130,29 @@ def fetch_repd() -> pd.DataFrame:
 
 
 # ------------------------------------------------------------------ matching BM units to REPD sites
-def _tokens(s) -> frozenset:
-    return frozenset(t for t in re.sub(r"[^a-z0-9 ]+", " ", str(s or "").lower().replace("-", " ")).split() if t not in STOP and len(t) > 1)
+def _compact(s) -> str:
+    """Name without generic words, number words as digits, no spaces: 'Dogger Bank A Offshore WF 1' -> 'doggerbanka1'."""
+    toks = re.sub(r"[^a-z0-9 ]+", " ", re.sub(r"\(.*?\)", " ", str(s or "").lower()).replace("-", " ").replace("_", " ")).split()
+    return "".join(NUMBER_WORDS.get(t, t) for t in toks if t not in STOP)
 
 
-def match_units(units: pd.DataFrame, repd: pd.DataFrame, min_score: float = 0.5) -> pd.DataFrame:
-    """Adds repd_ref / repd_site / lat / lon / match_score to the units. Score = best token overlap (Jaccard, generic words
-    removed) between the unit's name or lead party and the REPD site name, among sites of a compatible technology."""
+def _trigrams(c: str) -> set:
+    return {c[i:i + 3] for i in range(len(c) - 2)}
+
+
+def _score(a: str, b: str) -> float:
+    """Similarity of two compact names; differing numbers (Hornsea 1 vs Hornsea 3) cost 20 %."""
+    sc = difflib.SequenceMatcher(None, a, b).ratio()
+    da, db = set(re.findall(r"\d+", a)), set(re.findall(r"\d+", b))
+    return sc * 0.8 if da and db and not (da & db) else sc
+
+
+def match_units(units: pd.DataFrame, repd: pd.DataFrame, min_score: float = 0.82, overrides: dict | None = None) -> pd.DataFrame:
+    """Adds repd_ref / repd_site / repd_tech / lat / lon / match_score to the units.
+
+    Score = SequenceMatcher ratio of the compact names (unit name or lead party vs REPD site name, generic words removed) among
+    sites of a compatible technology. A site's matched units must have a total capacity within a factor 2 of the REPD
+    capacity, else the matches are dropped (unless the name is near-identical). `overrides` ({bm_unit: repd_ref}) wins."""
     out = units.copy()
     for c in ("repd_ref", "repd_site", "repd_tech"):
         out[c] = None
@@ -139,34 +160,60 @@ def match_units(units: pd.DataFrame, repd: pd.DataFrame, min_score: float = 0.5)
         out[c] = float("nan")
     if repd.empty:
         return out
-    site_tok = [(i, _tokens(n)) for i, n in zip(repd.index, repd["name"])]
-    index: dict[str, list] = {}
-    for i, tk in site_tok:
-        for t in tk:
-            index.setdefault(t, []).append(i)
-    tok_of = dict(site_tok)
+    comp = {i: _compact(n) for i, n in zip(repd.index, repd["name"])}
+    grams: dict[str, set] = {}
+    for i, c in comp.items():
+        for g in _trigrams(c):
+            grams.setdefault(g, set()).add(i)
+    by_ref = {str(r): i for i, r in zip(repd.index, repd["ref"])}
+    pick = {}
     for j, u in out.iterrows():
-        techs = FUEL_REPD.get(u["fuel"] if isinstance(u["fuel"], str) else None)
+        fuel = u["fuel"] if isinstance(u["fuel"], str) else None
+        techs = FUEL_REPD.get(fuel)
         if not techs:
             continue
         best = (0.0, None)
         for field in (u["name"], u["party"]):
-            tu = _tokens(field)
-            if not tu:
+            cu = _compact(field)
+            if len(cu) < 4:
                 continue
-            cand = {i for t in tu for i in index.get(t, [])}
+            cand = set().union(*(grams.get(g, set()) for g in _trigrams(cu)))
             for i in cand:
-                if repd.at[i, "tech"] not in techs:
+                if repd.at[i, "tech"] not in techs or len(comp[i]) < 4:
                     continue
-                ts = tok_of[i]
-                sc = len(tu & ts) / len(tu | ts)
+                sc = _score(cu, comp[i])
                 if sc > best[0]:
                     best = (sc, i)
         if best[1] is not None and best[0] >= min_score:
-            i = best[1]
-            out.loc[j, ["repd_ref", "repd_site", "repd_tech"]] = [repd.at[i, "ref"], repd.at[i, "name"], repd.at[i, "tech"]]
-            out.loc[j, ["lat", "lon", "match_score"]] = [repd.at[i, "lat"], repd.at[i, "lon"], round(best[0], 3)]
+            pick[j] = best
+    # capacity sanity per site
+    cap = out["capacity_mw"].fillna(0)
+    for i in {b[1] for b in pick.values()}:
+        js = [j for j, b in pick.items() if b[1] == i]
+        site_mw = repd.at[i, "mw"]
+        tot = float(cap[js].sum())
+        if site_mw and tot and not (0.5 <= tot / site_mw <= 2.0) and max(pick[j][0] for j in js) < 0.95:
+            for j in js:
+                del pick[j]
+    for j, (sc, i) in pick.items():
+        out.loc[j, ["repd_ref", "repd_site", "repd_tech"]] = [repd.at[i, "ref"], repd.at[i, "name"], repd.at[i, "tech"]]
+        out.loc[j, ["lat", "lon", "match_score"]] = [repd.at[i, "lat"], repd.at[i, "lon"], round(sc, 3)]
+    for bm, ref in (overrides or {}).items():  # hand-checked links; "" = checked, no site (an automatic match was wrong)
+        i, j = by_ref.get(str(ref)), out.index[out["bm_unit"] == bm]
+        if not ref and len(j):
+            out.loc[j[0], ["repd_ref", "repd_site", "repd_tech"]] = [None, None, None]
+            out.loc[j[0], ["lat", "lon", "match_score"]] = [float("nan")] * 3
+        elif i is not None and len(j):
+            out.loc[j[0], ["repd_ref", "repd_site", "repd_tech"]] = [repd.at[i, "ref"], repd.at[i, "name"], repd.at[i, "tech"]]
+            out.loc[j[0], ["lat", "lon", "match_score"]] = [repd.at[i, "lat"], repd.at[i, "lon"], 1.0]
     return out
+
+
+def load_overrides() -> dict:
+    try:
+        return {k: v for k, v in json.loads(OVERRIDES.read_text()).items() if not k.startswith("_")}
+    except (OSError, ValueError):
+        return {}
 
 
 def refresh_reference(store: Store) -> pd.DataFrame:
@@ -184,7 +231,7 @@ def refresh_reference(store: Store) -> pd.DataFrame:
         for c in ("repd_ref", "repd_site", "repd_tech", "lat", "lon", "match_score"):  # keep earlier matches
             units[c] = [old.get(b, {}).get(c, units.at[i, c]) for i, b in zip(units.index, units["bm_unit"])]
     else:
-        units = match_units(units, repd)
+        units = match_units(units, repd, overrides=load_overrides())
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
     clean = lambda df: json.loads(df.astype(object).where(df.notna(), None).to_json(orient="records"))
     store.write_json("gb_units.json", {"generated": now, "n_registry": int(len(reg)), "units": clean(units)})

@@ -486,8 +486,11 @@ sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.t
 - Same job refreshes release assets **gb_units.json** (BM-unit registry: id, NGC id, name, lead party, fuel, type, capacity, plus REPD match: repd_ref,
   repd_site, lat, lon, match_score) and **gb_repd.json** (DESNZ REPD sites with status Operational / Under Construction / Awaiting Construction /
   Decommissioned: tech, MW, turbines, CfD round, offshore round, lat/lon from British National Grid via pyproj). REPD licence: Open Government Licence v3.0.
-  Matching is by name overlap (token Jaccard >= 0.5, technology-compatible), so check `match_score`; thermal and nuclear units are not in REPD (no coordinates).
-  The log prints the share of wind capacity placed. Improve matching later (lead-party aliases) or use powerplantmatching for thermal.
+  Matching (`gbunits.match_units`): SequenceMatcher ratio >= 0.82 of the compact names (generic words dropped, number words as digits; differing numbers
+  cost 20 %), technology-compatible, matched units of a site must total 0.5-2x its REPD MW; `data/gb_unit_overrides.json` (hand-checked, "" = no site) wins.
+  Checked offline on the first run's files: 98 % of wind capacity placed (30.1 of 30.8 GW), the rest are supplier-aggregated units. Thermal and nuclear
+  units are not in REPD (no coordinates; use powerplantmatching later), small hydro names rarely match. **REPD offshore coordinates are approximate**
+  (several farms share one point): for offshore wind prefer the farm positions already in the site data. Check `match_score` before relying on a location.
 - `collector/gbhist.py` + `collect-gbhist.yml` (daily 14:20 UTC, backfill every 6 h until done, state `gbhist_state.json`): **gb_hist** = NESO historic
   generation mix + carbon intensity (half-hourly since 2009) merged with NESO historic demand (ND, TSD, embedded wind/solar generation and capacity,
   pumping, interconnector flows), one wide row per half hour; **gb_forecast** (long: series, issued, ts, mw) = NESO day-ahead wind forecast (+ archive since

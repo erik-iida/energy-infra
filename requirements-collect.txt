@@ -2,3 +2,6 @@ requests
 pandas
 pyarrow
 pyproj
+
+# data store in an S3-compatible bucket (common/store.py, STORE_BACKEND=s3: Cloudflare R2, Backblaze B2, AWS S3)
+boto3

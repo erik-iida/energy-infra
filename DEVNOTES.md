@@ -832,6 +832,22 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - These are the commands Render's cron jobs will run (4D); converting a script into a function called by its job can happen
   one at a time later without touching the workflows again.
 
+## Spec 3 step 4C: store backend for a bucket (Oct 4 2026)
+- `common/store.py` has three backends behind the same `Store()` API: `github` (release assets, as before), `s3` (any
+  S3-compatible bucket: Cloudflare R2, Backblaze B2, AWS S3) and `local` (STORE_DIR). Chosen by `STORE_BACKEND`, else
+  inferred: STORE_DIR -> local, STORE_BUCKET -> s3, otherwise github. S3 settings: `STORE_BUCKET`, `STORE_PREFIX`
+  (default `store`), `STORE_S3_ENDPOINT` (R2: `https://<account id>.r2.cloudflarestorage.com`; B2 similar; AWS none),
+  credentials `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` (or `STORE_S3_KEY` / `STORE_S3_SECRET`), `STORE_S3_REGION`
+  (default `auto`, what R2 expects). Objects keep the asset names (`<dataset>_<YYYY-MM>.parquet`, the json state files), so
+  a bucket is a byte-for-byte copy of the release; the download cache is keyed by ETag (a new upload = a new download).
+  An S3 put is atomic, so the `tmp-` upload-rename dance is GitHub-only.
+- `tools/store_migrate.py --from github --to s3 [--dry-run | --verify-only | --only ds1,ds2]`: copies what is missing or
+  different (size + MD5), never deletes, then reads every Parquet file on both sides and compares row counts (table per
+  dataset, exit 1 on any difference). Re-runnable. Run it with GH_TOKEN + the bucket settings once the bucket exists; then
+  set `STORE_BACKEND=s3` on Render (and, for the transition, on Actions) so every job reads and writes the bucket.
+- Tests: `tests/test_store_s3.py` against a fake S3 (moto): merge, json, cache versioning, migration + verification.
+  `boto3` is in requirements-collect.txt; `pull_store.py` still reads the public release (fine while that exists).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

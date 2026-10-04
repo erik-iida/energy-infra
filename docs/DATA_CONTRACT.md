@@ -11,8 +11,10 @@ Rules
 - Each JSON file carries a schema version in `data/meta.json` (`files.<name>.schema`); per-run JSON files also carry a
   top-level `"schema"` field. Bump the number when a field the page reads is renamed, removed or changes meaning, and
   update the page in the same push.
-- Public means "on GitHub Pages". Only openly licensed data is published; private series (spark spreads from fuel
-  prices) never enter these files (`scripts/split_private.py`, `--no-fuel`).
+- Public means "on GitHub Pages". Only openly licensed data is published: `data/registry.toml` lists every served file
+  and every stored dataset with its source and a `publishable` flag, and `scripts/build_dist.py` refuses to build the
+  site if a file under `dist/data` is not listed as publishable (`tests/test_registry_files.py`). Private series (spark
+  spreads from fuel prices) never enter these files (`scripts/split_private.py`, `--no-fuel`).
 - All URLs stay relative (`data/...`): Pages serves the site under `/energy-infra/`.
 
 ## Files

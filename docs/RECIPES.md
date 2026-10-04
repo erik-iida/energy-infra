@@ -55,10 +55,13 @@ attribution line. Then update this recipe with the contract.
 0. Decide where it lives: slow and committed -> `data/static/` (`config.static_file("x.json")`, refreshed by a bot workflow
    that `git add`s it); generated every run -> `build/data/` (`config.build_file("x.json")`, added to the `built-data`
    artifact list in `hourly.yml`). Never write into `web/`.
-1. The writer stamps `"schema": 1` into the file (see `scripts/build_meta.py` for the pattern).
-2. Add a row to `docs/DATA_CONTRACT.md` and the file to `SCHEMAS` in `scripts/build_meta.py`.
-3. Add a small version to `tests/fixtures/data/` (`tests/fixtures/make_fixtures.py` if it can be derived).
-4. Read it in the page with `dbJson("data/<file>")` (or `fetch` for non-JSON). `tests/test_contract.py` checks the
+1. Add it to `data/registry.toml` under `[files."<path>"]` with its source and `publishable = true` (or `false`, in which
+   case the build refuses to serve it; write it somewhere other than `build/data` / `data/static`). A new store dataset
+   gets a `[datasets.<name>]` entry. Note the decision in `docs/DECISIONS.md`.
+2. The writer stamps `"schema": 1` into the file (see `scripts/build_meta.py` for the pattern).
+3. Add a row to `docs/DATA_CONTRACT.md` and the file to `SCHEMAS` in `scripts/build_meta.py`.
+4. Add a small version to `tests/fixtures/data/` (`tests/fixtures/make_fixtures.py` if it can be derived).
+5. Read it in the page with `dbJson("data/<file>")` (or `fetch` for non-JSON). `tests/test_contract.py` checks the
    three places agree.
 
 ## Add a daily metric (back end)

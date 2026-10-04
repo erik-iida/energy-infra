@@ -77,3 +77,11 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | Probes | `tools/probes/` + one `probe.yml` (eleven workflows removed) |
 | Dependencies | `requirements.lock` (uv compile of requirements.in) for the image; workflows keep the per-area files until the cutover |
 
+## Spec 3 step 6: dataset registry (4 Oct 2026)
+| Decision | Choice |
+|---|---|
+| Where "publishable" is decided | `data/registry.toml` (TOML: readable, parsed by the standard library, so the deploy job needs no extra package) |
+| Enforcement | `scripts/build_dist.py` refuses to build `dist/` if any file under `dist/data` is unlisted or `publishable = false`; `tests/test_registry_files.py` checks the page's files, the contract rows and every store dataset are listed |
+| First version | everything the site serves today is `publishable = true` (no change to the site); the four never-published sources are listed under `[private]` so the rule is visible |
+| Changing a flag | counts as a structural decision: one line here |
+

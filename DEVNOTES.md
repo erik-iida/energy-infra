@@ -866,12 +866,21 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - What stays on GitHub after the cutover: deploy.yml, checks.yml, docker-build.yml, probe.yml and the bots that commit
   `data/static/` (capture, gas, grid, osm-world, bathymetry, turbines). Reason: they commit to git and are cheap.
 
+## Spec 3 step 6: dataset registry (Oct 4 2026)
+- `data/registry.toml`: `[files."<path>"]` for every file the page loads (patterns `<zone>`, `<day>`), `[datasets.<name>]` for
+  every store dataset, `[private.<name>]` for sources that are never stored or served (TTF gas price, manual EUA, ENTSO-E
+  grid map, EOX tiles). Each entry: `source`, `publishable`. `common/registry.py` reads it (stdlib `tomllib`).
+- `scripts/build_dist.py` gate: after copying, every file under `dist/data` must match a publishable entry, else `dist/` is
+  removed, the offenders are listed and the job exits 1 (deploy.yml then stops before publishing: the site keeps the last
+  good build). Tests: page files, contract rows and store datasets all registered; the gate refuses an unlisted file.
+- Flag changes are decisions (docs/DECISIONS.md). Spark spreads stay the one in-file exception handled by split_private.py.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".
 - Flags drill-down Phase 2: "copy context as text" first (spec 4 step 3; goes into `js/features/flags/`), congestion marker once
   NTC is in the store, starred story candidates (browser-only).
-- Spec 3 remaining (step 6): dataset registry with `publishable: true/false` enforced by `build_dist`, freshness labels on the
+- Spec 3 remaining (step 6): freshness labels on the
   page from meta.json, a screenshot-diff assertion in the smoke test, failure notifications. Spec 2: the cutover itself
   (docs/DEPLOY.md), then `jobs.publish cloudflare` when the public site moves next to the private one.
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,

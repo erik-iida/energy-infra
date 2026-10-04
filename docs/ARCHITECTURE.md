@@ -169,6 +169,12 @@ feature; `core/` never imports a feature; every module is reachable from `app.js
 `registerTab("id", {el: "<pane id>", render})`; the map calls `registerMap({paint, pane, goto})`. The router draws
 whichever is active and knows no tab by name, so adding a tab touches one new folder plus one line in `app.js`.
 
+**What may be public** is decided in one file, `data/registry.toml`: every file the site serves and every dataset the
+store holds, with its source, licence and `publishable = true / false`. The build (`scripts/build_dist.py`) refuses to
+assemble the site if a file is not listed as publishable, and a test fails if the page loads a file that is not listed.
+Adding data that must stay private means adding it with `publishable = false`; it then cannot reach the public site by
+accident. (Spark spreads are the special case: part of a public file, stripped by `split_private.py`.)
+
 Settings that differ per deploy (the CARTO basemap key, build time, schema versions) come from `web/config.js`, written
 by `scripts/build_config.py` at deploy time and never committed. Without it the page still works (keyless basemaps).
 

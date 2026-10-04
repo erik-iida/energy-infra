@@ -1,0 +1,160 @@
+# Dataset registry: every data file the site serves and every dataset the store holds, with source, licence and whether
+# it may be published. scripts/build_dist.py refuses to put a file into dist/ (the deployed site) unless it matches an
+# entry here with publishable = true, so "only openly licensed data goes on the site" is enforced by code, not habit.
+# tests/test_registry_files.py checks that every file the page loads is listed. Patterns: <zone>, <day> = one path segment.
+#
+# Change here = decision: add a line to docs/DECISIONS.md when a dataset's publishable flag changes.
+
+# ---------------------------------------------------------------- files the page loads (served under data/)
+[files."site.json"]
+source = "EuroWindWakes (CC BY 4.0), Global offshore wind turbine dataset (Zhang et al. 2021, CC0), OpenStreetMap (ODbL), Natural Earth (public domain)"
+publishable = true
+
+[files."feed.json"]
+source = "Open-Meteo / ECMWF IFS (CC BY 4.0, non-commercial tier), PyWake results, ENTSO-E Transparency (prices, generation, load, flows), Elexon BMRS / EirGrid (GB / IE)"
+publishable = true
+stripped = ["market.spark"]   # spark spreads reveal the TTF gas price (Yahoo terms): removed by split_private.py before publishing
+
+[files."zones.json"]
+source = "entsoe-py bidding-zone geometries (MIT), Natural Earth"
+publishable = true
+
+[files."capture.json"]
+source = "ENTSO-E Transparency (A75 generation, A44 prices), derived capture prices per technology; UAH via NBU, GBP via ECB"
+publishable = true
+
+[files."gas.json"]
+source = "ENTSOG Transparency Platform (public API)"
+publishable = true
+
+[files."gie.json"]
+source = "GIE AGSI+ / ALSI (API key, free account; attribution required)"
+publishable = true
+
+[files."grid.json"]
+source = "PyPSA-Eur prebuilt OSM network (Zenodo, ODbL)"
+publishable = true
+
+[files."bathy.json"]
+source = "EMODnet Bathymetry (CC BY 4.0)"
+publishable = true
+
+[files."bathy.png"]
+source = "EMODnet Bathymetry (CC BY 4.0)"
+publishable = true
+
+[files."browse/index.json"]
+source = "data store export (ENTSO-E, Elexon, EirGrid; IRENA capacity, (c) IRENA)"
+publishable = true
+
+[files."browse/ts/<zone>.json"]
+source = "data store export: hourly means per zone (ENTSO-E A44 / A75 / A65 / A11, Elexon, EirGrid) and daily metrics"
+publishable = true
+
+[files."browse/capacity.json"]
+source = "IRENA Renewable Energy Statistics ((c) IRENA, attribution), data store generation peaks"
+publishable = true
+
+[files."browse/flags.json"]
+source = "data store export: signals (newsletter/signals.py) on daily metrics"
+publishable = true
+
+[files."browse/flags/<day>.json"]
+source = "as browse/flags.json, last 14 days"
+publishable = true
+
+[files."browse/flags/index.json"]
+source = "list of the kept days"
+publishable = true
+
+[files."browse/xflow.json"]
+source = "data store export: net physical flow per zone pair (ENTSO-E A11, Elexon)"
+publishable = true
+
+[files."newsletter/index.json"]
+source = "generated"
+publishable = true
+
+[files."newsletter/<day>.md"]
+source = "newsletter draft from the store (--no-fuel: no gas prices, no spark spreads) or the hand-written editorial"
+publishable = true
+
+[files."newsletter/<day>.auto.md"]
+source = "the generated draft kept next to a hand-written editorial"
+publishable = true
+
+[files."meta.json"]
+source = "generated: build time, schema versions, freshness per file"
+publishable = true
+
+# ---------------------------------------------------------------- datasets in the store (not served as files)
+# publishable here means: rows may be exported into the files above (hourly means / derived figures). Raw rows are never
+# republished as such; the Data tab serves hourly means and the CSV button is a convenience over those.
+[datasets.da_price]
+source = "ENTSO-E A44 day-ahead prices (seq 1); GB: Elexon Market Index (APX MID, third-party data outside the BMRS licence, credited)"
+publishable = true
+
+[datasets.gen_actual]
+source = "ENTSO-E A75 actual generation per production type; GB: Elexon FUELHH + B1630"
+publishable = true
+
+[datasets.gen_forecast]
+source = "ENTSO-E A69 day-ahead wind / solar forecast"
+publishable = true
+
+[datasets.load]
+source = "ENTSO-E A65 actual load and day-ahead forecast; GB: Elexon INDO + embedded estimate; IE: EirGrid"
+publishable = true
+
+[datasets.flows]
+source = "ENTSO-E A11 physical flows per border; GB: Elexon interconnector fuels"
+publishable = true
+
+[datasets.farm_hourly]
+source = "Open-Meteo / ECMWF hub-height wind per farm (non-commercial tier) and PyWake output"
+publishable = true
+
+[datasets.farm_forecast]
+source = "as farm_hourly, per forecast issue"
+publishable = true
+
+[datasets.farms_meta]
+source = "farm metadata snapshot (site.json)"
+publishable = true
+
+[datasets.metrics_daily]
+source = "derived daily metrics (newsletter/registry.py) from the datasets above"
+publishable = true
+
+[datasets.imb_price]
+source = "Elexon BMRS system (imbalance) prices (BMRS open data licence)"
+publishable = true
+
+[datasets.unit_output]
+source = "Elexon B1610 metered output per BM unit (BMRS open data licence)"
+publishable = true
+
+[datasets.gb_hist]
+source = "NESO historic generation mix, carbon intensity and demand (NESO open data licence)"
+publishable = true
+
+[datasets.gb_forecast]
+source = "NESO and Elexon day-ahead forecasts"
+publishable = true
+
+# ---------------------------------------------------------------- never published (fetched at run time, never stored or served)
+[private.ttf_gas_price]
+source = "Yahoo Finance TTF=F (terms forbid republishing): newsletter/fuel.py, cached in state/, feeds spark spreads only"
+publishable = false
+
+[private.eua_manual]
+source = "newsletter/eua_manual.csv, hand-entered carbon price (git-ignored)"
+publishable = false
+
+[private.entsoe_grid_map]
+source = "ENTSO-E grid map PDF: redistribution forbidden; not used"
+publishable = false
+
+[private.eox_satellite]
+source = "EOX Sentinel-2 cloudless tiles (CC BY-NC-SA, non-commercial): fetched by the browser from EOX, never stored"
+publishable = false

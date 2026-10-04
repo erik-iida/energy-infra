@@ -193,7 +193,7 @@ svg.cmp{display:block;width:100%;overflow:visible}
 <details class="srcd" id="footw"><summary>Sources and notes</summary><div class="mut" id="foot"></div></details>
 </aside></main>
 <script>
-function main(DATA,FEED,MHIST){
+function main(DATA,FEED){
 const $=id=>document.getElementById(id),cv=$("cv"),cx=cv.getContext("2d");
 const F=DATA.farms,Z=DATA.zones,S={c:null,farm:null,hover:-1,zh:-1,tab:"map",hh:-1,sort:["now",-1]};
 const URG=11.5,PC=(u,R,ur)=>u<3||u>25?0:R*Math.min(1,u/(ur||URG))**3;
@@ -1561,9 +1561,9 @@ $("LV").checked=!!FEED;
 $("foot").innerHTML="Map: in-browser Jensen/Gaussian on "+(FEED?"the forecast wind (or what-if sliders)":"what-if wind")+". Compare: "+(FEED?"PyWake results from feed.json.":"in-browser models on synthetic wind.")+(FEED&&SRC==="openmeteo"?" <a href='https://open-meteo.com/' style='color:inherit'>Weather data by Open-Meteo.com</a> (CC BY 4.0).":"")+" Power and thrust curves per turbine type from the EuroWindWakes database (PyWake generic curves). <i>Italic</i> farms have no turbine layout in the dataset, so their output is the free-stream power curve minus an assumed 10% wake loss.<br><br><b>Disclaimer:</b> all figures are model estimates, not measured output, and not advice of any kind. Personal non-commercial project, not affiliated with any wind farm, operator or data provider.<br><br>Turbine data: <a href='https://doi.org/10.5281/zenodo.17311571' style='color:inherit'>EuroWindWakes European Offshore Dataset</a> contributors, © OpenStreetMap contributors, EMODnet (ODbL). Farm outlines: own compilation, partly from EMODnet Human Activities. Coastlines: Natural Earth. Farms outside Europe: <a href='https://doi.org/10.6084/m9.figshare.13280252' style='color:inherit'>Global offshore wind turbine dataset</a> (Zhang, Tian, Sengupta, Zhang &amp; Si 2021, Sentinel-1 detections to 2021, CC0), with the project names and capacities given there; turbine types estimated. Newer farms outside Europe and the Estonian onshore demo: © OpenStreetMap contributors (ODbL). Generation, load, flows and day-ahead prices for zones not openly licensed in Energy-Charts (incl. CEE / SEE): <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a>. Gas storage and LNG: <a href='https://agsi.gie.eu' style='color:inherit'>GIE AGSI+</a> / <a href='https://alsi.gie.eu' style='color:inherit'>ALSI</a>. Gas flows: <a href='https://transparency.entsog.eu' style='color:inherit'>ENTSOG Transparency Platform</a> (daily physical flows; point positions approximate, georeferenced from the ENTSOG map). High-voltage grid: <a href='https://zenodo.org/records/14144752' style='color:inherit'>PyPSA-Eur prebuilt network</a> (Xiong, Fioriti, Neumann, Riepin &amp; Brown), from © OpenStreetMap contributors (ODbL). Bathymetry: <a href='https://emodnet.ec.europa.eu/en/bathymetry' style='color:inherit'>EMODnet Bathymetry Consortium</a>, Digital Terrain Model (CC BY 4.0). Wake models: PyWake (DTU).";
 addEventListener("resize",draw);size();Object.assign(V,fit(HOME,0));clampV();$("M").value="t";$("K").value=K_DEF.t;$("kl").textContent="Wake expansion A";moSet(MO);draw();
 }
-(async()=>{let site=window.SITE,feed=window.FEED||null,mh=window.MHIST||null;
+(async()=>{let site=window.SITE,feed=window.FEED||null;
  if(!site){try{site=await(await fetch("data/site.json",{cache:"no-cache"})).json()}catch(e){document.body.innerHTML="<p style='padding:24px;font-family:system-ui'>Couldn't load data/site.json. Serve the web folder over http (for example <code>python -m http.server -d web</code>) instead of opening the file directly.</p>";return}
   try{const r=await fetch("data/feed.json",{cache:"no-store"});if(r.ok)feed=await r.json()}catch(e){feed=null}
-  try{const r=await fetch("data/market_history.json",{cache:"no-store"});if(r.ok)mh=await r.json()}catch(e){mh=null}}
- main(site,feed,mh)})();
+}
+ main(site,feed)})();
 </script></body></html>

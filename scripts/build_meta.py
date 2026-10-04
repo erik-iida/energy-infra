@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # file (relative to data/) -> schema version (see docs/DATA_CONTRACT.md)
 SCHEMAS = {
-    "site.json": 1, "feed.json": 1, "market_history.json": 1, "zones.json": 1, "capture.json": 1, "gas.json": 1,
+    "site.json": 1, "feed.json": 1, "zones.json": 1, "capture.json": 1, "gas.json": 1,
     "gie.json": 1, "grid.json": 1, "bathy.json": 1, "browse/index.json": 1, "browse/ts/<zone>.json": 1,
     "browse/capacity.json": 1, "browse/flags.json": 1, "browse/flags/<day>.json": 1, "browse/xflow.json": 1,
     "newsletter/index.json": 1, "meta.json": 1,

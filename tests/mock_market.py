@@ -13,6 +13,14 @@ from pipeline import config
 import pipeline.market as M
 
 M.MIN_GAP_S = 0
+import pipeline.gbie_live as _G  # noqa: E402  GB/IE live data needs the network: off in this offline test
+
+
+def _offline(*a, **k):
+    raise RuntimeError("offline")
+
+
+_G.fetch = _offline
 CALLS = []
 
 
@@ -72,10 +80,9 @@ def main():
     hrs = [(now + timedelta(hours=h)).strftime("%Y-%m-%dT%H:00Z") for h in range(-23, 25)]
     for run in range(1, 13):
         CALLS.clear()
-        mk, hist = M.build(site["farms"], hrs)
+        mk = M.build(site["farms"], hrs)
         if run in (1, 2, 12):
-            print(f"run {run}: {len(CALLS)} calls, history months per area:",
-                  {k: len(v["months"]) for k, v in hist["areas"].items()})
+            print(f"run {run}: {len(CALLS)} calls")
     assert mk["restricted_zones"] == ["SE4"], mk["restricted_zones"]
     assert "SE4" not in mk["prices"] and "DK1" in mk["prices"]
     assert "uk" not in mk["actual_offshore"]
@@ -83,8 +90,6 @@ def main():
     assert set(sy["series"]) == {"solar", "fossil_gas", "load", "wind_offshore"}, sy["series"].keys()  # % series dropped
     assert sy["flows"]["germany"][0] == 800.0 and sy["zones"] == ["DK1", "DK2"]
     print("system countries", sorted(mk["system"]), "prices", sorted(mk["prices"]))
-    assert all(len(v["months"]) >= 6 for v in hist["areas"].values()), hist["areas"].keys()
-    print("sample", hist["areas"]["dk"]["months"][-1])
     print("OK")
     shutil.rmtree(config.STATE_DIR, ignore_errors=True)
 

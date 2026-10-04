@@ -146,7 +146,6 @@ jobs:
           if-no-files-found: error
           path: |
             web/data/feed.json
-            web/data/market_history.json
             web/data/meta.json
             web/data/browse/
             web/data/newsletter/

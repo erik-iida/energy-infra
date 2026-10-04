@@ -711,6 +711,13 @@ Nothing visible changed on the site. Added:
   from the cloud workspace (blob host blocked): check deploys on the live site. If no hourly build succeeded for 3 days,
   deploy.yml fails with "no built-data artifact" (run hourly-feed by hand).
 
+## Spec 3 step 5c: market_history.json removed (Oct 4 2026)
+The monthly offshore capture history from Energy-Charts (DE, NL, BE, DK, FR; `market.history()`) was loaded by the page
+but unused since `capture.json` (ENTSO-E, all zones and technologies) replaced that view in 34cbbc6. Removed the file, the
+page's fetch, `history()`/`history_public()`/`zone_weights()` and the HISTORY_* constants: up to ~9 fewer Energy-Charts
+calls per hourly run. `state/market_history.json` in the Actions cache is simply no longer read. `python -m
+tests.mock_market` (offline Energy-Charts mock) now stubs GB/IE live data; steady state 24 Energy-Charts calls per run.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

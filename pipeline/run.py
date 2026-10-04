@@ -143,7 +143,7 @@ def main(argv=None) -> None:
     if config.MARKET and args.source != "synthetic":
         try:
             from . import market
-            mk, hist = market.build(farms, feed["hours"] + feed["fc_hours"])
+            mk = market.build(farms, feed["hours"] + feed["fc_hours"])
             farms_block = feed.pop("farms")
             feed["market"] = mk
             if os.environ.get("SPARK") in ("private", "public"):  # off by default: see pipeline/spark.py and scripts/split_private.py
@@ -155,8 +155,6 @@ def main(argv=None) -> None:
                 except Exception as e:
                     print(f"spark spreads: skipped ({type(e).__name__})")
             feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read
-            (config.FEED_JSON.parent / "market_history.json").write_text(
-                json.dumps({"schema": 1, **hist} if isinstance(hist, dict) else hist, separators=(",", ":")), encoding="utf-8")
         except Exception as e:  # market data must never stop the wind feed
             print(f"market: failed ({e!r}); feed written without market data")
     feed = {"schema": 1, **feed}  # data contract version (docs/DATA_CONTRACT.md); bump when a field the page reads changes

@@ -3,8 +3,6 @@
 What it provides to the monitor:
   * day-ahead prices per bidding zone for the feed window (last 24 h + next 24 h once published)
   * actual offshore wind generation per country (last 24 h) to check the model against
-  * a monthly history per market area of baseload price, offshore capture price and capture rate,
-    built from ACTUAL national offshore generation (no modelling), filled in a few months per run
 
 Licences: each response states its licence. Only data whose licence is CC BY is written to the public
 site; zones marked "private and internal use" are skipped (see is_open()).
@@ -15,14 +13,12 @@ from __future__ import annotations
 import json
 import time
 from collections import defaultdict
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 
 from . import config, entsoe
 
 EC_URL = "https://api.energy-charts.info/v2"
 MIN_GAP_S = 3.0  # seconds between calls (the API answers bursts with HTTP 429)
-HISTORY_UNITS_PER_RUN = 3  # (market area, month) pairs to backfill per run
-HISTORY_MONTHS = 24
 
 # Bidding zone of each country's offshore farms. Denmark is split by longitude (see farm_zone).
 ZONE_BY_COUNTRY = {
@@ -40,8 +36,6 @@ SYSTEM_COUNTRIES = {
     "de": ["DE-LU"], "fr": ["FR"], "nl": ["NL"], "be": ["BE"], "dk": ["DK1", "DK2"], "no": ["NO2"],
     "se": ["SE3", "SE4"], "pl": ["PL"], "at": ["AT"], "ch": ["CH"],
 }
-# Market areas for the monthly history (country code -> zones it trades in)
-HISTORY_AREAS = {"de": ["DE-LU"], "nl": ["NL"], "be": ["BE"], "dk": ["DK1", "DK2"], "fr": ["FR"]}
 
 
 # every current physical bidding zone with a day-ahead price in Energy-Charts (price comparison heatmap);
@@ -220,118 +214,21 @@ def recent(cl: Client, zones: set[str], countries: set[str], hours: list[int]) -
     return {"prices": prices, "actual": actual, "system": system, "licence": lic}
 
 
-# ---------------------------------------------------------------- monthly history (actual data)
+# ---------------------------------------------------------------- helpers
 def _utc_today() -> date:
     return datetime.now(timezone.utc).date()
 
 
-def _months(n: int) -> list[str]:
-    d = _utc_today().replace(day=1)
-    out = []
-    for _ in range(n):
-        out.append(d.strftime("%Y-%m"))
-        d = (d - timedelta(days=1)).replace(day=1)
-    return out  # newest first
-
-
-def _month_range(m: str) -> tuple[str, str]:
-    y, mo = map(int, m.split("-"))
-    first = date(y, mo, 1)
-    last = (date(y + (mo == 12), mo % 12 + 1, 1) - timedelta(days=1))
-    return first.isoformat(), min(last, _utc_today()).isoformat()
-
-
-def history(cl: Client, zone_weights: dict[str, dict[str, float]]) -> dict:
-    """Fill a few missing (area, month) cells per run. The current and previous month are refreshed daily."""
-    st = _load("market_history.json")
-    cells = st.setdefault("cells", {})
-    lic = st.setdefault("licence", {})
-    months = _months(HISTORY_MONTHS)
-    today = _utc_today().isoformat()
-    todo = []
-    for m in months:
-        for c in HISTORY_AREAS:
-            key = f"{c}|{m}"
-            cell = cells.get(key)
-            fresh_needed = m in months[:2] and (not cell or cell.get("day") != today)
-            if cell is None or fresh_needed:
-                todo.append((c, m))
-    for c, m in todo[:HISTORY_UNITS_PER_RUN]:
-        a, b = _month_range(m)
-        r = cl.get("public_power", country=c, start=a, end=b)
-        if not r:
-            continue
-        lic[f"power:{c}"] = r.get("license") or ""
-        if "wind_offshore" not in {s["id"] for s in r.get("series", [])}:
-            cells[f"{c}|{m}"] = {"day": today, "none": True}
-            continue
-        gen = hourly(r, "wind_offshore")
-        zp = {}
-        for z in HISTORY_AREAS[c]:
-            rp = cl.get("price", bzn=z, start=a, end=b)
-            if rp:
-                lic[f"price:{z}"] = rp.get("license") or ""
-                zp[z] = hourly(rp, "day_ahead_price")
-        if len(zp) != len(HISTORY_AREAS[c]):
-            continue
-        w = zone_weights.get(c) or {z: 1 / len(zp) for z in zp}
-        hrs = sorted(set(gen) & set.intersection(*(set(v) for v in zp.values())))
-        if not hrs:  # nothing yet (e.g. a month that has just started): mark and move on
-            cells[f"{c}|{m}"] = {"day": today, "empty": True}
-            continue
-        price = {h: sum(w.get(z, 0) * zp[z][h] for z in zp) / sum(w.get(z, 0) for z in zp) for h in hrs}
-        g = [max(0.0, gen[h]) for h in hrs]
-        p = [price[h] for h in hrs]
-        e = sum(g)
-        cells[f"{c}|{m}"] = {
-            "day": today, "hours": len(hrs), "baseload": round(sum(p) / len(p), 2),
-            "capture": round(sum(gi * pi for gi, pi in zip(g, p)) / e, 2) if e > 0 else None,
-            "gwh": round(e / 1000, 1), "neg_hours": sum(1 for x in p if x < 0),
-            "neg_share": round(sum(gi for gi, pi in zip(g, p) if pi < 0) / e, 4) if e > 0 else None,
-        }
-    _save("market_history.json", st)
-    return st
-
-
-def history_public(st: dict) -> dict:
-    """Monthly series per area, only where every price zone involved is openly licensed."""
-    lic = st.get("licence", {})
-    out = {}
-    for c, zones in HISTORY_AREAS.items():
-        if not all(is_open(lic.get(f"price:{z}")) for z in zones):
-            continue
-        rows = []
-        for key, cell in st.get("cells", {}).items():
-            cc, m = key.split("|")
-            if cc == c and cell.get("capture") is not None:
-                rows.append({"m": m, **{k: cell[k] for k in ("baseload", "capture", "gwh", "neg_hours", "neg_share", "hours")}})
-        if rows:
-            rows.sort(key=lambda r: r["m"])
-            out[c] = {"zones": zones, "months": rows}
-    return out
-
-
-def zone_weights(farms: list[dict]) -> dict[str, dict[str, float]]:
-    """Installed offshore MW per zone within each history country (used to blend DK1/DK2 prices)."""
-    w: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    for f in farms:
-        cc, z = COUNTRY_CODE.get(f["c"]), farm_zone(f)
-        if cc in HISTORY_AREAS and z:
-            inst = f.get("inst") or f.get("cap", 0)
-            w[cc][z] += inst
-    return {c: dict(v) for c, v in w.items()}
-
-
-def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
-    """Returns (market block for feed.json, market_history.json content)."""
+def build(farms: list[dict], hours_iso: list[str]) -> dict:
+    """Returns the market block for feed.json. (The monthly offshore capture history, market_history.json, was removed on
+    4 Oct 2026: unused since capture.json took over; it cost up to ~9 Energy-Charts calls per run.)"""
     cl = Client()
     hours = [int(datetime.fromisoformat(h.replace("Z", ":00+00:00")).timestamp()) for h in hours_iso]
     core = {z for f in farms if (z := farm_zone(f))} | {z for zs in SYSTEM_COUNTRIES.values() for z in zs}
     zones = core | set(ALL_PRICE_ZONES)
     countries = {COUNTRY_CODE[f["c"]] for f in farms if f["c"] in COUNTRY_CODE}
     rec = recent(cl, zones, countries, hours)
-    hist = history(cl, zone_weights(farms))
-    lic = {**hist.get("licence", {}), **rec["licence"]}
+    lic = rec["licence"]
     open_zones = {z for z in zones if is_open(lic.get(f"price:{z}"))}
     market = {
         "source": "Energy-Charts (Fraunhofer ISE), prices: Bundesnetzagentur | SMARD.de",
@@ -394,10 +291,6 @@ def build(farms: list[dict], hours_iso: list[str]) -> tuple[dict, dict]:
     except Exception as ex:
         market.setdefault("diag", {})["gbie"] = {"error": repr(ex)[:300]}
         print(f"gbie: failed {ex!r}")
-    hist_pub = {"generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                "note": "Capture price = generation-weighted day-ahead price using ACTUAL national offshore wind "
-                        "output (Energy-Charts). DK blends DK1/DK2 prices by installed offshore MW per zone.",
-                "areas": history_public(hist)}
     print(f"market: {cl.calls} calls, {len(cl.errors)} errors, open zones {sorted(open_zones)}, "
-          f"restricted {market['restricted_zones']}, history areas {sorted(hist_pub['areas'])}")
-    return market, hist_pub
+          f"restricted {market['restricted_zones']}")
+    return market

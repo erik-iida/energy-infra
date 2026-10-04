@@ -2,7 +2,7 @@
 #
 # Runs when the page changes (push to web/**), after a data job has committed new data (bot commits), by hand, and as the
 # last job of every hourly-feed run (workflow_call with that run's id). ~1 minute; it never runs the pipeline.
-# Data: the `built-data` artifact (public files only: feed.json without spark spreads, market_history.json, browse/,
+# Data: the `built-data` artifact (public files only: feed.json without spark spreads, browse/,
 # newsletter/, meta.json) uploaded by hourly-feed's build job; everything else comes from the checkout.
 # If a data run fails, nothing new is uploaded and every deploy keeps using the last good artifact (kept 3 days).
 # Rollback: delete this file and restore `push` + the workflow_run list in hourly.yml (docs/DECISIONS.md).

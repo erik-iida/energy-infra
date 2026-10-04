@@ -4,7 +4,7 @@
 
 Inputs: the committed files in web/data/ (site, zones, capture, gas, gie, grid, bathy) and the generated ones the deploy
 builds (web/data/browse/, web/data/newsletter/: run `STORE_DIR=<store copy> python scripts/build_browse.py` and
-`python scripts/build_newsletter_site.py` first). feed.json and market_history.json are synthetic (same shape as the
+`python scripts/build_newsletter_site.py` first). feed.json is synthetic (same shape as the
 pipeline writes, values from smooth formulas), so the smoke test does not depend on live APIs. The fixed "now" of the
 fixtures is NOW below; the smoke test pins the browser clock to it.
 
@@ -128,7 +128,6 @@ def feed(farms: list[dict]) -> None:
                        "generated": (NOW + timedelta(minutes=50)).isoformat(timespec="seconds"), "ref_heights_m": {"100": len(farms)},
                        "models": MODELS, "hours": [iso(d) for d in past], "fc_hours": [iso(d) for d in fut],
                        "market": market, "farms": out})
-    dump("market_history.json", {"schema": 1, "hours": {}})
 
 
 def static() -> None:

@@ -657,6 +657,21 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - Price data and cross-border flows (later phase).
 - Onshore Denmark with satellite roughness (v2); DK onshore turbine file exists but is not in this repo.
 
+## Handover status (Oct 4 2026, 07:00 UTC)
+- Store (checked via the release): gb_hist 214 months complete (2009-01..2026-10), unit_output 33 months (from 2024-01, backfill
+  state 31 done, last 2026-07, still running every 2 h), da_price Market Index state gbie_mid_state.json 33 months done
+  (last 2026-09). No failed Actions runs since Oct 3 16:00 UTC; metrics ran at 06:29 UTC after the GB price landed, so
+  GB baseload/TB2/TB4/capture should now be in metrics_daily (not yet looked at on the live site).
+- Open check: the daily ENTSO-E collect slot (12:35 UTC) has not fired as "daily" yet (GitHub dropped it on Oct 3;
+  collector_log.json only has backfill entries). RO / MK late generation is therefore not yet judged: after the
+  first daily run read `late_gen_actual_h`, `seq_dropped`, `n_errors` in collector_log.json; widen the daily window in
+  collector/collect.py only if RO lags more than ~3 days.
+- Live GB price path (pipeline/gbie_live.py -> market.py) was only tested with mock data; confirm on the live site that
+  GB is coloured on the Map and has the line in Market/System. If not, read the hourly-feed log or add a probe.
+- Not collected on purpose: National Gas gas flows (licence unclear), Yahoo/yfinance gas (SPARK gating), EnergyDashboard API (terms).
+- Next: Flags drill-down Phase 2 (see Known gaps); GB plant layer from unit_output + REPD sites; per-farm capacity
+  factors vs PyWake; stability-aware hub-height wind.
+
 ## Working from a browser-only session
 The code runs on GitHub, not locally. Clone the repo, edit, push to `main`; the workflow runs the pipeline
 and redeploys the site in ~3 minutes. Check the run in the Actions tab.

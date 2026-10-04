@@ -33,6 +33,8 @@ def fake(monkeypatch, tmp_path):
     calls = []
 
     def get(self, **p):
+        if self.over_budget():
+            return None
         calls.append(p)
         self.calls += 1
         dt = p["documentType"]
@@ -52,7 +54,8 @@ def fake(monkeypatch, tmp_path):
 
     monkeypatch.setattr(E.Client, "get", get)
     monkeypatch.setattr(E, "token", lambda: "x")
-    monkeypatch.setattr(E.Client, "__init__", lambda self: (setattr(self, "calls", 0), setattr(self, "errors", [])) and None)
+    monkeypatch.setattr(E.Client, "__init__", lambda self: (setattr(self, "calls", 0), setattr(self, "errors", []),
+                                                             setattr(self, "t0", time.time())) and None)
     return calls
 
 
@@ -88,7 +91,8 @@ def test_market_build_uses_entsoe_only(monkeypatch, tmp_path):
     from pipeline import gbie_live, market
     monkeypatch.setattr(config, "STATE_DIR", tmp_path)
     monkeypatch.setattr(E, "token", lambda: "x")
-    monkeypatch.setattr(E.Client, "__init__", lambda self: (setattr(self, "calls", 0), setattr(self, "errors", [])) and None)
+    monkeypatch.setattr(E.Client, "__init__", lambda self: (setattr(self, "calls", 0), setattr(self, "errors", []),
+                                                             setattr(self, "t0", time.time())) and None)
     monkeypatch.setattr(E, "prices", lambda cl, zones, hours: {z: [50.0] * len(hours) for z in zones if z in ("DE-LU", "PL", "MK")})
     off = [1000.0] * 24
     monkeypatch.setattr(E, "system", lambda cl, hours: {
@@ -103,3 +107,19 @@ def test_market_build_uses_entsoe_only(monkeypatch, tmp_path):
     assert "DE-LU" in mk["core_zones"] and mk["restricted_zones"] == []
     assert mk["actual_offshore"] == {"de": off}
     assert mk["source"].startswith("ENTSO-E") and "Energy-Charts" not in str(mk)
+
+
+def test_time_budget_keeps_last_data(fake, monkeypatch):
+    E.system(E.Client(), HOURS)
+    cache = E._load_cache()
+    for cc in cache["system"]:
+        cache["system"][cc]["t"] = 0   # stale: would be fetched again
+    E._save_cache(cache)
+    monkeypatch.setattr(E.Client, "MAX_WALL_S", -1)  # budget already used
+    cl = E.Client()
+    out = E.system(cl, HOURS)
+    assert set(out) == {"dk", "pl"} and out["dk"]["series"]["wind_offshore"][0] == 1000.0
+    assert cl.errors and cl.errors[0].startswith("skipped")
+    assert "lag_h" not in out["dk"]  # same hour: not late
+    out2 = E.system(cl, [h + 7200 for h in HOURS])  # two hours later, still no budget
+    assert out2["dk"]["lag_h"] == 2

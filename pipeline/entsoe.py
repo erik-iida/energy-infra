@@ -13,9 +13,10 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from . import config
 
@@ -111,14 +112,51 @@ def token() -> str:
     return os.environ.get("ENTSOE_TOKEN", "")
 
 
+class RateLimiter:
+    """Request spacing shared by all threads of a process. ENTSO-E allows 400 requests per minute per token, and the
+    hourly feed and the collector can run at the same time (4 Oct 2026: together they hit the limit and the feed's
+    ENTSO-E part took 680 s of 429 retries). Budgets: hourly feed 200/min (ENTSOE_PER_MIN), collector 190/min."""
+
+    def __init__(self, per_min: float):
+        self.gap = 60.0 / per_min
+        self.lock = threading.Lock()
+        self.next = 0.0
+
+    def wait(self) -> None:
+        with self.lock:
+            now = time.monotonic()
+            t = max(now, self.next)
+            self.next = t + self.gap
+        if t > now:
+            time.sleep(t - now)
+
+
+LIMIT = RateLimiter(float(os.environ.get("ENTSOE_PER_MIN", "200")))
+
+
 class Client:
+    # Time budget for one hourly run: after MAX_WALL_S the remaining calls are skipped (countries keep their last data),
+    # so a slow or rate-limited API can't hold the feed. Normal runs need 5-40 s.
+    MAX_WALL_S = float(os.environ.get("ENTSOE_MAX_WALL_S", "240"))
+
     def __init__(self):
         import requests
         self.s = requests.Session()
         self.calls, self.errors = 0, []
+        self.t0 = time.time()
+
+    def over_budget(self) -> bool:
+        if time.time() - self.t0 <= self.MAX_WALL_S:
+            return False
+        if not any(e.startswith("skipped") for e in self.errors):
+            self.errors.append(f"skipped: time budget of {self.MAX_WALL_S:.0f} s used")
+        return True
 
     def get(self, **params) -> ET.Element | None:
+        if self.over_budget():
+            return None
         for attempt in range(3):
+            LIMIT.wait()
             self.calls += 1
             try:
                 r = self.s.get(URL, params={**params, "securityToken": token()}, timeout=60)
@@ -126,7 +164,6 @@ class Client:
                 self.errors.append(f"{params.get('documentType')}: {ex!r}"[:200])
                 time.sleep(3 * (attempt + 1))
                 continue
-            time.sleep(0.2)  # the API allows 400 requests per minute
             if r.status_code == 200 and b"Acknowledgement_MarketDocument" not in r.content[:300]:
                 try:
                     return ET.fromstring(r.content)
@@ -502,5 +539,9 @@ def system(cl: Client, hours: list[int], workers: int = 6) -> dict[str, dict]:
                 continue
             if d is not None:
                 out[cc], sc[cc] = d, entry
+            elif sc.get(cc):  # not fetched this time (time budget, outage): keep the last data, marked as late
+                old = sc[cc]
+                shift = max(0, int((past0[0] - old.get("h0", past0[0])) // 3600))
+                out[cc] = {**old["d"], **({"lag_h": old["d"].get("lag_h", 0) + shift} if shift else {})}
     _save_cache(cache)
     return out

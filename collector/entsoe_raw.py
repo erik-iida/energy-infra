@@ -13,6 +13,7 @@ Every row also has `fetched` (UTC). psr is the ENTSO-E code (B01..B25); names in
 """
 from __future__ import annotations
 
+import os
 import re
 import threading
 import time
@@ -21,7 +22,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from pipeline.entsoe import URL, ZONE_EIC, token
+from pipeline.entsoe import URL, ZONE_EIC, RateLimiter, token
 
 # Bidding-zone borders for physical flows. Generated from entsoe-py's NEIGHBOURS (MIT) mapped to our zone codes,
 # plus the borders it lacks (GR-IT South, ME-IT Centre-South, Ukraine). Each border is fetched in both directions.
@@ -52,24 +53,7 @@ SEQ_DROPPED: dict[str, int] = {}
 _SEQ_LOCK = threading.Lock()
 
 
-class RateLimiter:
-    """Shared across worker threads: the API allows 400 requests per minute; stay at ~330."""
-
-    def __init__(self, per_min: int = 330):
-        self.gap = 60.0 / per_min
-        self.lock = threading.Lock()
-        self.next = 0.0
-
-    def wait(self):
-        with self.lock:
-            now = time.monotonic()
-            t = max(now, self.next)
-            self.next = t + self.gap
-        if t > now:
-            time.sleep(t - now)
-
-
-LIMIT = RateLimiter()
+LIMIT = RateLimiter(float(os.environ.get("COLLECT_PER_MIN", "190")))  # + hourly feed 200/min < 400/min (pipeline/entsoe.py)
 
 
 class Client:

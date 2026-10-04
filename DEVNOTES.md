@@ -735,6 +735,13 @@ that all failed (circuit breaker), ENTSO-E 4 s for 20 countries. The System tab 
   ENTSO-E calls (spec 2: one collect step feeding both).
 
 ## Spec 3 step 5d: installs, store downloads, collector window (Oct 4 2026)
+- **PyWake ahead**: PyWake's cost per call is per turbine (≈0.31 s per farm for 1 hour, 0.45 s for 25), so the cache
+  alone only helped the :37 run. When a farm is computed, all forecast hours up to REFRESH_HOURS + 24 h ahead are computed
+  in the same call; later runs reuse them until the forecast changes (simulated hours +1, +2, +7: 0.2-0.3 s, identical).
+- **ENTSO-E rate limits**: the feed (6 threads) and the collector (4 threads) running together exceeded 400 req/min; the
+  feed's ENTSO-E part took 680 s of 429 retries (14:10 UTC run). Shared `entsoe.RateLimiter`: feed 200/min
+  (ENTSOE_PER_MIN), collector 190/min (COLLECT_PER_MIN). Plus a 240 s budget per feed run (ENTSOE_MAX_WALL_S): skipped
+  countries keep their last data with `lag_h` set, so the page labels it "data N h old".
 - **uv instead of pip** in every regular workflow (`astral-sh/setup-uv`, `uv pip install --system`, no cache): local test
   5.6 s vs 37 s for requirements.txt. A cache of the installed packages would be ~700-800 MB, slower to restore than uv
   downloads fresh, so none.

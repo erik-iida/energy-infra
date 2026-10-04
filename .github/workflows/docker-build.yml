@@ -19,4 +19,5 @@ jobs:
         run: |
           docker run --rm gridecon python -m jobs
           docker run --rm -e STORE_BACKEND=local -e STORE_DIR=/tmp/s gridecon python -m jobs.render dist
-          docker run --rm gridecon python -m pytest tests --ignore=tests/e2e -q -p no:cacheprovider
+          # pytest and moto are test-only (not in the image): install them in a throw-away container
+          docker run --rm gridecon sh -c "uv pip install --system -q pytest 'moto[s3]' && python -m pytest tests --ignore=tests/e2e -q -p no:cacheprovider"

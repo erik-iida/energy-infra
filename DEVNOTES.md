@@ -647,6 +647,32 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
   wait, stop calling after 4 consecutive failures or 7 min of market calls (the page keeps what it got). Job limit 45 min.
   Read the step log on the job page (Run pipeline: "market: N calls, M errors", "openmeteo: … N s").
 
+## Spec 3 step 0: Actions measurements (Oct 4 2026, read-only)
+Whole history of the repo (created 30 Sep 22:11 UTC): 298 runs to 4 Oct 10:35 UTC. Source: `gh api …/actions/runs` + jobs.
+
+| workflow | runs | ok | cancelled | failed | median / p90 run time (min) | total min |
+|---|--:|--:|--:|--:|--:|--:|
+| hourly-feed | 187 | 142 | 37 | 8 | 7.3 / 19.9 | 1,758 |
+| osm-world | 15 | 14 | 1 | 0 | 24.6 / 45.7 | 339 |
+| collect | 9 | 7 | 2 | 0 | 29.8 / 36.6 | 193 |
+| collect-gbie | 9 | 7 | 2 | 0 | 2.0 / 44.0 | 137 |
+| metrics | 10 | 6 | 4 | 0 | 4.5 / 48.1 | 91 |
+| collect-gbunits | 7 | 6 | 0 | 1 | 4.8 / 40.5 | 90 |
+| capture | 14 | 14 | 0 | 0 | 0.5 / 29.2 | 68 |
+| collect-gbhist, gas, extra-turbines, bathymetry, grid, global-turbines, 13 probes | 49 | | | | | ~125 |
+
+hourly-feed in detail (jobs API):
+- Triggers: 129 push, 29 schedule, 28 workflow_run (after data jobs), 1 manual.
+- Queue (run created -> job started): median 0.1 min, p90 6 min, max 27 min; 9 of 103 pushes that ran waited > 5 min.
+  26 pushes never ran: replaced in the queue by a newer push (concurrency group keeps only the latest pending run).
+- Job time median 6.4 min, p90 17 min. Steps: **Run pipeline 5.5 / 15.0 / 29.8 min** (median / p90 / max: forecasts,
+  PyWake on 593 farms, ENTSO-E and Energy-Charts calls), newsletter drafts 2.7, Data-tab export 1.2, pip 0.4, deploy 0.1.
+- 6 runs timed out at 30 min on 4 Oct (Energy-Charts errors, fixed with the circuit breaker); 8 failures on 30 Sep–2 Oct.
+- Reading: a front-end push waits for the **whole pipeline** (median ~6, often 15+ min); queueing adds a few minutes
+  only sometimes. So the main delay is "every push runs the pipeline", not the queue: spec 3's fast deploy (step 5)
+  removes it. Actions minutes: ~2,800 in 3.5 days (~24,000 per month), free while the repo is public; a private repo
+  (spec 2) gets 2,000 free minutes per month on the free plan, so spec 2 needs this number.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

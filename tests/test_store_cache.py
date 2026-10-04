@@ -10,6 +10,8 @@ from common import store as ST
 @pytest.fixture
 def fake_gh(monkeypatch):
     monkeypatch.delenv("STORE_DIR", raising=False)
+    monkeypatch.delenv("STORE_CACHE", raising=False)   # the Docker image sets it; these tests count real downloads
+    monkeypatch.delenv("STORE_BACKEND", raising=False)
     ST._MEM.clear()
     ST._ASSETS.clear()
     state = {"assets": {"da_price_2026-10.parquet": 11, "x.json": 12}, "calls": []}

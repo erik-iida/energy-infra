@@ -877,6 +877,19 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
   good build). Tests: page files, contract rows and store datasets all registered; the gate refuses an unlisted file.
 - Flag changes are decisions (docs/DECISIONS.md). Spark spreads stay the one in-file exception handled by split_private.py.
 
+## Legend toggles and line-end labels (Oct 4 2026, evening; Erik's feature list items 2 and 4)
+- `core/chart.js spread()`: labels along one axis keep a minimum gap and stay inside the plot (gap shrinks to fit, font to
+  9.5 px below 13 px gap). `core/cmp.js` uses it for the line-end country / zone labels: no more labels above the chart or
+  over the legend with 30 countries (System "Compare across countries", Market prices).
+- Click a line-end label in a `cmp` chart to hide that series (struck through, dimmed), "show all" at the top right;
+  `C.hidden` per chart, in memory. Hover ranking skips hidden series.
+- System tab: the technology legend (`.mixleg`) toggles technologies and the load line in the generation mix chart
+  (`SYSHIDE`, localStorage `sys-hide`); the y scale follows the visible stack.
+- Flags drill-down: every legend chip toggles (`FX.hide`: `tech:<k>`, `load`, `res`, `price`, `nb:<zone>`), the panel
+  re-renders through `fxFill`; the flows chart's net position is then the net over the shown borders (labelled). Event
+  hours and the caption stay computed on the full series.
+- Baseline screenshots for the Market tab updated (label layout).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

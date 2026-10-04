@@ -167,3 +167,6 @@ svg.cmp{display:block;width:100%;overflow:visible}
 #nws table.dt{width:auto;min-width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;font-variant-numeric:tabular-nums}
 #nws .dt th{position:sticky;top:0;background:var(--panel);padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-weight:600}#nws .dt td{padding:2px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
 #nws .badge{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}#nws .hint{font-size:12px;color:var(--mut);max-width:900px}
+/* legend toggles: click a technology / series to hide it (spec: all legends toggle) */
+.mixleg span[data-k]{cursor:pointer;user-select:none}.mixleg span[data-k].off{opacity:.4;text-decoration:line-through}.mixleg .mixall{cursor:pointer;color:var(--acc);font-size:12px;margin-left:6px}
+#flg .fxk[data-h]{cursor:pointer;user-select:none}#flg .fxk[data-h].off{opacity:.4;text-decoration:line-through}#flg .fxall{cursor:pointer;color:var(--acc);margin-left:6px}

@@ -9,7 +9,8 @@ import { tab } from "../../core/router.js";
 import { FL, flagsTab } from "./table.js";
 /* ---------- Flags drill-down: click a fired signal to see the CET day behind it (spec 1, step 1) ---------- */
 /* Hourly series: web/data/browse/ts/<zone>.json (the Data tab export). Older days: browse/flags/<day>.json (FLAG_DAYS kept). */
-const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0};
+const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0,hide:new Set()};  // hide: legend keys switched off (tech:<k>, load, res, price, nb:<zone>)
+const fxOff=k=>FX.hide.has(k);
 const FXTECH=[["nuc","Nuclear"],["coal","Coal & lignite"],["bio","Biomass & waste"],["hyd","Hydro"],["oth","Other"],["gas","Gas"],["oil","Oil"],["won","Onshore wind"],["woff","Offshore wind"],["sol","Solar"]];
 const FXPLAIN={
  tb4:"Average of the 4 priciest hours minus the 4 cheapest hours of the day: roughly what a 4-hour battery could earn from one charge-discharge cycle, before losses.",
@@ -156,11 +157,12 @@ function fxStrip(o,nb,pm){return"<div class='fxnb'>"+nb.map(q=>{const tot=q.mix?
 function fxNext(o,T,idx,Q,lab,ev,W){const zs=fxNbZones(T,idx);if(!zs.length)return"<h4 class='fxh4'>Next door</h4><div class='feednote'>No cross-border flow data for "+o.z+" on this day in the store.</div>";
  if(zs.some(n=>!FX.ts[n]))return"<h4 class='fxh4'>Next door</h4><div class='feednote'>Loading the neighbours ("+zs.join(", ")+")…</div>";
  const nb=fxNb(o,T,idx),pm=Q.P&&Q.Pu==="€/MWh"?(a=>a.length?a.reduce((x,v)=>x+v,0)/a.length:null)(Q.P.filter(v=>v!=null)):null;
- const lg=nb.map(q=>"<span class='fxk'><i style='background:"+q.col+"'></i>"+q.z+"</span>").join("");
- let h="<h4 class='fxh4'>Cross-border flows <span class='mut'>physical flow per border, hourly; above the line = import into "+o.z+", below = export; black line = net position over these borders</span></h4><div class='fxch'>"+fxFlowChart(o.z,nb,lab,ev,W)+"</div><div class='fxlg'>"+lg+"<span class='fxk'><i style='height:0;border-top:2px solid var(--ink)'></i>Net position</span></div>";
- const pc=Q.P&&Q.Pu==="€/MWh"?fxPriceChart(o.z,Q.P,Q.Pu,nb,lab,ev,W):"";
+ const nbv=nb.filter(q=>!fxOff("nb:"+q.z));
+ const lg=nb.map(q=>"<span class='fxk"+(fxOff("nb:"+q.z)?" off":"")+"' data-h='nb:"+q.z+"' title='click to hide or show'><i style='background:"+q.col+"'></i>"+q.z+"</span>").join("");
+ let h="<h4 class='fxh4'>Cross-border flows <span class='mut'>physical flow per border, hourly; above the line = import into "+o.z+", below = export; black line = net position over these borders</span></h4><div class='fxch'>"+fxFlowChart(o.z,nbv,lab,ev,W)+"</div><div class='fxlg'>"+lg+"<span class='fxk'><i style='height:0;border-top:2px solid var(--ink)'></i>Net position"+(nbv.length<nb.length?" (shown borders)":"")+"</span>"+(FX.hide.size?"<a class='fxall'>show all</a>":"")+"</div>";
+ const pc=Q.P&&Q.Pu==="€/MWh"?fxPriceChart(o.z,Q.P,Q.Pu,nbv,lab,ev,W):"";
  const na=nb.filter(q=>!q.P);
- if(pc)h+="<h4 class='fxh4'>Day-ahead prices next door <span class='mut'>"+o.z+" bold; same colours as the flows</span></h4><div class='fxch'>"+pc+"</div><div class='fxlg'><span class='fxk'><i style='height:0;border-top:3px solid var(--ink)'></i>"+o.z+"</span>"+nb.filter(q=>q.P).map(q=>"<span class='fxk'><i style='height:0;border-top:2px solid "+q.col+"'></i>"+q.z+(q.z==="GB"?" (Market Index, trade-weighted)":"")+(Q.P&&q.P.every((v,i)=>v==null||Q.P[i]==null||Math.abs(v-Q.P[i])<.01)?" (same price as "+o.z+" all day, hidden behind it)":"")+"</span>").join("")+(na.length?"<span class='mut'>price n/a: "+na.map(q=>q.z+(q.why?" ("+q.why+")":"")).join(", ")+"</span>":"")+"</div>";
+ if(pc)h+="<h4 class='fxh4'>Day-ahead prices next door <span class='mut'>"+o.z+" bold; same colours as the flows</span></h4><div class='fxch'>"+pc+"</div><div class='fxlg'><span class='fxk'><i style='height:0;border-top:3px solid var(--ink)'></i>"+o.z+"</span>"+nb.filter(q=>q.P).map(q=>"<span class='fxk"+(fxOff("nb:"+q.z)?" off":"")+"' data-h='nb:"+q.z+"' title='click to hide or show'><i style='height:0;border-top:2px solid "+q.col+"'></i>"+q.z+(q.z==="GB"?" (Market Index, trade-weighted)":"")+(Q.P&&q.P.every((v,i)=>v==null||Q.P[i]==null||Math.abs(v-Q.P[i])<.01)?" (same price as "+o.z+" all day, hidden behind it)":"")+"</span>").join("")+(na.length?"<span class='mut'>price n/a: "+na.map(q=>q.z+(q.why?" ("+q.why+")":"")).join(", ")+"</span>":"")+"</div>";
  h+="<h4 class='fxh4'>Next door on "+fxDayLbl(o.d)+" <span class='mut'>click a neighbour to see the same day there</span></h4>"+fxStrip(o,nb,pm);
  return h}
 function fxHead(j,o){const r=j.scan.find(q=>q.zone===o.z&&q.metric===o.m),ru=(j.rules||[]).find(q=>q.metric===o.m)||{label:o.m,unit:""},u=ru.unit==="EUR/MWh"?"€/MWh":ru.unit;
@@ -196,14 +198,14 @@ function fxBody(j,o,T,W){FX.charts=[];let h=fxHead(j,o);if(T.err)return h+"<div 
  if(cap&&dm!=null){const cp=mc("m|"+cap);refs.push({v:dm,l:"baseload "+fxN(dm,1),c:"var(--mut)",dash:"2 3"});if(cp!=null)refs.push({v:cp,l:"capture price "+fxN(cp,1),c:"var(--acc)",dash:"6 3"})}
  const lab=idx.map((i,k)=>T.hr[i]+(k&&T.hr[idx[k-1]]===T.hr[i]?"′":""));
  const showR=/^res_/.test(o.m);
- h+="<div class='fxch'>"+fxChart({d:o.d,lab,st:Q.st,src:Q.src,L:Q.L,Ls:Q.Ls,R:Q.R,showR,P:Q.P,Pu:Q.Pu,ev,refs},W)+"</div>";
- const chip=(c,l,ln)=>"<span class='fxk'><i style='"+(ln?"height:0;border-top:"+ln+" "+c:"background:"+c)+"'></i>"+l+"</span>";
- let lg=Q.st.slice().reverse().map(q=>chip("var(--m-"+q.k+")",q.name+(Q.src==="forecast"?" (forecast)":""))).join("");
- if(Q.L)lg+=chip("var(--ink)","Load"+(Q.Ls!=="actual"?" ("+Q.Ls+")":""),"2px "+(Q.Ls==="day-ahead forecast"?"dotted":"solid"));
- if(Q.R&&showR)lg+=chip("var(--ink)","Residual load (load − wind − solar)","2px dashed");
- if(Q.P)lg+=chip("var(--acc)","Day-ahead price ("+Q.Pu+", right axis)","2px solid");
+ h+="<div class='fxch'>"+fxChart({d:o.d,lab,st:Q.st.filter(q=>!fxOff("tech:"+q.k)),src:Q.src,L:fxOff("load")?null:Q.L,Ls:Q.Ls,R:fxOff("res")?null:Q.R,showR,P:fxOff("price")?null:Q.P,Pu:Q.Pu,ev,refs:fxOff("price")?[]:refs},W)+"</div>";
+ const chip=(c,l,ln,key)=>"<span class='fxk"+(key&&fxOff(key)?" off":"")+"'"+(key?" data-h='"+key+"' title='click to hide or show'":"")+"><i style='"+(ln?"height:0;border-top:"+ln+" "+c:"background:"+c)+"'></i>"+l+"</span>";
+ let lg=Q.st.slice().reverse().map(q=>chip("var(--m-"+q.k+")",q.name+(Q.src==="forecast"?" (forecast)":""),null,"tech:"+q.k)).join("");
+ if(Q.L)lg+=chip("var(--ink)","Load"+(Q.Ls!=="actual"?" ("+Q.Ls+")":""),"2px "+(Q.Ls==="day-ahead forecast"?"dotted":"solid"),"load");
+ if(Q.R&&showR)lg+=chip("var(--ink)","Residual load (load − wind − solar)","2px dashed","res");
+ if(Q.P)lg+=chip("var(--acc)","Day-ahead price ("+Q.Pu+", right axis)","2px solid","price");
  if(ev.hi&&ev.hi.length)lg+=chip("rgba(194,65,12,.35)",ev.hiL);if(ev.lo&&ev.lo.length)lg+=chip("rgba(31,95,153,.35)",ev.loL);
- h+="<div class='fxlg'>"+lg+"</div>";
+ h+="<div class='fxlg'>"+lg+(FX.hide.size?"<a class='fxall'>show all</a>":"")+"</div>";
  let cap2="";if(ev.k)cap2="The "+ev.k+" priciest hours averaged <b>"+fxN(ev.mh,1)+"</b> "+Q.Pu+", the "+ev.k+" cheapest <b>"+fxN(ev.ml,1)+"</b>: a spread of <b data-chk='"+ev.spread.toFixed(2)+"'>"+fxN(ev.spread,1)+" "+Q.Pu+"</b>"+(Q.Pu!=="€/MWh"?" (the flag itself is computed in €/MWh)":"")+".";
  else if(o.m==="neg_hours"&&ev.lo)cap2="<b>"+ev.lo.length+"</b> hours below zero"+(ev.lo.length?", from "+lab[ev.lo[0]]+":00 to "+lab[ev.lo[ev.lo.length-1]]+":59 CET":"")+".";
  else if(o.m==="res_ramp3"&&ev.rise!=null)cap2="Residual load rose by <b>"+fxN(ev.rise,0)+" MW</b> between "+lab[ev.hi[0]]+":00 and "+lab[ev.hi[3]]+":00 CET.";
@@ -228,7 +230,9 @@ function fxFill(){const p=$("fxp");if(!p||!FX.open||!FX.cur)return;const o=FX.op
  p.innerHTML=fxBody(j,o,T,W)}
 function fxToggle(z,m,d){const o=FX.open,fr=o&&(o.row||o);FX.open=fr&&fr.z===z&&fr.m===m&&o.d===d?null:{z,m,d};fxHash();flagsTab();
  const row=document.querySelector("#flg tr.fsr[data-z='"+z+"'][data-m='"+m+"']");if(row){row.focus({preventScroll:true});if(FX.open)row.scrollIntoView({block:"nearest"})}}
-$("flg").addEventListener("click",e=>{const nc=e.target.closest(".fxcard"),bk=e.target.closest(".fxback");
+$("flg").addEventListener("click",e=>{const lk=e.target.closest(".fxk[data-h]"),la=e.target.closest(".fxall");
+ if(lk||la){if(la)FX.hide.clear();else{const k=lk.dataset.h;FX.hide.has(k)?FX.hide.delete(k):FX.hide.add(k)}fxFill();return}
+ const nc=e.target.closest(".fxcard"),bk=e.target.closest(".fxback");
  if((nc||bk)&&FX.open){const o=FX.open,row=o.row||{z:o.z,m:o.m};FX.open=bk||nc.dataset.nz===row.z?{z:row.z,m:row.m,d:o.d}:{z:nc.dataset.nz,m:o.m,d:o.d,row};fxHash();FX.charts=[];fxFill();const p=$("fxp");if(p)p.scrollIntoView({block:"nearest"});return}
  if(e.target.closest(".fxx")){const o=FX.open&&(FX.open.row||FX.open);FX.open=null;fxHash();flagsTab();if(o){const r=document.querySelector("#flg tr.fsr[data-z='"+o.z+"'][data-m='"+o.m+"']");if(r)r.focus()}return}
  const tr=e.target.closest("tr.fsr");if(tr&&FX.cur)fxToggle(tr.dataset.z,tr.dataset.m,FX.cur.day)});

@@ -30,4 +30,13 @@ function tsSVG(W,H,n,series,lo,hi,now,lbl){const x=i=>3+(W-6)*i/Math.max(1,n-1),
  return s}
 const axl=(W,H,a,m,b,mx)=>"<text class='tl' x='3' y='"+(H+11)+"'>"+a+"</text>"+(m?"<text class='tl' x='"+mx+"' y='"+(H+11)+"' text-anchor='middle'>"+m+"</text>":"")+"<text class='tl' x='"+(W-3)+"' y='"+(H+11)+"' text-anchor='end'>"+b+"</text>";
 
-export { CO, UMAX, aggW, arrow, axl, chartSVG, dtip, fut, hourAt, line, mean, ms, past, pathOf, tsSVG };
+/* Lay out labels along one axis: start from the wanted positions (sorted ascending), keep at least `gap` between
+   neighbours and keep every label inside [lo, hi]. If they do not fit at `gap`, the gap shrinks to what fits (min 9).
+   Returns the new positions in the same order, plus the gap used. */
+function spread(ys,lo,hi,gap){const n=ys.length;if(!n)return{ys:[],gap};gap=Math.max(9,Math.min(gap,(hi-lo)/Math.max(1,n-1)));
+ const out=ys.slice();for(let j=0;j<n;j++)out[j]=Math.max(j?out[j-1]+gap:lo,Math.min(out[j],hi));
+ for(let j=n-1;j>=0;j--)out[j]=Math.min(j<n-1?out[j+1]-gap:hi,out[j]);   // pull the stack back up from the bottom edge
+ for(let j=0;j<n;j++)out[j]=Math.max(j?out[j-1]+gap:lo,out[j]);           // and down from the top edge (fits by construction of gap)
+ return{ys:out,gap}}
+
+export { spread, CO, UMAX, aggW, arrow, axl, chartSVG, dtip, fut, hourAt, line, mean, ms, past, pathOf, tsSVG };

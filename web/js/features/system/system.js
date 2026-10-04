@@ -14,14 +14,17 @@ import { gasCard, gieCard, gieOverview } from "./gie.js";
 // stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
 let STIPS=[];S.sys=null;
 const v1=v=>v==null||!isFinite(v)?"–":fmt(v);
-function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<n;h++)mx=Math.max(mx,h<=D.last?D.gen[h]:0,D.load?D.load[h]||0:0);mx=Math.ceil(mx/1000)*1000;
+// technologies hidden in the generation mix chart (click the legend); kept per browser
+const SYSHIDE=new Set((()=>{try{return JSON.parse(localStorage.getItem("sys-hide")||"[]")}catch(e){return[]}})());
+function sysHideSave(){try{localStorage.setItem("sys-hide",JSON.stringify([...SYSHIDE]))}catch(e){}}
+function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1),vis=MIXC.filter(([k])=>!SYSHIDE.has(k));let mx=1;for(let h=0;h<n;h++)mx=Math.max(mx,h<=D.last?vis.reduce((a,[k])=>a+(D.mix[k][h]||0),0):0,D.load&&!SYSHIDE.has("load")?D.load[h]||0:0);mx=Math.ceil(mx/1000)*1000;
  const y=v=>H-2-(H-6)*v/mx;let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+fmt(mx)+"</text>";
  const base=Array(n).fill(0);
- MIXC.forEach(([k])=>{const top=base.map((b,h)=>b+D.mix[k][h]);if(top.every((t,h)=>t===base[h]))return;
+ MIXC.forEach(([k])=>{if(SYSHIDE.has(k))return;const top=base.map((b,h)=>b+D.mix[k][h]);if(top.every((t,h)=>t===base[h]))return;
   let d="M"+x(0)+","+y(top[0]);for(let h=1;h<=D.last;h++)d+="L"+x(h).toFixed(1)+","+y(top[h]).toFixed(1);for(let h=D.last;h>=0;h--)d+="L"+x(h).toFixed(1)+","+y(base[h]).toFixed(1);
   s+="<path d='"+d+"Z' style='fill:var(--m-"+k+");stroke:var(--panel);stroke-width:1'/>";top.forEach((t,h)=>base[h]=t)});
  if(D.last<n-1)s+="<rect x='"+x(D.last).toFixed(1)+"' y='0' width='"+(x(n-1)-x(D.last)).toFixed(1)+"' height='"+(H-2)+"' fill='var(--line)' opacity='.3'/><text class='tl' x='"+(x(n-1)-4)+"' y='"+(H-8)+"' text-anchor='end'>generation not yet reported</text>";
- if(D.load)s+="<path class='ln' style='stroke:var(--ink);stroke-width:2' d='"+pathOf(D.load,x,y,0,n-1)+"'/>";
+ if(D.load&&!SYSHIDE.has("load"))s+="<path class='ln' style='stroke:var(--ink);stroke-width:2' d='"+pathOf(D.load,x,y,0,n-1)+"'/>";
  return s}
 function sysCard(D){const h=D.last,g=D.gen[h]||1,pz=D.zones.map(z=>MK.prices[z]&&MK.prices[z][N0]).filter(v=>v!=null);
  let bar="",xo=0;MIXC.forEach(([k])=>{const w=100*D.mix[k][h]/g;if(w>0.3){bar+="<span style='left:"+xo+"%;width:calc("+w+"% - 2px);background:var(--m-"+k+")'></span>";xo+=w}});
@@ -37,7 +40,7 @@ function system(){const el=$("sys");STIPS=[];
  let h=(S.c&&S.c!=="Europe"&&!csel&&!grp?"<div class='feednote'>No system data for "+S.c+" in this source yet; showing the European countries covered.</div>":"")+"<div class='feednote srcnote'><b>System tab.</b> Generation, load, cross-border physical flows and day-ahead prices: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (actual generation per production type, actual load, physical flows, day-ahead auction). Last 24 h, hourly averages. Flows: positive = import. Great Britain: Contains BMRS data © Elexon Limited copyright and database right "+new Date().getFullYear()+" (national demand plus the embedded wind and solar estimate). GB price: Market Index Data, the volume-weighted price of half-hourly trades on APX / EPEX SPOT supplied via Elexon BMRS (not an auction result; published after delivery; converted to EUR at the ECB rate). Ireland: generation ENTSO-E, load Supported by EirGrid Group Data.</div>";
  const mark0=h.length;
  h+="<h2>Countries <span class='mut' style='font:13px system-ui'>· latest hour; bar = generation mix; click for detail</span></h2><div class='grid'>"+all.map(sysCard).join("")+"</div>";
- h+="<div class='mixleg'>"+MIXC.map(([k,n])=>"<span><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span><i style='background:var(--ink);height:2px'></i>Load</span></div>";
+ h+="<div class='mixleg' title='Click a technology to hide or show it in the generation mix chart'>"+MIXC.map(([k,n])=>"<span data-k='"+k+"' class='"+(SYSHIDE.has(k)?"off":"")+"'><i style='background:var(--m-"+k+")'></i>"+n+"</span>").join("")+"<span data-k='load' class='"+(SYSHIDE.has("load")?"off":"")+"'><i style='background:var(--ink);height:2px'></i>Load</span>"+(SYSHIDE.size?"<a class='mixall'>show all</a>":"")+"</div>";
  S.tcT=S.tcT||"woff";S.offm=S.offm||"gen";const TN=Object.fromEntries(MIXC.map(([k,n])=>[k,n]));TN.res="Residual load";const resM=S.tcT==="res",om=resM&&S.offm==="gen"?"load":S.offm,offc=all.filter(d=>resM?d.res&&d.res.some(v=>v!=null):d.mix[S.tcT].some(v=>v>0));
  h+="<div class='card' style='cursor:default'><h3><span style='display:flex;align-items:center;gap:8px'>Compare <select id='tcT' style='width:auto;padding:3px 6px;font-size:13px'>"+MIXC.map(([k,n])=>"<option value='"+k+"'"+(k===S.tcT?" selected":"")+">"+n+"</option>").join("")+"<option value='res'"+(S.tcT==="res"?" selected":"")+">Residual load (load − wind − solar)</option></select> across countries</span><span class='seg big'><button data-om='gen' class='"+(S.offm==="gen"?"on":"")+"'>% of generation</button><button data-om='load' class='"+(S.offm==="load"?"on":"")+"'>% of consumption</button><button data-om='mw' class='"+(S.offm==="mw"?"on":"")+"'>MW</button></span></h3>"+(offc.length?"<svg class='cmp' id='cmpOff'></svg>":"<div class='mut'>No country in this selection has "+TN[S.tcT].toLowerCase()+" output in the last 24 h.</div>")+"<div class='mut' style='font-size:12px'>"+TN[S.tcT]+(resM?" (load minus wind and solar)":" output")+" "+(om==="mw"?"in MW":om==="gen"?"as a share of national generation":"as a share of load (consumption)")+", last 24 h, hourly"+(resM&&S.offm==="gen"?" (shown against load: residual load has no generation share)":"")+". Hours a TSO has not reported yet are left blank, not drawn as zero. Countries follow the selector (pick a group such as CEE / SEE to narrow it). Hover to rank them for one hour.</div></div>";
  const mark1=h.length;
@@ -72,7 +75,8 @@ function system(){const el=$("sys");STIPS=[];
   else{const m=Math.max(100,...D.net.filter(v=>v!=null).map(Math.abs));const hi=Math.ceil(m/500)*500;sv.innerHTML=tsSVG(W,Hh,NP,[{v:D.net,cls:""}],-hi,hi,null,"+"+fmt(hi))+axl(W,Hh,"−24 h","","now")}});
 }
 $("sys").onchange=e=>{if(e.target.id==="tcT"){S.tcT=e.target.value;keepScroll(system)}};
-$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;keepScroll(system);return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
+$("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;keepScroll(system);return}
+ const lg=e.target.closest(".mixleg span[data-k]"),la=e.target.closest(".mixleg .mixall");if(lg||la){if(la)SYSHIDE.clear();else{const k=lg.dataset.k;SYSHIDE.has(k)?SYSHIDE.delete(k):SYSHIDE.add(k)}sysHideSave();keepScroll(system);return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
 function sysVline(sv,k){let l=sv.querySelector("line.xh");const vb=sv.viewBox.baseVal,n=+sv.dataset.n,xx=3+(vb.width-6)*k/Math.max(1,n-1);
  if(!l){l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("class","xh");l.setAttribute("y1","0");l.setAttribute("pointer-events","none");sv.appendChild(l)}l.setAttribute("y2",vb.height);l.setAttribute("x1",xx);l.setAttribute("x2",xx)}
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");$("sys").querySelectorAll("svg.sx line.xh").forEach(l=>{if(l.parentNode!==sv)l.remove()});if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);sysVline(sv,k);if(t)dtip(e,t)};

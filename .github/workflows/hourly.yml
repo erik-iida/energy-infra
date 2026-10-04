@@ -5,6 +5,11 @@ on:
     - cron: "7 * * * *"   # every hour at :07 (off the hour, when Actions is less busy)
     - cron: "37 * * * *"  # second slot: GitHub often drops scheduled runs; forecasts are cached, so no extra API calls
   workflow_dispatch:       # "Run workflow" button for manual runs
+    inputs:
+      rebuild_tabs:
+        description: "Rebuild the Data / Flags / Newsletter files now (otherwise every 3 h)"
+        type: boolean
+        default: false
   push:
     branches: [main]       # re-run the pipeline when back-end code changes
     paths-ignore:          # page, docs and tests only: deploy.yml publishes those in ~1 min without the pipeline
@@ -57,6 +62,31 @@ jobs:
           key: state-${{ github.run_id }}
           restore-keys: state-
 
+      # Data tab (scripts/build_browse.py: last 30 days of the data store as small JSON files) and Newsletter tab drafts
+      # (last 3 CET days, no fuel prices; newsletter/editorial/<day>.md overrides the text). Rebuilt every 3 h, cached in
+      # between. They read only the data store, not the pipeline's output, so they run in the background WHILE the pipeline
+      # runs (saves ~3 min on those runs) and share downloaded store files through STORE_CACHE. A failure only hides the
+      # tabs' data.
+      - id: bucket
+        run: echo "k=$(date -u +%Y%m%d)-$(( $(date -u +%-H) / 3 ))" >> "$GITHUB_OUTPUT"
+      - id: browsecache
+        uses: actions/cache@v4
+        with:
+          path: |
+            web/data/browse
+            web/data/newsletter
+          key: browse-${{ steps.bucket.outputs.k }}${{ inputs.rebuild_tabs && format('-r{0}', github.run_id) || '' }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*') }}
+      - name: Start Data tab + Newsletter export (background)
+        if: steps.browsecache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          nohup bash -c 'set -o pipefail; t0=$(date +%s)
+            timeout 600 python scripts/build_browse.py; echo "build_browse exit $? after $(( $(date +%s) - t0 )) s"
+            t1=$(date +%s); timeout 600 python scripts/build_newsletter_site.py --days 3
+            echo "newsletter exit $? after $(( $(date +%s) - t1 )) s"' > /tmp/export.log 2>&1 &
+          echo $! > /tmp/export.pid
+
       - name: Run pipeline
         timeout-minutes: 30
         env:
@@ -77,34 +107,14 @@ jobs:
           path: state
           key: state-${{ github.run_id }}
 
-      # Data tab: last 30 days of the data store as small JSON files (scripts/build_browse.py). Rebuilt every 3 h
-      # (cached in between so the hourly runs don't download the store each time); a failure only hides the tab's data.
-      - id: bucket
-        run: echo "k=$(date -u +%Y%m%d)-$(( $(date -u +%-H) / 3 ))" >> "$GITHUB_OUTPUT"
-      - id: browsecache
-        uses: actions/cache@v4
-        with:
-          path: |
-            web/data/browse
-            web/data/newsletter
-          key: browse-${{ steps.bucket.outputs.k }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*') }}
-      - name: Export store for the Data tab
+      - name: Wait for Data tab + Newsletter export
         if: steps.browsecache.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python scripts/build_browse.py
-      # Newsletter tab: the daily draft(s) for the last 3 CET days, no fuel prices (public site). newsletter/editorial/<day>.md overrides the generated text.
-      - name: Build the Newsletter tab drafts
-        if: steps.browsecache.outputs.cache-hit != 'true'
-        timeout-minutes: 10
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python scripts/build_newsletter_site.py --days 3
-      # continue-on-error hides a failed export, and the 3-hour cache would then keep an empty Data tab until the next bucket:
-      # drop incomplete output so it is neither deployed from cache nor saved to it
+        timeout-minutes: 21
+        run: |
+          pid=$(cat /tmp/export.pid); while kill -0 "$pid" 2>/dev/null; do sleep 2; done
+          cat /tmp/export.log
+      # a failed export would otherwise be kept by the 3-hour cache: drop incomplete output so it is neither deployed
+      # from cache nor saved to it
       - name: Drop an incomplete Data tab export
         if: steps.browsecache.outputs.cache-hit != 'true'
         run: |

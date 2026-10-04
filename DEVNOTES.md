@@ -735,6 +735,10 @@ that all failed (circuit breaker), ENTSO-E 4 s for 20 countries. The System tab 
   ENTSO-E calls (spec 2: one collect step feeding both).
 
 ## Spec 3 step 5d: installs, store downloads, collector window (Oct 4 2026)
+- **Data tab + Newsletter export in the background**: they read only the store, so hourly.yml starts them (nohup,
+  /tmp/export.log) before `Run pipeline` and waits for them afterwards; on the 3-hourly rebuild runs this overlaps
+  ~3 min (Data-tab export ~87 s + newsletter ~89 s with the shared store cache; newsletter was ~162 s). Manual rebuild:
+  "Run workflow" on hourly-feed with `rebuild_tabs`.
 - **PyWake ahead**: PyWake's cost per call is per turbine (≈0.31 s per farm for 1 hour, 0.45 s for 25), so the cache
   alone only helped the :37 run. When a farm is computed, all forecast hours up to REFRESH_HOURS + 24 h ahead are computed
   in the same call; later runs reuse them until the forecast changes (simulated hours +1, +2, +7: 0.2-0.3 s, identical).

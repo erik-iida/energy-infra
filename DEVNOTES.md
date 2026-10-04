@@ -803,6 +803,9 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - The data store (`store` release) is untouched by this step.
 - `scripts/build_meta.py --data` takes several folders (default `build/data data/static`, first hit wins) and writes
   `build/data/meta.json`. `tests/fixtures/make_fixtures.py` reads `data/static/` and `build/data/`.
+- Lesson (first deploy after the step had empty Data / Flags / Newsletter tabs): a `from pipeline import config` placed before
+  `sys.path.insert(0, ROOT)` works under pytest (repo root on the path) and fails when the script runs from the command line,
+  as hourly.yml runs it. Check scripts the way the workflow runs them: `cd /tmp && python <repo>/scripts/<x>.py`.
 - Local page work: `python scripts/build_dist.py --serve 8000`; without a pipeline run `dist/data/feed.json` is missing (page
   falls back to synthetic wind), so download the newest `built-data` artifact into `build/data/` for the real thing.
 

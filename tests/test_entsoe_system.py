@@ -123,3 +123,5 @@ def test_time_budget_keeps_last_data(fake, monkeypatch):
     assert "lag_h" not in out["dk"]  # same hour: not late
     out2 = E.system(cl, [h + 7200 for h in HOURS])  # two hours later, still no budget
     assert out2["dk"]["lag_h"] == 2
+    out3 = E.system(cl, [h + 7 * 3600 for h in HOURS])  # 7 h later: too old to keep
+    assert out3 == {}

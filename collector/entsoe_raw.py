@@ -53,7 +53,7 @@ SEQ_DROPPED: dict[str, int] = {}
 _SEQ_LOCK = threading.Lock()
 
 
-LIMIT = RateLimiter(float(os.environ.get("COLLECT_PER_MIN", "190")))  # + hourly feed 200/min < 400/min (pipeline/entsoe.py)
+LIMIT = RateLimiter(float(os.environ.get("COLLECT_PER_MIN", "150")))  # + hourly feed 240/min < 400/min (pipeline/entsoe.py)
 
 
 class Client:

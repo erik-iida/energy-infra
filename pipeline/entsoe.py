@@ -115,7 +115,7 @@ def token() -> str:
 class RateLimiter:
     """Request spacing shared by all threads of a process. ENTSO-E allows 400 requests per minute per token, and the
     hourly feed and the collector can run at the same time (4 Oct 2026: together they hit the limit and the feed's
-    ENTSO-E part took 680 s of 429 retries). Budgets: hourly feed 200/min (ENTSOE_PER_MIN), collector 190/min."""
+    ENTSO-E part took 680 s of 429 retries). Budgets: hourly feed 240/min (ENTSOE_PER_MIN), collector 150/min (its calls are slower anyway, ~140/min)."""
 
     def __init__(self, per_min: float):
         self.gap = 60.0 / per_min
@@ -131,7 +131,7 @@ class RateLimiter:
             time.sleep(t - now)
 
 
-LIMIT = RateLimiter(float(os.environ.get("ENTSOE_PER_MIN", "200")))
+LIMIT = RateLimiter(float(os.environ.get("ENTSOE_PER_MIN", "240")))
 
 
 class Client:
@@ -539,9 +539,10 @@ def system(cl: Client, hours: list[int], workers: int = 6) -> dict[str, dict]:
                 continue
             if d is not None:
                 out[cc], sc[cc] = d, entry
-            elif sc.get(cc):  # not fetched this time (time budget, outage): keep the last data, marked as late
+            elif sc.get(cc):  # not fetched this time (time budget, outage): keep the last data, marked as late, for 6 h
                 old = sc[cc]
                 shift = max(0, int((past0[0] - old.get("h0", past0[0])) // 3600))
-                out[cc] = {**old["d"], **({"lag_h": old["d"].get("lag_h", 0) + shift} if shift else {})}
+                if shift <= 6:
+                    out[cc] = {**old["d"], **({"lag_h": old["d"].get("lag_h", 0) + shift} if shift else {})}
     _save_cache(cache)
     return out

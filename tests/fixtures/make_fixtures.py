@@ -182,7 +182,7 @@ def browse() -> None:
     f0 = json.loads((src / "flags" / f"{days[0]}.json").read_text())
     dump("browse/flags.json", {**f0, "schema": 1, "days": days})
     dump("browse/flags/index.json", {"schema": 1, "days": days, "keep_days": 14})
-    for name in ("capacity.json", "xflow.json"):
+    for name in ("capacity.json", "xflow.json", "agg.json"):
         if (src / name).exists():
             dump(f"browse/{name}", {**json.loads((src / name).read_text()), "schema": 1})
 

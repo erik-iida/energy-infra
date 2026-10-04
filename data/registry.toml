@@ -67,6 +67,10 @@ publishable = true
 source = "list of the kept days"
 publishable = true
 
+[files."browse/agg.json"]
+source = "data store export: window averages (7 / 30 / 365 days) of the daily metrics per zone, for the map's zone colours"
+publishable = true
+
 [files."browse/xflow.json"]
 source = "data store export: net physical flow per zone pair (ENTSO-E A11, Elexon)"
 publishable = true

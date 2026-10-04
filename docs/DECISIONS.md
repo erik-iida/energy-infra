@@ -93,3 +93,12 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | History | R2 bucket (S3 backend), caches mirrored to `store-state/` |
 | Repo | private after the side-by-side days (docs/DEPLOY.md, step 4) |
 
+## Page features, 4 Oct 2026 evening (Erik's list)
+| Decision | Choice |
+|---|---|
+| System ranges beyond 24 h | from the 30-day store export, per bidding zone summed to the country; forecast part only in the 24 h view; selected country only |
+| "Day-ahead" on the mix chart | the day-ahead price on a right-hand axis (Erik) |
+| Map 1 y | kept as a button, fed by a new weekly/daily aggregate export (`browse/agg.json`) rather than `capture.json` |
+| "Local generation" | self-sufficiency = generation of all types / load over the period (Erik); new daily metric `gen_total`, registry v5 |
+| Registry file | `browse/agg.json` added as publishable (store-derived aggregates, no raw rows) |
+

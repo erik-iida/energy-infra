@@ -904,6 +904,20 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - `tests/test_page_syntax.py`: `node --check file.js` silently passed a .js file with `import` + a syntax error (Node 22
   module guessing); the test now feeds each file to `node --input-type=module --check` on stdin, which parses for real.
 
+## Map zone colours: periods and new buckets (Oct 4 2026, items 5 and 6)
+- "Colour zones by" = metric (day-ahead price, TB2, TB4; wind = onshore + offshore, solar, solar + wind, self-sufficiency =
+  generation of all types / load; each technology), the segment below = period (Now, 24 h, Tomorrow for prices, 1 wk, 1 mo,
+  1 y). Periods that do not exist for a metric are greyed with a tooltip (tomorrow: prices only; long periods: prices,
+  wind, solar, solar + wind, self-sufficiency).
+- Now / 24 h / tomorrow come from the feed (prices) and the System data (shares: latest hour, or energy over the 24 h, whole
+  country). 1 wk / 1 mo / 1 y come from **`browse/agg.json`** (`build_browse.agg_export`): per zone and window the mean of
+  the daily baseload / TB2 / TB4 and the energy ratios wind, solar, vre, self over the window, from `metrics_daily` only
+  (tiny file), plus `n_*` day counts (shown in the tooltip). 1 y therefore covers what the metrics table holds (backfill
+  from 2024-01 is in the store; the daily metrics follow the metrics job).
+- New daily metric `gen_total` (registry VERSION 5, mean hourly generation of all types) for self-sufficiency: run the
+  metrics workflow with mode=all once so every past day gets it (until then `self` is empty in agg.json).
+- `zones.js`: MO = metric, MWIN = period; legacy keys now/avg/next/tb2/tb4 still accepted by moSet; `S.moLast` holds the metric.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

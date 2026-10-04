@@ -170,3 +170,5 @@ svg.cmp{display:block;width:100%;overflow:visible}
 /* legend toggles: click a technology / series to hide it (spec: all legends toggle) */
 .mixleg span[data-k]{cursor:pointer;user-select:none}.mixleg span[data-k].off{opacity:.4;text-decoration:line-through}.mixleg .mixall{cursor:pointer;color:var(--acc);font-size:12px;margin-left:6px}
 #flg .fxk[data-h]{cursor:pointer;user-select:none}#flg .fxk[data-h].off{opacity:.4;text-decoration:line-through}#flg .fxall{cursor:pointer;color:var(--acc);margin-left:6px}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+#mocol{max-width:230px}

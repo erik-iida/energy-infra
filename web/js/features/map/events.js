@@ -12,7 +12,7 @@ import { attrib, bmSet } from "./tiles.js";
 import { gasHit, gasTip } from "./layers/gas.js";
 import { HID, LCAT, anim, catOn, flyTo, legSync, repaint, zoomAt } from "./view.js";
 import { bathyColour } from "./layers/bathy.js";
-import { MZ, moSet, moTip } from "./layers/zones.js";
+import { MZ, moSet, moTip, moWin } from "./layers/zones.js";
 import { sidebar } from "./sidebar.js";
 /* ---------- events ---------- */
 $("C").innerHTML="<option value=''>World</option><optgroup label='Groups'>"+Object.keys(GROUPS).map(g=>"<option value='"+g+"'>"+g+"</option>").join("")+"</optgroup>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);$("C2").innerHTML=$("C").innerHTML;$("C2").onchange=()=>go($("C2").value||null,null);flagSel($("C"));flagSel($("C2"));csSync();
@@ -21,10 +21,10 @@ $("crumb").onclick=e=>{const a=e.target.closest("a");if(!a)return;a.dataset.go==
 ["U","D","K"].forEach(i=>$(i).oninput=draw);$("M").onchange=()=>{$("K").value=K_DEF[$("M").value]||.04;$("kl").textContent=$("M").value==="t"?"Wake expansion A":"Wake decay k";draw()};$("Z").onchange=()=>{legSync();draw()};$("LV").onchange=draw;if(F.some(f=>f.on))$("lon").style.display="";
 function legFold(open){$("legb").hidden=!open;$("legt").setAttribute("aria-expanded",String(open));$("legc").textContent=open?"▾":"▸";try{localStorage.setItem("wm-legend",open?"1":"0")}catch(e){}}
 $("legt").onclick=()=>legFold($("legb").hidden);legFold(true);  // the legend lives in the right-hand pane now, always open
-$("leg").onchange=e=>{if(e.target.id==="mocol"){const v=e.target.value;moSet(v==="price"?(S.mpLast||"now"):v)}};
-$("leg").onclick=e=>{const mb=e.target.closest("#mosel button");if(mb){S.mpLast=mb.dataset.mo;moSet(mb.dataset.mo);return}if(e.target.closest("#mocol"))return;
+$("leg").onchange=e=>{if(e.target.id==="mocol")moSet(e.target.value)};
+$("leg").onclick=e=>{const mb=e.target.closest("#mosel button");if(mb){if(!mb.disabled)moWin(mb.dataset.mw);return}if(e.target.closest("#mocol"))return;
  const lc=e.target.closest(".lc");if(lc){const c=lc.dataset.c,on=catOn(c);
-  if(c==="price")moSet(on?"off":(S.moLast||"now"));else if(c==="zones"){$("Z").checked=!on;if(!on)LCAT.zones.forEach(k=>HID.delete(k))}else if(c==="grid"){$("GR").checked=!on;if(!on)LCAT.grid.forEach(k=>HID.delete(k));$("GR").onchange()}
+  if(c==="price")moSet(on?"off":(S.moLast||"price"));else if(c==="zones"){$("Z").checked=!on;if(!on)LCAT.zones.forEach(k=>HID.delete(k))}else if(c==="grid"){$("GR").checked=!on;if(!on)LCAT.grid.forEach(k=>HID.delete(k));$("GR").onchange()}
   else if(c==="depth"){$("BY").checked=!on;on?HID.add("depth"):HID.delete("depth");$("BY").onchange()}else LCAT[c].forEach(k=>on?HID.add(k):HID.delete(k));
   try{localStorage.setItem("wm-hide",JSON.stringify([...HID]))}catch(e){}legSync();S.hover=-1;draw();return}
  const b=e.target.closest(".lk");if(!b)return;const k=b.dataset.k;
@@ -71,5 +71,4 @@ cv.onpointerup=cv.onpointercancel=e=>{ptr.delete(e.pointerId);cv.style.cursor="g
 cv.onwheel=e=>{e.preventDefault();cancelAnimationFrame(anim);zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0016))};
 cv.ondblclick=e=>{zoomAt(e.offsetX,e.offsetY,2)};
 cv.onmouseleave=()=>{$("tip").style.display="none";if(S.hover>=0||S.zh>=0||S.mzh){S.hover=-1;S.zh=-1;S.mzh=null;repaint()}};
-$("mosel").onclick=e=>{const b=e.target.closest("button[data-mo]");if(b)moSet(b.dataset.mo)};
 $("zin").onclick=()=>zoomAt(W0/2,H0/2,1.6);$("zout").onclick=()=>zoomAt(W0/2,H0/2,1/1.6);$("zhome").onclick=()=>go(null,null);

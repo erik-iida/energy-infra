@@ -1,4 +1,4 @@
-"""Export the data store as small JSON files for the site's Flags and Data tabs (build/data/browse/).
+"""Export the data store as small JSON files for the site's Flags and Data tabs and the map (build/data/browse/).
 
     index.json         {generated, window, zones, groups, vars: [{id, name, grp, tech, unit, def}], avail: {zone: [var id]},
                         capacity: bool}
@@ -173,6 +173,57 @@ def flags_export(now: datetime, days: int = FLAG_DAYS) -> list[dict]:
     return out
 
 
+AGG_WINDOWS = {"w1": 7, "m1": 30, "y1": 365}   # keys used by the page's map window selector (plus "now" / "d1" from the feed)
+
+
+def agg_export(st: Store, now: datetime) -> dict | None:
+    """browse/agg.json: per zone and window (last 7 / 30 / 365 CET days ending yesterday), averages of the stored daily metrics
+    for the map's zone colours: price (mean of daily baseload), tb2 / tb4 (mean of the daily spreads), wind / solar /
+    wind+solar as a share of load and self-sufficiency = generation of all types / load (ratios of the window's energy:
+    sums of the daily means), plus the number of days behind each number. Reads metrics_daily only (small)."""
+    end = pd.Timestamp(now).tz_convert(M.CET).normalize().tz_localize(None) - pd.Timedelta(days=1)
+    start = end - pd.Timedelta(days=max(AGG_WINDOWS.values()) - 1)
+    months = [str(x) for x in pd.period_range(start, end, freq="M")]
+    parts = [d for d in (st.read("metrics_daily", m) for m in months) if d is not None]
+    if not parts:
+        return None
+    dm = pd.concat(parts, ignore_index=True)
+    dm["day"] = pd.to_datetime(dm["day"])
+    dm = dm[(dm["day"] >= start) & (dm["day"] <= end)]
+    need = ["baseload", "tb2", "tb4", "gen_wind_onshore", "gen_wind_offshore", "gen_solar", "gen_total", "load_mean"]
+    w = dm[dm["metric"].isin(need)].pivot_table(index=["zone", "day"], columns="metric", values="value", aggfunc="last")
+    out = {}
+    for key, days in AGG_WINDOWS.items():
+        lo = end - pd.Timedelta(days=days - 1)
+        sub = w[w.index.get_level_values("day") >= lo]
+        for z, g in sub.groupby(level="zone"):
+            e = out.setdefault(z, {})
+            r = {}
+            for m in ("baseload", "tb2", "tb4"):
+                if m in g and g[m].notna().any():
+                    r["price" if m == "baseload" else m] = round(float(g[m].mean()), 2)
+                    r["n_" + ("price" if m == "baseload" else m)] = int(g[m].notna().sum())
+            if "load_mean" in g:
+                ld = g["load_mean"]
+                def share(cols):
+                    gg = g.reindex(columns=cols).sum(axis=1, min_count=1)
+                    both = gg.notna() & ld.notna() & (ld > 0)
+                    return (round(float(100 * gg[both].sum() / ld[both].sum()), 2), int(both.sum())) if both.any() else (None, 0)
+                for name, cols in (("wind", ["gen_wind_onshore", "gen_wind_offshore"]), ("solar", ["gen_solar"]),
+                                   ("vre", ["gen_wind_onshore", "gen_wind_offshore", "gen_solar"]), ("self", ["gen_total"])):
+                    v, n = share(cols)
+                    if v is not None:
+                        r[name], r["n_" + name] = v, n
+            if r:
+                e[key] = r
+    if not out:
+        return None
+    return {"schema": 1, "generated": now.isoformat(timespec="seconds"), "end_day": end.strftime("%Y-%m-%d"),
+            "windows": AGG_WINDOWS, "zones": out,
+            "note": "per zone and window: price = mean daily baseload (EUR/MWh), tb2 / tb4 = mean daily spread, wind / solar / vre / "
+                    "self = % of load over the window (energy); n_* = days behind the number; from the metrics_daily store dataset"}
+
+
 def main() -> None:
     now = datetime.now(timezone.utc)
     a = pd.Timestamp(now - timedelta(days=DAYS_BACK)).floor("D")
@@ -304,6 +355,13 @@ def main() -> None:
             (OUT / "flags" / "index.json").write_text(json.dumps({"schema": 1, "days": days, "keep_days": FLAG_DAYS}))
     except Exception as e:  # the flags tab is optional; the data browser must still ship
         print(f"flags export failed: {type(e).__name__}: {e}")
+    try:
+        agg = agg_export(st, now)
+        if agg:
+            (OUT / "agg.json").write_text(json.dumps(agg, separators=(",", ":")))
+            print(f"browse: agg.json for {len(agg['zones'])} zones (windows {', '.join(AGG_WINDOWS)})")
+    except Exception as e:  # the map's longer windows are optional
+        print(f"agg export failed: {type(e).__name__}: {e}")
     n = sum(1 for _ in OUT.rglob("*.json"))
     size = sum(p.stat().st_size for p in OUT.rglob("*.json")) / 1e6
     print(f"browse: {n} files, {size:.1f} MB; {len(avail)} zones, {len(vars_)} variables, flags {'yes' if (OUT / 'flags.json').exists() else 'no'}")

@@ -180,7 +180,7 @@ def residual_metrics(hl: pd.DataFrame, hg: pd.DataFrame) -> pd.DataFrame:
 
 
 def system_metrics(ga: pd.DataFrame, hg: pd.DataFrame, hl: pd.DataFrame | None) -> pd.DataFrame:
-    """gen_solar / gen_wind_onshore / gen_wind_offshore (daily mean MW), gas_share (gas / all generation, energy),
+    """gen_solar / gen_wind_onshore / gen_wind_offshore (daily mean MW), gen_total (all types, daily mean MW), gas_share (gas / all generation, energy),
     wind_share_load / solar_share_load (output / load, energy over the hours with both) and load_mean per zone and CET day; each needs >= MIN_CAPTURE_HOURS hours of its inputs. These describe the day (the
     'what else was unusual' table on the Flags tab); no signal rule uses them."""
     cols = ["zone", "day", "metric", "value"]
@@ -195,6 +195,12 @@ def system_metrics(ga: pd.DataFrame, hg: pd.DataFrame, hl: pd.DataFrame | None) 
         if not d.empty:
             d = d.assign(h=d["ts"].dt.floor("h"), mw=d["mw"].clip(lower=0))
             w = d.groupby(["zone", "h", "psr"])["mw"].mean().unstack("psr")
+            if TOTAL in w:  # gen_total: mean hourly generation of all types (self-sufficiency = gen_total / load_mean)
+                t = w[[TOTAL]].dropna().reset_index()
+                t["day"] = _local_day(t["h"])
+                a = t.groupby(["zone", "day"]).agg(tot=(TOTAL, "mean"), n=("h", "nunique")).reset_index()
+                a = a[a["n"] >= MIN_CAPTURE_HOURS]
+                parts.append(pd.DataFrame({"zone": a["zone"], "day": a["day"], "metric": "gen_total", "value": a["tot"]}))
             if GAS in w and TOTAL in w:
                 w = w.dropna(subset=[GAS, TOTAL]).reset_index()
                 w["day"] = _local_day(w["h"])

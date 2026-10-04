@@ -34,6 +34,7 @@ Rules
 | `browse/capacity.json` | 1 | `scripts/build_browse.py` | as above | Data tab, capacity view | `classes`, `rows[]` (`gw`, `pk`, `cf`, `zones`), `cf_window`, `peak_window` | yes |
 | `browse/flags.json` | 1 | `scripts/build_browse.py` (`newsletter/signals.py`) | as above | Flags tab (latest day) | `day`, `days`, `rules`, `scan[]`, `context_rules`, `context[]`, `focus`, `window_days`, `min_hist`, `hist_days`, `generated` | yes |
 | `browse/flags/<day>.json` | 1 | `scripts/build_browse.py` | as above, last 14 days | Flags tab (Day selector, deep links) | as `flags.json` | yes |
+| `browse/agg.json` | 1 | `scripts/build_browse.py` (`agg_export`, from `metrics_daily`) | as above | Map zone colours for 1 wk / 1 mo / 1 y | `end_day`, `windows`, `zones.<code>.<w1|m1|y1>` (`price`, `tb2`, `tb4`, `wind`, `solar`, `vre`, `self` and `n_*` day counts) | yes |
 | `browse/xflow.json` | 1 | `scripts/build_browse.py` | as above | Map interconnection layer | `pairs[]` = `[zone a, zone b, latest hour (epoch s), net MW a->b, last 24 h]` | yes |
 | `newsletter/index.json` | 1 | `scripts/build_newsletter_site.py` | hourly-feed, every 3 h with the browse export | Newsletter tab | `latest`, `days[]` (`day`, `source`), `repo` | yes |
 | `newsletter/<day>.md` | — | `scripts/build_newsletter_site.py` (or `newsletter/editorial/<day>.md` by hand) | as above, last 3 days | Newsletter tab | Markdown text with fixed section headings and two tables | yes |

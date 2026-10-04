@@ -1,16 +1,21 @@
-"""Publish the built data from a machine that is not GitHub Actions (Render): hand build/data to the deploy workflow.
+"""Publish the site from a machine that is not GitHub Actions (Render).
 
-    python -m jobs.publish pages      zip build/data -> asset `built-data.zip` of the GitHub release `built-data`,
-                                      then dispatch deploy.yml with source=release (it assembles dist/ and publishes to Pages)
+    python -m jobs.publish cloudflare   dist/ -> Cloudflare Pages project CF_PAGES_PUBLIC (the public site) and, when SPARK=private
+                                        and site_private/ exists, site_private/ -> CF_PAGES_PROJECT (the login-protected copy).
+                                        Needs CLOUDFLARE_API_TOKEN (Pages: Edit), CLOUDFLARE_ACCOUNT_ID, and wrangler (in the image).
+    python -m jobs.publish pages        zip build/data -> asset `built-data.zip` of the GitHub release `built-data`, then dispatch
+                                        deploy.yml with source=release (it assembles dist/ and publishes to GitHub Pages). Needs
+                                        GH_TOKEN (contents + actions write) and GITHUB_REPOSITORY. Fallback / transition path.
 
-Needs GH_TOKEN with `contents: write` and `actions: write` on the repo (a fine-grained token stored on Render), and
-GITHUB_REPOSITORY (owner/repo). The public feed must already be stripped of spark spreads (jobs.render site does that), because
-release assets of a public repository are public. Nothing else in the repo is touched: no commit, no data in git.
+The public feed must already be stripped of spark spreads (jobs.render site does that). Nothing touches the repo:
+no commit, no data in git.
 """
 from __future__ import annotations
 
 import io
 import os
+import shutil
+import subprocess
 import sys
 import zipfile
 
@@ -87,7 +92,45 @@ def pages(args: list[str]) -> None:
     dispatch_deploy()
 
 
-TABLE = {"pages": ("build/data -> release asset built-data.zip -> dispatch deploy.yml (GitHub Pages)", pages)}
+def _wrangler(folder, project: str) -> None:
+    exe = shutil.which("wrangler") or shutil.which("npx")
+    if not exe:
+        raise SystemExit("wrangler not installed (the Docker image has it; locally: npm i -g wrangler)")
+    cmd = ([exe] if exe.endswith("wrangler") else [exe, "--yes", "wrangler"]) + \
+          ["pages", "deploy", str(folder), "--project-name", project, "--branch", "main", "--commit-dirty=true"]
+    env = {k: v for k, v in os.environ.items()}
+    for k in ("CLOUDFLARE_API_TOKEN", "CLOUDFLARE_ACCOUNT_ID"):
+        if not env.get(k):
+            raise SystemExit(f"{k} not set")
+    r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=900)
+    tail = (r.stdout + r.stderr)[-1500:]
+    tail = tail.replace(env["CLOUDFLARE_API_TOKEN"], "***")
+    if r.returncode != 0:
+        raise SystemExit(f"wrangler pages deploy {project} failed:\n{tail}")
+    url = [ln for ln in tail.splitlines() if "https://" in ln]
+    print(f"publish: {folder} -> Cloudflare Pages project {project}" + (f" ({url[-1].strip()})" if url else ""))
+
+
+def cloudflare(args: list[str]) -> None:
+    pub = os.environ.get("CF_PAGES_PUBLIC", "")
+    if not pub:
+        raise SystemExit("CF_PAGES_PUBLIC not set (the Pages project name of the public site)")
+    if not (paths.DIST / "index.html").exists():
+        raise SystemExit(f"nothing to publish: {paths.DIST} is empty (run jobs.render site first)")
+    if "--dry-run" in args:
+        print(f"publish: dry run, would deploy {paths.DIST} to {pub}")
+        return
+    _wrangler(paths.DIST, pub)
+    priv = paths.ROOT / "site_private"
+    proj = os.environ.get("CF_PAGES_PROJECT", "")
+    if os.environ.get("SPARK") == "private" and proj and (priv / "index.html").exists():
+        _wrangler(priv, proj)
+
+
+TABLE = {
+    "cloudflare": ("dist/ -> Cloudflare Pages (CF_PAGES_PUBLIC; site_private/ -> CF_PAGES_PROJECT when SPARK=private)", cloudflare),
+    "pages": ("build/data -> release asset built-data.zip -> dispatch deploy.yml (GitHub Pages); fallback", pages),
+}
 
 if __name__ == "__main__":
     from . import _run

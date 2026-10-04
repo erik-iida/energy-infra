@@ -110,11 +110,17 @@ envVarGroups:
         value: "2024-01"
       - key: COLLECT_FARMS
         value: "1"
-      # --- publishing
-      - key: GITHUB_REPOSITORY
-        value: erik-iida/energy-infra
-      - key: GH_TOKEN
-        sync: false                   # fine-grained token: this repo only, Contents read/write + Actions read/write (jobs.publish)
+      # --- publishing (Cloudflare Pages: the public site and the login-protected copy)
+      - key: PUBLISH
+        value: cloudflare             # cloudflare | pages (GitHub Pages via deploy.yml, needs GH_TOKEN + GITHUB_REPOSITORY) | both | none
+      - key: CF_PAGES_PUBLIC
+        sync: false                   # Pages project name of the public site (Direct Upload project, e.g. gridecon)
+      - key: CF_PAGES_PROJECT
+        sync: false                   # Pages project name of the private copy (behind Cloudflare Access); used when SPARK=private
+      - key: CLOUDFLARE_API_TOKEN
+        sync: false                   # token with "Cloudflare Pages: Edit"
+      - key: CLOUDFLARE_ACCOUNT_ID
+        sync: false
       - key: CARTO_KEY
         sync: false
       - key: SPARK

@@ -7,11 +7,13 @@
     3. render tabs                                           Data / Flags / Newsletter files from the store (default: when the
                                                              previous ones in the bucket are older than 3 h, else reuse them)
     4. render site                                           meta.json, config.js, dist/, public / private split
-    5. publish pages                                         hand build/data to deploy.yml (GitHub Pages); --no-publish to skip
+    5. publish                                               PUBLISH=cloudflare (dist/ -> Cloudflare Pages, the plan), pages (GitHub
+                                                             Pages via deploy.yml, fallback), both, or none; --no-publish to skip
     6. push state/ (and the tab files) back to the bucket
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 
@@ -68,7 +70,11 @@ def main(argv: list[str]) -> int:
         _run.script("split_private")
         if "--no-publish" not in argv:
             from . import publish
-            _run._exec("python -m jobs.publish pages", lambda: publish.pages([]), soft=False)
+            target = os.environ.get("PUBLISH", "cloudflare")
+            if target in ("cloudflare", "both"):
+                _run._exec("python -m jobs.publish cloudflare", lambda: publish.cloudflare([]), soft=False)
+            if target in ("pages", "both"):
+                _run._exec("python -m jobs.publish pages", lambda: publish.pages([]), soft=False)
     finally:
         _state.push()
     print(f"hourly: done in {time.time() - t0:.0f} s")

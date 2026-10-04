@@ -85,3 +85,11 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | First version | everything the site serves today is `publishable = true` (no change to the site); the four never-published sources are listed under `[private]` so the rule is visible |
 | Changing a flag | counts as a structural decision: one line here |
 
+## Hosting after the restructuring (4 Oct 2026, Erik)
+| Decision | Choice |
+|---|---|
+| Public site | Cloudflare Pages (Direct Upload project), published by `jobs.publish cloudflare` from Render; GitHub Pages disabled at the switch, `deploy.yml` kept as fallback |
+| Hourly API calls and site build | Render cron jobs (`render.yaml`), image with node + wrangler |
+| History | R2 bucket (S3 backend), caches mirrored to `store-state/` |
+| Repo | private after the side-by-side days (docs/DEPLOY.md, step 4) |
+

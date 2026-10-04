@@ -859,7 +859,9 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
   state/), render site, `jobs.publish pages`, state push. `jobs/_state.py` mirrors `state/` to `<STORE_PREFIX>-state/` in
   the bucket (STATE_SYNC=1) because Render cron jobs start from an empty machine (the earlier idea of a persistent disk
   does not apply to cron jobs; the bucket does the same job). The 3-hourly tab files ride along in `state/tabs/`.
-- `jobs.publish pages`: zips `build/data` into asset `built-data.zip` of release `built-data` and dispatches `deploy.yml`
+- `jobs.publish cloudflare` (added later the same day, Erik's hosting decision): `wrangler pages deploy dist` to the public
+  Pages project `CF_PAGES_PUBLIC` and `site_private/` to `CF_PAGES_PROJECT` when SPARK=private; node + wrangler are in the
+  image; `PUBLISH=cloudflare|pages|both|none` picks the target in `jobs.hourly`. `jobs.publish pages`: zips `build/data` into asset `built-data.zip` of release `built-data` and dispatches `deploy.yml`
   with `source=release`; deploy.yml downloads that instead of the Actions artifact. Needs a fine-grained GH_TOKEN on Render.
 - Probes: `scripts/probe_*.py` -> `tools/probes/`; the eleven `probe-*.yml` / `entsoe-probe.yml` replaced by one `probe.yml`
   (workflow_dispatch, input `script`). Logs still land in `data/raw/*/probe*_log.txt`.

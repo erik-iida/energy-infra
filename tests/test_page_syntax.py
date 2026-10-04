@@ -1,20 +1,22 @@
-"""The page's JavaScript parses (node --check on the inline <script> of web/index.html)."""
-import re
+"""The page's JavaScript parses: node --check on every file under web/js/ and on the inline <script> of web/index.html."""
 import shutil
 import subprocess
-from pathlib import Path
 
 import pytest
 
-PAGE = Path(__file__).resolve().parents[1] / "web" / "index.html"
+from tests import pagejs
 
 
 def test_page_script_parses(tmp_path):
     if not shutil.which("node"):
         pytest.skip("node not installed")
-    scripts = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>", PAGE.read_text(encoding="utf-8"), re.S)
-    assert scripts, "no inline <script> in web/index.html"
-    js = tmp_path / "page.js"
-    js.write_text("\n;\n".join(scripts), encoding="utf-8")
-    r = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True)
-    assert r.returncode == 0, r.stderr[-2000:]
+    files = list(pagejs.js_files())
+    inline = pagejs.inline_scripts()
+    assert files or inline, "no page JavaScript found (web/js/*.js or inline <script> in web/index.html)"
+    if inline:
+        js = tmp_path / "inline.js"
+        js.write_text("\n;\n".join(inline), encoding="utf-8")
+        files.append(js)
+    for f in files:
+        r = subprocess.run(["node", "--check", str(f)], capture_output=True, text=True)
+        assert r.returncode == 0, f"{f}: {r.stderr[-2000:]}"

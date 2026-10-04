@@ -1,6 +1,6 @@
 """The data contract (docs/DATA_CONTRACT.md) matches what the page loads and what the writers stamp.
 
-- every `data/...` path in web/index.html is listed in the contract table, and every listed file is still used;
+- every `data/...` path in the page (web/index.html and web/js/) is listed in the contract table, and every listed file is still used;
 - the schema numbers in the table equal scripts/build_meta.py SCHEMAS;
 - the test data (tests/fixtures/data) has every file the page loads, and the schema stamped in each file agrees.
 """
@@ -12,8 +12,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import build_meta  # noqa: E402
+from tests import pagejs  # noqa: E402
 
-PAGE = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+PAGE = pagejs.page_text()
 CONTRACT = (ROOT / "docs" / "DATA_CONTRACT.md").read_text(encoding="utf-8")
 FIX = ROOT / "tests" / "fixtures" / "data"
 

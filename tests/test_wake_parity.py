@@ -1,4 +1,4 @@
-"""The map's in-browser wake models (web/index.html) agree with PyWake (pipeline/wake.py).
+"""The map's in-browser wake models (web/js) agree with PyWake (pipeline/wake.py).
 
 The page draws wake losses live with JavaScript copies of three PyWake models. This test runs the page's own `run()`
 in node on a few farms from tests/fixtures/data/site.json and compares farm power with the PyWake numbers stored in
@@ -13,8 +13,9 @@ from pathlib import Path
 
 import pytest
 
+from tests import pagejs
+
 ROOT = Path(__file__).resolve().parents[1]
-PAGE = ROOT / "web" / "index.html"
 REF = ROOT / "tests" / "fixtures" / "wake_reference.json"
 SITE = ROOT / "tests" / "fixtures" / "data" / "site.json"
 
@@ -25,10 +26,10 @@ TOL = 0.005         # 0.5 % of the farm's no-wake power (measured agreement Oct 
 
 def wake_js() -> str:
     """The wake-model source from the page: power/thrust curves (URG, PC, CT) and the 'in-browser wake models' block."""
-    s = PAGE.read_text(encoding="utf-8")
+    s = pagejs.all_js()
     curves = re.search(r"^const URG=.*?\n^const CT=.*?$", s, re.M | re.S)
     block = re.search(r"/\* -+ in-browser wake models \(map heatmap \+ what-if\) -+ \*/.*?(?=^function spacingOf)", s, re.M | re.S)
-    assert curves and block, "wake-model code not found in web/index.html (markers moved?)"
+    assert curves and block, "wake-model code not found in the page JavaScript (markers moved?)"
     return curves.group(0) + "\n" + block.group(0)
 
 

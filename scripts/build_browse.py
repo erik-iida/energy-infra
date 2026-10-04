@@ -25,8 +25,8 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
 sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 from collector.store import Store  # noqa: E402
 from newsletter import fundamentals as FU  # noqa: E402
 from newsletter import metrics as M  # noqa: E402

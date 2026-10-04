@@ -20,8 +20,8 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
 sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 OUT = config.BUILD_DATA / "newsletter"
 EDIT = ROOT / "newsletter" / "editorial"
 

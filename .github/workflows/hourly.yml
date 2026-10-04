@@ -24,7 +24,7 @@ permissions:
 jobs:
   feed:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     env:
       CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     environment:

@@ -640,6 +640,13 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - System tab: opening it with no region selected sets the selector to Europe. Picking a country puts its generation mix
   and load block first, above the country grid and the comparison chart.
 
+## Hourly feed timeouts (Oct 4 2026)
+- From ~02:00 UTC most hourly-feed runs were cancelled at the 30-minute job limit, so nothing deployed after 05:56 UTC.
+  The pipeline step took ~25 min: Energy-Charts answered 38 of 76 calls with errors/timeouts and each failure could hold
+  the job for 210 s (90 s timeout, 30 s wait, retry). `market.Client` now has a circuit breaker: 30 s timeout, 10 s
+  wait, stop calling after 4 consecutive failures or 7 min of market calls (the page keeps what it got). Job limit 45 min.
+  Read the step log on the job page (Run pipeline: "market: N calls, M errors", "openmeteo: … N s").
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

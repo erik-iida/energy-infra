@@ -73,8 +73,24 @@ class Client:
         self.last = 0.0
         self.calls = 0
         self.errors: list[str] = []
+        self.fails = 0          # consecutive failed calls
+        self.t0 = time.time()
+
+    # Circuit breaker (Oct 4 2026): Energy-Charts answered 38 of 76 calls with errors/timeouts and every failure could
+    # hold the job for up to 210 s, so the hourly feed ran into its 30-minute limit and nothing deployed. After
+    # MAX_FAILS consecutive failures, or once the market section has used MAX_WALL_S, the rest of the calls are skipped
+    # for this run (the page keeps the series it got; the next run tries again).
+    MAX_FAILS, MAX_WALL_S, TIMEOUT_S = 4, 420, 30
 
     def get(self, endpoint: str, **params) -> dict | None:
+        if self.fails >= self.MAX_FAILS or time.time() - self.t0 > self.MAX_WALL_S:
+            self.errors.append(f"{endpoint}: skipped (Energy-Charts unresponsive or time budget used)")
+            return None
+        out = self._get(endpoint, **params)
+        self.fails = 0 if out is not None else self.fails + 1
+        return out
+
+    def _get(self, endpoint: str, **params) -> dict | None:
         for attempt in range(2):
             wait = MIN_GAP_S - (time.time() - self.last)
             if wait > 0:
@@ -82,15 +98,15 @@ class Client:
             self.last = time.time()
             self.calls += 1
             try:
-                r = self.s.get(f"{EC_URL}/{endpoint}", params=params, timeout=90)
+                r = self.s.get(f"{EC_URL}/{endpoint}", params=params, timeout=self.TIMEOUT_S)
             except Exception as e:  # dropped connection etc.: wait and retry once
                 if attempt == 0:
-                    time.sleep(30)
+                    time.sleep(10)
                     continue
                 self.errors.append(f"{endpoint} {params}: {e}")
                 return None
             if r.status_code in (429, 502, 503, 504) and attempt == 0:
-                time.sleep(30)
+                time.sleep(10)
                 continue
             if r.status_code != 200:
                 self.errors.append(f"{endpoint} {params}: HTTP {r.status_code} {r.text[:120]}")

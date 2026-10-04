@@ -55,11 +55,14 @@ def asset_name(dataset: str, month: str) -> str:
     return f"{dataset}_{month}.parquet"
 
 
+_MEM: dict[str, bytes] = {}  # "<asset id>-<name>" -> bytes, shared by every Store() in this process
+_ASSETS: dict[str, dict[str, int]] = {}  # repo -> {asset name: id}, shared; refreshed after every upload
+
+
 class Store:
     def __init__(self):
         self.local = os.environ.get("STORE_DIR")
         self.repo = os.environ.get("GITHUB_REPOSITORY", "erik-iida/energy-infra")
-        self._assets: dict[str, int] | None = None
         if self.local:
             Path(self.local).mkdir(parents=True, exist_ok=True)
 
@@ -89,27 +92,51 @@ class Store:
         """asset name -> asset id"""
         if self.local:
             return {p.name: 0 for p in Path(self.local).iterdir() if p.is_file()}
-        if self._assets is None or refresh:
+        if self.repo not in _ASSETS or refresh:
             rid = self._release_id()
             r = self._gh("api", "--paginate", f"repos/{self.repo}/releases/{rid}/assets?per_page=100",
                          "--jq", ".[] | [.name, .id] | @tsv")
-            self._assets = {}
+            got = {}
             for line in r.stdout.decode().splitlines():
                 n, i = line.split("\t")
-                self._assets[n] = int(i)
-        return self._assets
+                got[n] = int(i)
+            _ASSETS[self.repo] = got
+        return _ASSETS[self.repo]
 
     def _download(self, name: str) -> bytes | None:
+        """Asset bytes. Cached per asset id (an upload gives the asset a new id, so a cached copy is never stale): in memory
+        for this process, and on disk under STORE_CACHE when set, so jobs that read the same months (Data-tab export,
+        newsletter drafts) download each file once."""
         if self.local:
             p = Path(self.local) / name
             return p.read_bytes() if p.exists() else None
-        a = self.assets()
-        real = name if name in a else ("tmp-" + name if "tmp-" + name in a else None)
-        if not real:
-            return None
+        for attempt in range(2):
+            a = self.assets(refresh=attempt > 0)
+            real = name if name in a else ("tmp-" + name if "tmp-" + name in a else None)
+            if not real:
+                return None
+            try:
+                return self._fetch(real, a[real])
+            except RuntimeError:  # replaced by a collector upload since the listing was read: list again, once
+                if attempt:
+                    raise
+        return None
+
+    def _fetch(self, real: str, asset_id: int) -> bytes:
+        key = f"{asset_id}-{real}"
+        if key in _MEM:
+            return _MEM[key]
+        disk = Path(os.environ["STORE_CACHE"]) / key if os.environ.get("STORE_CACHE") else None
+        if disk is not None and disk.exists():
+            _MEM[key] = disk.read_bytes()
+            return _MEM[key]
         r = self._gh("release", "download", TAG, "--repo", self.repo, "--pattern", real, "--output", "-")
         if not r.stdout:
             raise RuntimeError(f"download of {real} returned no data")
+        _MEM[key] = r.stdout
+        if disk is not None:
+            disk.parent.mkdir(parents=True, exist_ok=True)
+            disk.write_bytes(r.stdout)
         return r.stdout
 
     def _upload(self, name: str, data: bytes) -> None:
@@ -131,7 +158,7 @@ class Store:
         if name in a:
             self._gh("api", "-X", "DELETE", f"repos/{self.repo}/releases/assets/{a[name]}")
         self._gh("api", "-X", "PATCH", f"repos/{self.repo}/releases/assets/{new_id}", "-f", f"name={name}")
-        self._assets = None
+        _ASSETS.pop(self.repo, None)
 
     # ------------------------------------------------------------ public API
     def read(self, dataset: str, month: str) -> pd.DataFrame | None:

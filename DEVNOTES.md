@@ -734,6 +734,20 @@ that all failed (circuit breaker), ENTSO-E 4 s for 20 countries. The System tab 
 - Possible next: hourly-feed flows/generation could be read from the collector's store instead of a second set of
   ENTSO-E calls (spec 2: one collect step feeding both).
 
+## Spec 3 step 5d: installs, store downloads, collector window (Oct 4 2026)
+- **uv instead of pip** in every regular workflow (`astral-sh/setup-uv`, `uv pip install --system`, no cache): local test
+  5.6 s vs 37 s for requirements.txt. A cache of the installed packages would be ~700-800 MB, slower to restore than uv
+  downloads fresh, so none.
+- **Store download cache** (`collector/store.py`): asset bytes cached per asset id in memory (all Store() objects in a
+  process) and on disk under STORE_CACHE (hourly.yml: /tmp/store-cache, shared by build_browse and the newsletter
+  drafts); the asset listing is shared too. An upload gives a new id, so no stale reads; a download that fails because the
+  asset was replaced meanwhile lists again once and retries. Before: the newsletter re-downloaded the same monthly files
+  for every function and every day (3 days), and listed ~600 assets each time. `tests/test_store_cache.py`.
+- **Collector**: backfill handled the running month too and never marked it done, so every 2-hourly run re-downloaded the
+  whole month (46 zones, 89 borders; 133-150 s, growing through the month). Now backfill covers ended months only, and
+  the 2-hourly schedule runs `auto`: backfill while ended months are missing, else `recent` (last 2 days + tomorrow).
+  Daily 12:35 UTC keeps the 4-day window for revisions.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

@@ -1,7 +1,9 @@
 """Collect ENTSO-E series into the data store.
 
     python -m collector.collect daily      # last 4 days + tomorrow (revisions, late TSOs, next-day prices)
-    python -m collector.collect backfill   # whole months from BACKFILL_FROM, newest first, resumable
+    python -m collector.collect recent     # last 2 days + tomorrow (keeps the Data tab current between daily runs)
+    python -m collector.collect backfill   # ended months from BACKFILL_FROM not stored yet, newest first, resumable
+    python -m collector.collect auto       # backfill while ended months are missing, otherwise recent (every 2 h)
     python -m collector.collect probe      # one zone and one border for 2 days: checks parsing, writes nothing
 
 Needs ENTSOE_TOKEN. Each run appends a summary to collector_log.json in the store.
@@ -100,10 +102,10 @@ def months_between(first: str, last: str) -> list[str]:
     return out
 
 
-def daily(st: Store) -> dict:
+def daily(st: Store, back_days: int = 4) -> dict:
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    a, b = today - timedelta(days=4), today + timedelta(days=2)
-    log(f"daily window {a:%Y-%m-%d} .. {b:%Y-%m-%d}")
+    a, b = today - timedelta(days=back_days), today + timedelta(days=2)
+    log(f"window {a:%Y-%m-%d} .. {b:%Y-%m-%d}")
     data, calls, errors = fetch_window(a, b)
     return {"window": [a.isoformat(), b.isoformat()], "calls": calls, "errors": errors[:40],
             "n_errors": len(errors), "late_gen_actual_h": late_zones(data), **seq_note(),
@@ -113,7 +115,9 @@ def daily(st: Store) -> dict:
 def backfill(st: Store, t0: float) -> dict:
     state = st.read_json("backfill_state.json", default={"done": {}})
     now = datetime.now(timezone.utc)
-    months = months_between(BACKFILL_FROM, now.strftime("%Y-%m"))[::-1]  # newest first
+    # ended months only (newest first): the running month is kept current by the daily / recent windows. Until 4 Oct 2026
+    # the running month was in this list too and never marked done, so every 2-hourly run re-downloaded the whole month.
+    months = months_between(BACKFILL_FROM, now.strftime("%Y-%m"))[::-1][1:]
     todo = [m for m in months if m not in state["done"]]
     log(f"backfill: {len(todo)} of {len(months)} months to do")
     did = []
@@ -126,8 +130,7 @@ def backfill(st: Store, t0: float) -> dict:
         t1 = time.time()
         data, calls, errors = fetch_window(a, b)
         written = write_all(st, data)
-        # the current month is only marked done once it has ended (the daily job keeps it current anyway)
-        if (p + 1).start_time.tz_localize("UTC") <= now:
+        if (p + 1).start_time.tz_localize("UTC") <= now:  # always true now; kept as a guard
             state["done"][m] = {"at": now.isoformat(timespec="seconds"), "calls": calls, "n_errors": len(errors),
                                 "rows": {k: v["rows"] for k, v in written.items()}}
             st.write_json("backfill_state.json", state)
@@ -157,9 +160,22 @@ def main(argv=None) -> None:
         log(str(probe()))
         return
     st = Store()
+    if mode == "auto":
+        state = st.read_json("backfill_state.json", default={"done": {}})
+        now = datetime.now(timezone.utc).strftime("%Y-%m")
+        backlog = [m for m in months_between(BACKFILL_FROM, now)[:-1] if m not in state["done"]]
+        mode = "backfill" if backlog else "recent"
+        log(f"auto: {len(backlog)} ended months missing -> {mode}")
     entry = {"mode": mode, "start": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     try:
-        entry.update(daily(st) if mode == "daily" else backfill(st, t0))
+        if mode == "daily":
+            entry.update(daily(st))
+        elif mode == "recent":
+            entry.update(daily(st, back_days=2))
+        elif mode == "backfill":
+            entry.update(backfill(st, t0))
+        else:
+            raise SystemExit(f"unknown mode {mode}")
     except Exception as e:
         entry["failed"] = repr(e)[:400]
         raise

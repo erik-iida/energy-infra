@@ -21,7 +21,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
+from common import paths as config  # noqa: E402
 OUT = config.BUILD_DATA / "newsletter"
 EDIT = ROOT / "newsletter" / "editorial"
 

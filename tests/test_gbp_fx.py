@@ -2,7 +2,7 @@
 import pandas as pd
 
 from newsletter import metrics as M
-from pipeline import entsoe
+from common import fx as entsoe
 
 
 def test_parse_ecb_gbp():

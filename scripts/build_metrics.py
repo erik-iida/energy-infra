@@ -22,7 +22,7 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from collector.store import Store  # noqa: E402
+from common.store import Store  # noqa: E402
 from newsletter import build as NB  # noqa: E402
 from newsletter import metrics as M  # noqa: E402
 from newsletter import registry as R  # noqa: E402

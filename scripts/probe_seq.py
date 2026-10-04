@@ -235,7 +235,7 @@ for z, eic in (("FR", "10YFR-RTE------C"), ("PL", "10YPL-AREA-----S"), ("BG", "1
 # ---------------------------------------------------------------- 6. A75 lateness over all zones
 P("\n=== A75 actual generation, latest published timestamp per zone (lag vs now), window today-5 .. today+1")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from pipeline.entsoe import ZONE_EIC
+from common.entsoe import ZONE_EIC
 lagrows = []
 for z, eic in ZONE_EIC.items():
     t2 = get(documentType="A75", processType="A16", in_Domain=eic, periodStart=f(today - timedelta(days=5)), periodEnd=f(today + timedelta(days=1)))

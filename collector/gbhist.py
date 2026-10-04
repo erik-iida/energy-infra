@@ -30,7 +30,7 @@ import pandas as pd
 import requests
 
 from .gbie import EL, UA, _get, _iso, _rows, log
-from .store import Store
+from common.store import Store
 
 CKAN = "https://api.neso.energy/api/3/action/package_show"
 FIRST_YEAR = int(os.environ.get("GBHIST_FROM_YEAR", "2009"))

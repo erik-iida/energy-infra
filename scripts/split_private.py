@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402
+from common import paths as config  # noqa: E402
 
 DIST, PRIV = config.DIST, ROOT / "site_private"
 mode = os.environ.get("SPARK", "")

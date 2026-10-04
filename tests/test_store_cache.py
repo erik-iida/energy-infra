@@ -4,7 +4,7 @@ import types
 
 import pytest
 
-from collector import store as ST
+from common import store as ST
 
 
 @pytest.fixture

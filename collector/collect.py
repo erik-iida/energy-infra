@@ -18,10 +18,10 @@ from datetime import datetime, timedelta, timezone
 
 import pandas as pd
 
-from pipeline.entsoe import ZONE_EIC, token
+from common.entsoe import ZONE_EIC, token
 
 from . import entsoe_raw as er
-from .store import Store
+from common.store import Store
 
 BACKFILL_FROM = os.environ.get("BACKFILL_FROM", "2024-01")
 TIME_BUDGET_S = int(os.environ.get("COLLECT_BUDGET_S", str(45 * 60)))

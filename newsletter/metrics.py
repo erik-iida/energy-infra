@@ -34,7 +34,7 @@ def hourly_prices(da: pd.DataFrame) -> pd.DataFrame:
 
 def _gbp_rates(ts: pd.Series) -> pd.Series:
     """GBP per EUR for each time stamp (NaN without a stored rate, so the row is dropped rather than shown in the wrong currency)."""
-    from pipeline import entsoe
+    from common import fx as entsoe
     h = entsoe.fx_table().get("GBP", {}).get("history") or {}
     if not h:
         return pd.Series(float("nan"), index=ts.index)

@@ -26,13 +26,13 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
-from collector.store import Store  # noqa: E402
+from common import paths as config  # noqa: E402  (paths: data/static, build/)
+from common.store import Store  # noqa: E402
 from newsletter import fundamentals as FU  # noqa: E402
 from newsletter import metrics as M  # noqa: E402
 from newsletter import registry as R  # noqa: E402
 from newsletter import signals as SG  # noqa: E402
-from pipeline.entsoe import PSR  # noqa: E402
+from common.entsoe import PSR  # noqa: E402
 
 OUT = config.BUILD_DATA / "browse"
 DAYS_BACK, DAYS_FWD = 30, 2

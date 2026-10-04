@@ -1,37 +1,10 @@
 """Settings for the hourly pipeline. Environment variables override the defaults."""
 import os
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-
-# Where files live (spec 3 step 3: source and build output are separate folders).
-#   web/          the page as written by hand (index.html, css/, js/). Nothing generates files here.
-#   data/static/  slow inputs the page reads, committed to git and refreshed by bot workflows
-#                 (site.json, zones.json, grid.json, capture.json, gas.json, gie.json, bathy.*)
-#   build/        what one run generates, never committed: data/feed.json, data/meta.json, data/browse/,
-#                 data/newsletter/, config.js. The hourly job uploads it as the `built-data` artifact.
-#   dist/         the assembled site = web/ + data/static/ (as data/) + build/ (as data/ and config.js);
-#                 scripts/build_dist.py makes it, the deploy publishes it. Never committed.
-WEB = ROOT / "web"
-DATA_STATIC = ROOT / "data" / "static"
-BUILD = ROOT / "build"
-BUILD_DATA = BUILD / "data"
-DIST = ROOT / "dist"
-SITE_JSON = DATA_STATIC / "site.json"
-FEED_JSON = BUILD_DATA / "feed.json"
-STATE_DIR = ROOT / "state"  # forecast cache, 24 h history, call budget (Actions cache, not git)
-
-
-def static_file(name: str) -> Path:
-    """A committed page input (data/static/<name>)."""
-    return DATA_STATIC / name
-
-
-def build_file(*parts: str) -> Path:
-    """A generated page file (build/data/<parts>), parent folder created."""
-    p = BUILD_DATA.joinpath(*parts)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    return p
+# Folder layout: common/paths.py (re-exported here so `config.ROOT`, `config.FEED_JSON`, ... keep working)
+from common.paths import (  # noqa: F401,E402
+    BUILD, BUILD_DATA, DATA_STATIC, DIST, FEED_JSON, ROOT, SITE_JSON, STATE_DIR, WEB, build_file, static_file,
+)
 
 # Forecast source:
 #   "openmeteo"  Open-Meteo API: free for non-commercial use (<10 000 calls/day, credit "Weather data by

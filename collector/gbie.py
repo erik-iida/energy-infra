@@ -33,7 +33,7 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 import requests
 
-from .store import Store
+from common.store import Store
 
 EL = "https://data.elexon.co.uk/bmrs/api/v1"
 EIR = "https://www.smartgriddashboard.com/DashboardService.svc/data"

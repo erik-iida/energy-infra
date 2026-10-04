@@ -809,6 +809,18 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - Local page work: `python scripts/build_dist.py --serve 8000`; without a pipeline run `dist/data/feed.json` is missing (page
   falls back to synthetic wind), so download the newest `built-data` artifact into `build/data/` for the real thing.
 
+## Spec 3 step 4A: common/ (Oct 4 2026)
+- `common/` holds what every back-end package used to borrow from `pipeline/`: `paths.py` (folder layout, moved out of
+  `pipeline/config.py`, which re-exports it; `STATE_DIR`, `BUILD_DIR`, `DIST_DIR` env-overridable for Render), `entsoe.py`
+  (URL, token, RateLimiter, Client, series parsing, ZONE_EIC, GB_EIC, PSR, price_seq, currency), `fx.py` (data/fx.json, NBU
+  UAH, ECB GBP, eur_rate, to_eur), `store.py` (moved from `collector/store.py`; shim left there for one release).
+  `pipeline/entsoe.py` keeps the feed-specific parts (COUNTRIES, prices, system, cache) and re-exports the common names.
+- `collector/` and `newsletter/` no longer import `pipeline/`; `common/` imports no package; nothing imports `scripts/`
+  (`tests/test_packages.py`). `pipeline/` still imports `collector/` (farms, GB live) and `newsletter/` (fuel for spark):
+  that is derive using collect, and is resolved by the jobs entrypoints (4B), not by another move.
+- Scripts import `from common import paths as config`; `fetch_capture.py` uses `common.entsoe` + `common.fx` (as `FX`, a
+  local dict is called `fx`).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

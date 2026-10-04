@@ -11,7 +11,7 @@ import pandas as pd
 tmp = tempfile.mkdtemp()
 os.environ["STORE_DIR"] = tmp
 
-from collector.store import Store  # noqa: E402
+from common.store import Store  # noqa: E402
 from newsletter import build, metrics as M, signals as S  # noqa: E402
 
 DAY = pd.Timestamp("2026-10-02")

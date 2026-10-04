@@ -22,7 +22,7 @@ from shapely import wkt
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
+from common import paths as config  # noqa: E402
 RAW = ROOT / "data" / "raw" / "grid"
 OUT = config.static_file("grid.json")
 LOG = RAW / "grid_log.txt"

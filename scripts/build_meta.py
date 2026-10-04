@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402
+from common import paths as config  # noqa: E402
 
 # file (relative to data/) -> schema version (see docs/DATA_CONTRACT.md)
 SCHEMAS = {

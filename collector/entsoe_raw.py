@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from pipeline.entsoe import URL, ZONE_EIC, RateLimiter, token
+from common.entsoe import URL, ZONE_EIC, RateLimiter, token
 
 # Bidding-zone borders for physical flows. Generated from entsoe-py's NEIGHBOURS (MIT) mapped to our zone codes,
 # plus the borders it lacks (GR-IT South, ME-IT Centre-South, Ukraine). Each border is fetched in both directions.

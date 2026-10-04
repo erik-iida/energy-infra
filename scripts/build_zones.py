@@ -24,7 +24,7 @@ from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config  # noqa: E402  (paths: data/static, build/)
+from common import paths as config  # noqa: E402
 OUT = config.static_file("zones.json")
 EP = "https://raw.githubusercontent.com/EnergieID/entsoe-py/master/entsoe/geo/geojson/{}.geojson"
 NE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_units.geojson"

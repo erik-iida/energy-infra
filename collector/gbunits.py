@@ -33,7 +33,7 @@ import pandas as pd
 import requests
 
 from .gbie import EL, UA, _get, _iso, _rows, _windows, log
-from .store import Store
+from common.store import Store
 
 BACKFILL_FROM = os.environ.get("BACKFILL_FROM", "2024-01")
 BUDGET_S = int(os.environ.get("COLLECT_BUDGET_S", str(40 * 60)))

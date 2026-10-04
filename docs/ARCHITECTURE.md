@@ -12,8 +12,8 @@ then only reads those files and draws them.
 
 So there are two halves:
 
-- **Back end** (Python, in `pipeline/`, `collector/`, `newsletter/`, `scripts/`): fetches and computes. Runs on GitHub
-  Actions on a timetable.
+- **Back end** (Python, in `common/`, `pipeline/`, `collector/`, `newsletter/`, `scripts/`): fetches and computes. Runs on
+  GitHub Actions on a timetable (and, from the Render cutover, as cron jobs on Render).
 - **Front end** (`web/`: `index.html` as the shell, `css/base.css`, one JavaScript module per feature under `js/`): shows.
   Runs in your browser.
 
@@ -107,6 +107,7 @@ flowchart LR
 | `data/static/` | committed inputs the page reads: `site.json`, `zones.json`, `grid.json`, `capture.json`, `gas.json`, `gie.json`, `bathy.*` (refreshed by bot workflows) |
 | `build/` | not committed: what one run generates (`data/feed.json`, `data/browse/`, `data/newsletter/`, `data/meta.json`, `config.js`); uploaded as the `built-data` artifact |
 | `dist/` | not committed: the assembled site = `web/` + `data/static/` + `build/`, made by `scripts/build_dist.py`; this is what GitHub Pages (and the private copy) serve |
+| `common/` | shared by every back-end package and script: `paths` (folder layout), `entsoe` (client, zone codes, PSR), `fx` (exchange rates), `store` (the data store). Imports none of the packages below |
 | `pipeline/` | the hourly job: forecasts, wake model, market and system data |
 | `collector/` | the data store and the collectors that fill it |
 | `newsletter/` | daily metrics, signal rules (Flags), the newsletter draft |

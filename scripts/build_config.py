@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(ROOT))
 from build_meta import SCHEMAS  # noqa: E402
-from pipeline import config  # noqa: E402
+from common import paths as config  # noqa: E402
 
 
 def settings() -> dict:

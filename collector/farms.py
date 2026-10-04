@@ -17,9 +17,9 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
-from pipeline import config
+from common import paths as config
 
-from .store import Store
+from common.store import Store
 
 LAST = config.STATE_DIR / "collect_farms.json"
 

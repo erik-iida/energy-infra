@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from collector.store import Store
+from common.store import Store
 
 from . import fundamentals as FU
 from . import metrics as M

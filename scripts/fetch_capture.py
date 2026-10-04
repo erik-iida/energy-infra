@@ -26,7 +26,9 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import config, entsoe  # noqa: E402
+from common import paths as config  # noqa: E402
+from common import entsoe  # noqa: E402
+from common import fx as FX  # noqa: E402  (a local `fx` dict holds the rates below)
 
 STATE = ROOT / "data" / "raw" / "capture" / "cells.json"
 OUT = config.static_file("capture.json")
@@ -134,7 +136,7 @@ def main() -> None:
         log("ENTSOE_TOKEN not set")
         return
     t0 = time.time()
-    fx = entsoe.refresh_fx(log)
+    fx = FX.refresh_fx(log)
     st = json.loads(STATE.read_text()) if STATE.exists() else {}
     cells = st.setdefault("cells", {})
     ms = months(MONTHS)
@@ -144,7 +146,7 @@ def main() -> None:
     for m in ms:
         for z in zones:
             c = cells.get(f"{z}|{m}")
-            if c is None or (z in entsoe.ZONE_CURRENCY and "cur" not in c):  # non-EUR zones: refetch until stored raw
+            if c is None or (z in FX.ZONE_CURRENCY and "cur" not in c):  # non-EUR zones: refetch until stored raw
                 todo.append((z, m))
             elif c.get("sq") != 1:  # computed before the A44 seq-1 filter (position-2 series were averaged in)
                 todo.append((z, m))
@@ -196,9 +198,9 @@ def main() -> None:
                 if z in SEQ2_ZONES and c.get("sq") != 1:  # known to be contaminated until refetched
                     continue
                 cur = c.get("cur", "EUR")
-                if z in entsoe.ZONE_CURRENCY and "cur" not in c:  # old cell of unknown currency: skip until refetched
+                if z in FX.ZONE_CURRENCY and "cur" not in c:  # old cell of unknown currency: skip until refetched
                     continue
-                r = entsoe.eur_rate(cur)
+                r = FX.eur_rate(cur)
                 if r is None:  # no stored rate: leave the zone out rather than publish another currency
                     continue
                 row[m] = {k: c[k] for k in ("h", "neg") if k in c}

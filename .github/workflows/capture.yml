@@ -33,7 +33,7 @@ jobs:
       - name: Fetch
         env:
           ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
-        run: python scripts/fetch_capture.py || true
+        run: python -m jobs.collect capture || true
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"

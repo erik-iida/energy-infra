@@ -821,6 +821,17 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - Scripts import `from common import paths as config`; `fetch_capture.py` uses `common.entsoe` + `common.fx` (as `FX`, a
   local dict is called `fx`).
 
+## Spec 3 step 4B: jobs entrypoints (Oct 4 2026)
+- `jobs/` = `collect`, `derive`, `render`, each a tiny dispatcher (`jobs/_run.py`) that runs the existing module or script
+  under `runpy` with the same argv, so behaviour is unchanged; a step either stops the job (exit 1) or is "soft" (logged,
+  continue: the Data-tab and newsletter exports in `render tabs`, meta.json in `render site`). `python -m jobs` lists all.
+- Every workflow calls these now: hourly = `derive feed` + `render tabs` (background) + `render site`; deploy = `render dist`;
+  collect / GB jobs = `collect entsoe|gb-ie|gb-hist|gb-units <mode>`; metrics = `derive metrics [--all]`; newsletter =
+  `derive newsletter`; bots = `collect capture|gas|gie|grid|bathymetry|osm-world|extra-turbines|global-turbines|site`.
+  The old `python scripts/x.py` and `python -m collector.x` still work (nothing was moved); they are not used by workflows.
+- These are the commands Render's cron jobs will run (4D); converting a script into a function called by its job can happen
+  one at a time later without touching the workflows again.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

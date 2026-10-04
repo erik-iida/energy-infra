@@ -29,7 +29,7 @@ jobs:
       - env:
           GH_TOKEN: ${{ github.token }}
           DAY: ${{ inputs.day }}
-        run: python -m newsletter.build ${DAY:+--day "$DAY"} --out newsletter/out
+        run: python -m jobs.derive newsletter ${DAY:+--day "$DAY"} --out newsletter/out
       - uses: actions/upload-artifact@v4
         with:
           name: brief

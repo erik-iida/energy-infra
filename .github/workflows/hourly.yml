@@ -76,16 +76,13 @@ jobs:
           path: |
             build/data/browse
             build/data/newsletter
-          key: browse-${{ steps.bucket.outputs.k }}${{ inputs.rebuild_tabs && format('-r{0}', github.run_id) || '' }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*') }}
+          key: browse-${{ steps.bucket.outputs.k }}${{ inputs.rebuild_tabs && format('-r{0}', github.run_id) || '' }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*', 'jobs/*.py') }}
       - name: Start Data tab + Newsletter export (background)
         if: steps.browsecache.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          nohup bash -c 'set -o pipefail; t0=$(date +%s)
-            timeout 600 python scripts/build_browse.py; echo "build_browse exit $? after $(( $(date +%s) - t0 )) s"
-            t1=$(date +%s); timeout 600 python scripts/build_newsletter_site.py --days 3
-            echo "newsletter exit $? after $(( $(date +%s) - t1 )) s"' > /tmp/export.log 2>&1 &
+          nohup timeout 1200 python -m jobs.render tabs > /tmp/export.log 2>&1 &
           echo $! > /tmp/export.pid
 
       - name: Run pipeline
@@ -100,7 +97,7 @@ jobs:
           COLLECT_FARMS: "1"
           GH_TOKEN: ${{ github.token }}
           SPARK: ${{ vars.SPARK }}   # "private" (login-protected site only) or "public"; empty = off (pipeline/spark.py)
-        run: python -m pipeline.run
+        run: python -m jobs.derive feed
 
       - uses: actions/cache/save@v4
         if: always()
@@ -124,27 +121,16 @@ jobs:
             rm -rf build/data/browse build/data/newsletter
           fi
 
-      # data/meta.json: build time, schema version and newest data point per file (docs/DATA_CONTRACT.md); never fails
-      - name: Data freshness (meta.json)
-        run: python scripts/build_meta.py || echo "::warning::meta.json not written"
-
-      # CARTO raster basemaps: the key is client-side by nature (it ends up in the served page) but stays out of the repo:
-      # written to build/config.js (window.CFG) from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
-      - name: Page settings (config.js, CARTO key)
+      # jobs.render site = meta.json (freshness per file), build/config.js (CARTO key from the secret; without it the page
+      # falls back to keyless tiles), dist/ = web/ + data/static/ + build/, then the public / private split: site_private/ is
+      # a full copy incl. data that must not be public (spark spreads); the public feed (dist/ and the artifact) is stripped.
+      - name: Render the site (meta, config.js, dist/, public / private split)
         env:
           CARTO_KEY: ${{ secrets.CARTO_KEY }}
-        run: |
-          python scripts/build_config.py   # build/config.js: window.CFG (CARTO key, build time, schema versions)
-          if [ -z "$CARTO_KEY" ]; then echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
-
-      # dist/ = web/ + data/static/ + build/ (spec 3 step 3). The private site is a full copy of it incl. data that must not
-      # be public (spark spreads); the public feed (dist/ and the artifact) gets them stripped.
-      - name: Assemble the site (dist/)
-        run: python scripts/build_dist.py
-      - name: Split public / private site
-        env:
           SPARK: ${{ vars.SPARK }}
-        run: python scripts/split_private.py
+        run: |
+          python -m jobs.render site
+          if [ -z "$CARTO_KEY" ]; then echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
       - name: Deploy private site (Cloudflare Pages, behind Cloudflare Access)
         if: ${{ env.CF_TOKEN != '' && vars.SPARK == 'private' }}
         continue-on-error: true

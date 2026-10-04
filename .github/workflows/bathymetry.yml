@@ -23,7 +23,7 @@ jobs:
         with:
           enable-cache: false
       - run: uv pip install --system requests numpy pillow tifffile
-      - run: python scripts/fetch_bathymetry.py || true
+      - run: python -m jobs.collect bathymetry || true
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"

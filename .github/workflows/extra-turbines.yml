@@ -23,8 +23,8 @@ jobs:
         with:
           enable-cache: false
       - run: uv pip install --system requests shapely
-      - run: python scripts/fetch_osm_turbines.py
-      - run: python scripts/build_site.py
+      - run: python -m jobs.collect extra-turbines
+      - run: python -m jobs.collect site
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"

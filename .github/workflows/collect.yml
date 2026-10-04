@@ -43,4 +43,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           BACKFILL_FROM: ${{ vars.BACKFILL_FROM || '2024-01' }}
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '35 12 * * *' && 'daily' || 'auto') }}
-        run: python -m collector.collect "$MODE"
+        run: python -m jobs.collect entsoe "$MODE"

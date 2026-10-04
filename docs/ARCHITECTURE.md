@@ -107,6 +107,7 @@ flowchart LR
 | `data/static/` | committed inputs the page reads: `site.json`, `zones.json`, `grid.json`, `capture.json`, `gas.json`, `gie.json`, `bathy.*` (refreshed by bot workflows) |
 | `build/` | not committed: what one run generates (`data/feed.json`, `data/browse/`, `data/newsletter/`, `data/meta.json`, `config.js`); uploaded as the `built-data` artifact |
 | `dist/` | not committed: the assembled site = `web/` + `data/static/` + `build/`, made by `scripts/build_dist.py`; this is what GitHub Pages (and the private copy) serve |
+| `jobs/` | the three back-end commands: `python -m jobs.collect <source>`, `jobs.derive <what>`, `jobs.render <what>`; what the workflows call today and Render's cron jobs call next (`python -m jobs` lists them) |
 | `common/` | shared by every back-end package and script: `paths` (folder layout), `entsoe` (client, zone codes, PSR), `fx` (exchange rates), `store` (the data store). Imports none of the packages below |
 | `pipeline/` | the hourly job: forecasts, wake model, market and system data |
 | `collector/` | the data store and the collectors that fill it |

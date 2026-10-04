@@ -26,7 +26,7 @@ jobs:
         with:
           enable-cache: false
       - run: uv pip install --system requests shapely
-      - run: python scripts/fetch_grid.py || true
+      - run: python -m jobs.collect grid || true
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"

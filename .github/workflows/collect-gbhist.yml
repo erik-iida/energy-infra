@@ -41,7 +41,7 @@ jobs:
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '20 14 * * *' && 'daily' || 'backfill') }}
         run: |
           set -o pipefail
-          python -m collector.gbhist "$MODE" 2>&1 | tee /tmp/run.log
+          python -m jobs.collect gb-hist "$MODE" 2>&1 | tee /tmp/run.log
       - name: Keep the log of this run (manual runs and failures)
         if: always() && (failure() || github.event_name == 'workflow_dispatch')
         run: |

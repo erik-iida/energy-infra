@@ -67,8 +67,16 @@ One entry in `newsletter/registry.py` plus the function in `newsletter/metrics.p
 `metrics` workflow with mode=all. It then appears in the Data tab, the Flags matrix and the newsletter (details in
 DEVNOTES.md "Metric catalogue").
 
+## Run a back-end job by hand
+
+`python -m jobs` lists every command. The three jobs mirror the data flow: `jobs.collect <source>` (source -> store or
+`data/static/`), `jobs.derive feed|metrics|newsletter`, `jobs.render tabs|dist|site`. Each runs the existing module or
+script with the same arguments as before, so e.g. `python -m jobs.collect entsoe recent` is `python -m collector.collect
+recent`. Needs the same environment as the workflow (ENTSOE_TOKEN, GH_TOKEN or STORE_DIR for the store, GIE_KEY, ...).
+
 ## Add a workflow
 
-Copy the closest one in `.github/workflows/`. Rules that every job follows: `uv pip install --system` for packages,
+Copy the closest one in `.github/workflows/`. The step that does the work calls a `python -m jobs.<job> <what>` command
+(add the subcommand to `jobs/collect.py`, `derive.py` or `render.py` first, one line in its TABLE). Rules that every job follows: `uv pip install --system` for packages,
 secrets only through `${{ secrets.X }}` and redacted in logs, a `concurrency` group if it writes to the store, no
 writes into `web/` except through the deploy. Note the trigger in `docs/ARCHITECTURE.md` (jobs table) and DEVNOTES.md.

@@ -43,4 +43,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || 'daily' }}
         run: |
-          if [ "$MODE" = "all" ]; then python scripts/build_metrics.py --all; else python scripts/build_metrics.py; fi
+          if [ "$MODE" = "all" ]; then python -m jobs.derive metrics --all; else python -m jobs.derive metrics; fi

@@ -27,11 +27,11 @@ jobs:
           enable-cache: false
       - run: uv pip install --system requests shapely
       - name: Fetch (resumable; a timed-out run still commits what it has, the next run continues)
-        run: python scripts/fetch_osm_world.py
+        run: python -m jobs.collect osm-world
         timeout-minutes: 45
         continue-on-error: true
       - name: Rebuild site.json
-        run: python scripts/build_site.py
+        run: python -m jobs.collect site
       - name: Commit
         run: |
           git config user.name "wake-monitor-bot"

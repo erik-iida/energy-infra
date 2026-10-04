@@ -51,28 +51,21 @@ $env:WM_OPENMETEO_MODEL = "icon_eu"   # example: switch model
 python -m pipeline.run --source openmeteo
 ```
 
-## Market data (Energy-Charts)
+## Market data (ENTSO-E)
 
-The pipeline also pulls from the [Energy-Charts API](https://api.energy-charts.info) (Fraunhofer ISE, no key):
+The pipeline pulls market data from the [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) API (token as
+GitHub secret `ENTSOE_TOKEN`; `pipeline/entsoe.py`, cached in `state/entsoe_cache.json`), plus Elexon BMRS / EirGrid
+for GB and Ireland (`pipeline/gbie_live.py`):
 
 - **Day-ahead prices** per bidding zone for the last 24 h and the next 24 h (tomorrow's auction is published
   around midday). Farms map to zones by country; Denmark splits at the Great Belt (Anholt → DK1, Sprogø assumed DK2).
-- **Actual offshore generation** per country for the last 24 h, to check the model against reality.
-- **Generation mix, load and cross-border physical flows** for 10 countries (System tab).
-- **Monthly history** (`web/data/market_history.json`) of baseload price, offshore capture price, capture rate and
-  output at negative prices for DE-LU, NL, BE, DK (DK1/DK2 blended by installed MW) and FR, built from actual
-  national offshore output. It backfills 3 area-months per hourly run, so two years take a day or two.
+- **Generation mix, load and cross-border physical flows** for 30 countries (System tab); DK, NO and SE are summed
+  over their bidding zones.
+- **Actual offshore generation** per country for the last 24 h (from the generation mix), to check the model.
 
-The **System** tab shows, for DE, FR, NL, BE, DK, NO, SE, PL, AT and CH, the generation mix (8 groups) and load over
-the last 24 h, day-ahead prices (±24 h) and cross-border physical flows per neighbour (positive = import).
-
-The page's **Market** tab shows capture price and capture rate per zone (modelled, last and next 24 h), revenue lost
-to wakes, the model check and the monthly history. The Compare table gets capture price and wake cost per farm.
-
-Licences: every Energy-Charts response states its licence. Only CC BY data is published; zones marked "private
-and internal use" are listed as restricted and left out. The API rate-limits bursts, so calls are spaced 3 s apart, retried once
-after 30 s, and cached (roughly 30 calls per hourly run). UK farms have no market numbers: this source has no GB day-ahead price.
-Switch it off with `WM_MARKET=0`. Offline test: `python -m tests.mock_market`.
+Until 4 Oct 2026 prices and the western / Nordic countries came from Energy-Charts; it failed from GitHub's runners
+most hours, so the feed now uses ENTSO-E only. Countries are fetched in parallel; generation is refreshed hourly,
+flows every 3 h, prices when hours are missing. Switch market data off with `WM_MARKET=0`.
 
 ## API budget
 
@@ -177,8 +170,7 @@ in it.
 | Terrain shading (optional) | [Mapterhorn](https://mapterhorn.com/) terrain tiles (terrarium), hillshade computed in the browser; [attribution](https://mapterhorn.com/attribution) | see Mapterhorn attribution |
 | Gas flows (interconnection points, LNG terminals, production entries; daily) | [ENTSOG Transparency Platform](https://transparency.entsog.eu) public API; point positions georeferenced from ENTSOG's schematic map (~20 km typical error) | ENTSOG terms |
 | Gas storage fill and LNG send-out (daily) | [GIE AGSI+](https://agsi.gie.eu) and [ALSI](https://alsi.gie.eu), Gas Infrastructure Europe; API key as GitHub secret `GIE_KEY` | GIE terms |
-| CEE / SEE, Baltic, Nordic, Iberian, Italian prices; generation by type, load and physical flows for CZ, SK, HU, RO, BG, SI, HR, RS, GR, BA, ME, MK, EE, LV, LT, FI, ES, PT, IT | [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) API (token as GitHub secret `ENTSOE_TOKEN`) | ENTSO-E terms, source credited |
-| Power prices and actual generation | [Energy-Charts](https://www.energy-charts.info), Fraunhofer ISE; prices from Bundesnetzagentur \| SMARD.de | CC BY 4.0 (per response; restricted zones not published) |
+| Day-ahead prices for every bidding zone; generation by type, load and physical flows per country | [ENTSO-E Transparency Platform](https://transparency.entsoe.eu) API (token as GitHub secret `ENTSOE_TOKEN`) | ENTSO-E terms, source credited |
 | Coastlines | [Natural Earth](https://www.naturalearthdata.com/) | Public domain |
 | Wake models | [PyWake](https://gitlab.windenergy.dtu.dk/TOPFARM/PyWake), DTU Wind Energy | MIT |
 

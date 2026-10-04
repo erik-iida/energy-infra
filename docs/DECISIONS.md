@@ -26,3 +26,11 @@ rename, a deleted file group, a changed workflow trigger) need Erik's go-ahead a
 
 Rollback: delete `.github/workflows/deploy.yml`; in `hourly.yml` remove `paths-ignore`, restore the `workflow_run` list
 (gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture) and the Pages steps at the end of the job.
+
+## Spec 3 step 5b: market data source (4 Oct 2026)
+| Decision | Choice |
+|---|---|
+| Hourly feed market source | ENTSO-E only (Erik). Energy-Charts failed from GitHub runners most hours and cost ~50 s per run |
+| Countries on the System tab | 30, all ENTSO-E; DK / NO / SE summed over bidding zones |
+| PyWake | results cached per farm-hour while inputs are unchanged |
+| GIE | incremental 14-day download, weekly full refresh |

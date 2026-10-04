@@ -718,6 +718,22 @@ page's fetch, `history()`/`history_public()`/`zone_weights()` and the HISTORY_* 
 calls per hourly run. `state/market_history.json` in the Actions cache is simply no longer read. `python -m
 tests.mock_market` (offline Energy-Charts mock) now stubs GB/IE live data; steady state 24 Energy-Charts calls per run.
 
+## Spec 3 step 5b: one market source (ENTSO-E), PyWake cache, GIE incremental (Oct 4 2026)
+Measured on the live feed first (new `feed.timing_s`, `market.diag.seconds`): wake 67 s, Energy-Charts 52 s for 8 calls
+that all failed (circuit breaker), ENTSO-E 4 s for 20 countries. The System tab had lost DE/FR/NL/BE/DK/NO/SE/PL/AT/CH.
+- **Energy-Charts removed from the hourly feed** (Erik, 4 Oct). `pipeline/market.py` now only assembles ENTSO-E + GB/IE.
+  Prices: `entsoe.prices` for all ALL_PRICE_ZONES + MK, BA. System: the 10 western / Nordic countries were added to
+  `entsoe.COUNTRIES`; an area can be a list of zones (DK1+DK2, NO1-5, SE1-4, summed; hours where a zone has not reported
+  are dropped, no false dips) and a neighbour can be a list of (own zone, neighbour zone) borders whose flows are added.
+  Countries are fetched in parallel (6 threads; ENTSO-E allows 400 req/min). Actual offshore for the model check = the
+  `wind_offshore` series of each country (skipped when the country lags). Page and README credits now name ENTSO-E only.
+  `tests/test_entsoe_system.py` checks this offline; `tests/mock_market.py` (Energy-Charts mock) removed.
+- **PyWake result cache** (`state/wake_cache.json`): a farm-hour is reused when its hub-height wind is unchanged and the
+  farm signature (layout, turbine types, hash of wake.py) matches. Local: 96 s -> 0.2 s, identical output.
+- **GIE**: last 14 days merged into gie.json by gas day; full 400-day pull on Mondays (or `--full`, or no gie.json).
+- Possible next: hourly-feed flows/generation could be read from the collector's store instead of a second set of
+  ENTSO-E calls (spec 2: one collect step feeding both).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

@@ -1,5 +1,19 @@
 /* Map and side-pane events: country picker, list / breadcrumb clicks, pointer, wheel, pinch and keyboard on the canvas, zoom buttons.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { COUNTRIES, F, GROUPS, REGIONS, RGOF, S, Z } from "../../core/data.js";
+import { $, fmt } from "../../core/util.js";
+import { K_DEF } from "../../core/wake.js";
+import { cur, curWind } from "../../core/feed.js";
+import { H0, V, W0, clampV, cv, cx, farmBox, fit, mercInv, mercY } from "./canvas.js";
+import { attrib, bmSet } from "./tiles.js";
+import { gasHit, gasTip } from "./layers/gas.js";
+import { HID, LCAT, anim, catOn, draw, flyTo, legSync, repaint, zoomAt } from "./view.js";
+import { CFLAG, ZONEFLAG, csSync, flagSel } from "../../core/flags.js";
+import { bathyColour } from "./layers/bathy.js";
+import { MZ, moSet, moTip } from "./layers/zones.js";
+import { go, sidebar } from "./sidebar.js";
+import { tab } from "../../core/router.js";
+import { SYS } from "../system/system.js";
 /* ---------- events ---------- */
 $("C").innerHTML="<option value=''>World</option><optgroup label='Groups'>"+Object.keys(GROUPS).map(g=>"<option value='"+g+"'>"+g+"</option>").join("")+"</optgroup>"+REGIONS.map(r=>"<optgroup label='"+r+"'><option value='"+r+"'>All of "+r+"</option>"+COUNTRIES.filter(c=>RGOF[c]===r).map(c=>"<option>"+c+"</option>").join("")+"</optgroup>").join("");$("C").onchange=()=>go($("C").value||null,null);$("C2").innerHTML=$("C").innerHTML;$("C2").onchange=()=>go($("C2").value||null,null);flagSel($("C"));flagSel($("C2"));csSync();
 $("list").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.c)go(b.dataset.c,null);else{const i=+b.dataset.i;go(F[i].c,i)}};

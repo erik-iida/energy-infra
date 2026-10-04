@@ -1,5 +1,17 @@
 /* Map paint: draws sea, land, layers, farms and legends onto the canvas in order.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { DATA, F, S, Z } from "../../core/data.js";
+import { $, css, fmt } from "../../core/util.js";
+import { spacingOf } from "../../core/wake.js";
+import { cur, curWind } from "../../core/feed.js";
+import { LOD_TURB, LOD_WAKE, M, P, clampV, cx, landInView, pxm, seamCover, size, sl } from "./canvas.js";
+import { BM, isDark, tilesDraw } from "./tiles.js";
+import { gasDraw } from "./layers/gas.js";
+import { gridDraw } from "./layers/grid.js";
+import { icDraw } from "./layers/interconnection.js";
+import { HID, coastPath, fcol, glyph, heat, heatLegend, scaleBar } from "./view.js";
+import { bathyDraw, bathyWant } from "./layers/bathy.js";
+import { moDraw } from "./layers/zones.js";
 function paint(){if(S.tab!=="map")return;const[W,H]=size();clampV();S.heatShown=false;cx.fillStyle=css("--sea");cx.fillRect(0,0,W,H);S.pts=[];S.zp=[];S.fp=[];if(BM()!=="simple")tilesDraw(BM(),1);bathyWant(W,H);bathyDraw();
  // polygons -> Path2D, skipping vertices less than ~1 px from the last one drawn (big win at small scales)
 const TILE=DATA.tile||0,onTile=v=>TILE>0&&Math.abs(v/TILE-Math.round(v/TILE))<1e-4;
@@ -22,3 +34,5 @@ const pth=fl=>{const p=new Path2D();for(const r of fl){let lx=1e9,ly=1e9;for(let
   cx.font="12px sans-serif";const w=Math.max(cx.measureText(l1).width,cx.measureText(l2).width+20)+20;cx.fillStyle=css("--panel");cx.globalAlpha=.92;cx.fillRect(10,104,w,42);cx.globalAlpha=1;cx.strokeStyle=css("--line");cx.lineWidth=1;cx.strokeRect(10.5,104.5,w,42);
   cx.fillStyle=css("--mut");cx.fillText(l1,20,121);cx.fillStyle=css("--ink");cx.font="600 13px sans-serif";cx.fillText(l2,20,139)}}
  scaleBar(W,H);if(S.heatShown)heatLegend(W,H)}
+
+export { paint };

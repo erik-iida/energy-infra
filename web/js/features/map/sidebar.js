@@ -1,5 +1,12 @@
 /* Map side pane: breadcrumb, totals, farm list and wake controls; go(country, farm) navigation used by every tab.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { COUNTRIES, F, FEED, REGIONS, RGOF, S, Z, inC, isReg, place, sum } from "../../core/data.js";
+import { $, fmt } from "../../core/util.js";
+import { spacingOf } from "../../core/wake.js";
+import { LIVE, MODELS, N0, cur, curWind, hl, now } from "../../core/feed.js";
+import { HOME, farmBox, fit } from "./canvas.js";
+import { bbox, draw, flyTo } from "./view.js";
+import { agg, series } from "../compare/compare.js";
 function crumb(){const p=[["World","e"]];if(S.c&&!isReg(S.c))p.push([RGOF[S.c],"r"]);if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
 function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
@@ -27,3 +34,5 @@ function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$
   else{$("mwsub").textContent="of "+fmt(f.inst)+" · estimated";$("sub").textContent="Site "+f.a+" km²";$("cmp").innerHTML="";const n=$("note");n.style.display="block";n.textContent="There are no turbine positions for this farm in the dataset, so there's no wake field. Output is the free-stream power curve with an assumed 10% wake loss."}
   $("list").innerHTML=F.map((g,i)=>g.c!==f.c?"":"<button data-i='"+i+"' class='"+(i===S.farm?"on ":"")+(g.lay?"":"est")+"'><span>"+g.n+"</span><span class='mut'>"+fmt(cur(g).pw)+"</span></button>").join("")}}
 function go(c,farm){S.c=c;S.farm=farm;S.hover=-1;S.zh=-1;$("tip").style.display="none";if(S.tab==="map"){if(farm!=null)flyTo(fit(farmBox(F[farm]),.12));else flyTo(fit(c?bbox(c):HOME,0));sidebar()}else draw()}
+
+export { go, sidebar };

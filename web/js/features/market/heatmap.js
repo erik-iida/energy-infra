@@ -1,5 +1,10 @@
 /* Market tab: price heatmap of every bidding zone x hour, with TB2 / TB4 and the optional spark column.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $ } from "../../core/util.js";
+import { MK, dl, hl } from "../../core/feed.js";
+import { ZONEFLAG, flagSVG } from "../../core/flags.js";
+import { dtip } from "../../core/chart.js";
+import { cmpHover, cmpLeave } from "../../core/cmp.js";
 // ---- price heatmap: every bidding zone (rows, sorted by mean) x hour (columns) ----
 // One warm sequential hue for prices >= 0 (light -> dark), a separate cool hue for negative prices.
 const HMPOS=[[253,238,220],[250,201,148],[240,145,82],[214,88,38],[160,48,20],[96,24,12]],HMNEG=[[214,232,250],[42,120,214]];
@@ -36,3 +41,5 @@ document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.cl
 document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.closest("svg.hm");if(sv&&!sv.contains(e.relatedTarget)){const C=HM[sv.id];if(C){C.hk=C.hr=null;hmRender(sv.id)}$("dtip").style.display="none"}});
 document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv)cmpHover(e,sv)});
 document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv&&!sv.contains(e.relatedTarget))cmpLeave(sv)});
+
+export { HM, HMNEG, HMPOS, hmColor, hmRender, lerpC, tbn };

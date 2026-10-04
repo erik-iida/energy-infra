@@ -1,8 +1,10 @@
 /* Map canvas: Web Mercator projection, pan / zoom state V, level-of-detail thresholds, coastline tiles and seams.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { DATA, F } from "../../core/data.js";
+import { $, css } from "../../core/util.js";
 const cv=$("cv"),cx=cv.getContext("2d");
 /* ---------- map: pan / zoom with level of detail ---------- */
-const EU=[-11,40.5,27,62.5],HOME=[-14,34,44,71],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0,anim=0,paintReq=0;
+const EU=[-11,40.5,27,62.5],HOME=[-14,34,44,71],WORLD=()=>{let a=[180,90,-180,-90];F.forEach(f=>{a=[Math.min(a[0],f.lon),Math.min(a[1],f.lat),Math.max(a[2],f.lon),Math.max(a[3],f.lat)]});return[a[0]-4,a[1]-4,a[2]+4,a[3]+4]},V={lon:8,lat:51.5,s:30};let W0=0,H0=0;
 F.forEach(f=>{let e=0;const add=(x,y)=>{e=Math.max(e,Math.abs(x),Math.abs(y))};if(f.xy)for(let i=0;i<f.xy.length;i+=2)add(f.xy[i],f.xy[i+1]);(f.o||[]).forEach(r=>{for(let i=0;i<r.length;i+=2)add(r[i],r[i+1])});let t=0;if(f.xy)for(let i=0;i<f.xy.length;i+=2)t=Math.max(t,Math.abs(f.xy[i]),Math.abs(f.xy[i+1]));f.tex=f.xy?Math.max(t,300):Math.max(e,400);f.ext=Math.max(e,400);f.kx=111320*Math.cos(f.lat*Math.PI/180)});
 // Web Mercator display: panning is a pure shift (no stretching); V.s = pixels per degree of longitude.
 // mercY(): Mercator y in degree units; YMAX = edge of the map (85.05 deg), north/south panning stops there.
@@ -37,3 +39,5 @@ function landInView(){const v=viewBox();return DATA.coast.filter((r,i)=>{const b
 function seamCover(){const v=viewBox(),p=new Path2D();for(let i=0;i<SEAML.length;i+=4){const x0=SEAML[i],y0=SEAML[i+1],x1=SEAML[i+2],y1=SEAML[i+3];
  if(Math.max(x0,x1)<v[0]||Math.min(x0,x1)>v[2]||Math.max(y0,y1)<v[1]||Math.min(y0,y1)>v[3])continue;const[a,b]=P(x0,y0),[c,d]=P(x1,y1);p.moveTo(a,b);p.lineTo(c,d)}
  const lw=cx.lineWidth,ss=cx.strokeStyle;cx.strokeStyle=css("--land");cx.lineWidth=1.5;cx.stroke(p);cx.lineWidth=lw;cx.strokeStyle=ss}
+
+export { COASTL, COASTLB, D2R, H0, HOME, LOD_TURB, LOD_WAKE, M, P, Pinv, V, W0, WORLD, clampV, cv, cx, farmBox, fit, landInView, mercInv, mercY, pxm, seamCover, size, sl, viewBox, zMin };

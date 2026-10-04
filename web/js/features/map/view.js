@@ -1,5 +1,21 @@
 /* Map view: coastlines, fly-to / zoom, repaint, wake heat map and legend, farm glyphs, layer legend toggles, scale bar.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { CBOX, F, GROUPS, S, Z, inC } from "../../core/data.js";
+import { $, css } from "../../core/util.js";
+import { wakeFarm, wd } from "../../core/wake.js";
+import { cur } from "../../core/feed.js";
+import { COASTL, COASTLB, D2R, M, P, Pinv, V, WORLD, clampV, cx, mercInv, mercY, pxm, sl, viewBox, zMin } from "./canvas.js";
+import { csSync } from "../../core/flags.js";
+import { MO } from "./layers/zones.js";
+import { paint } from "./paint.js";
+import { sidebar } from "./sidebar.js";
+import { dash } from "../compare/compare.js";
+import { market } from "../market/market.js";
+import { system } from "../system/system.js";
+import { flagsTab } from "../flags/table.js";
+import { dataTab } from "../data/data.js";
+import { nwsTab } from "../newsletter/newsletter.js";
+let anim=0,paintReq=0; // fly-to animation frame and pending repaint frame (moved here from canvas.js: only this file sets them)
 function coastPath(){const p=new Path2D(),v=viewBox();for(let q=0;q<COASTL.length;q++){const r=COASTL[q],b=COASTLB[q];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}}return p}
 function bbox(c){if(GROUPS[c]){let a=[180,90,-180,-90];GROUPS[c].forEach(m=>{const b=bbox(m);if(b[2]-b[0]<200){a=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])]}});return a}
  if(CBOX[c]&&!F.some(f=>f.c===c))return CBOX[c];let a=[180,90,-180,-90];const add=(x,y)=>{a[0]=Math.min(a[0],x);a[1]=Math.min(a[1],y);a[2]=Math.max(a[2],x);a[3]=Math.max(a[3],y)};
@@ -17,7 +33,7 @@ function draw(){csSync();if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="m
 const RAMP=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]]; // viridis
 function rampC(t){t=Math.max(0,Math.min(1,t))*(RAMP.length-1);const i=Math.min(RAMP.length-2,Math.floor(t)),f=t-i,a=RAMP[i],b=RAMP[i+1];return[a[0]+(b[0]-a[0])*f,a[1]+(b[1]-a[1])*f,a[2]+(b[2]-a[2])*f]}
 const DEF_MAX=.3; // colour scale top: 30 % wind speed deficit
-function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;WTI=f.on?.10:.06;WHH=f.h||100;
+function heat(f,m,k){const r=cur(f),key=m+"|"+k+"|"+f._k;wakeFarm(f);
  if(!f._hm||f._hm.key!==key){const D=f.D||150,dx=r.dx,dy=r.dy,P=r.P;
   let s0=1e9,s1=-1e9,c0=1e9,c1=-1e9;P.forEach(p=>{const s=p[0]*dx+p[1]*dy,c=-p[0]*dy+p[1]*dx;s0=Math.min(s0,s);s1=Math.max(s1,s);c0=Math.min(c0,c);c1=Math.max(c1,c)});
   s0-=1.5*D;s1+=m==="t"?Math.max(8000,80*D):Math.max(4000,30*D);  // TurbOPark wakes are narrower and recover more slowlyc0-=3*D;c1+=3*D;
@@ -50,3 +66,5 @@ function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.m
  S.pts.push([x,y,Ro,i])}
 function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
  cx.fillStyle=css("--ink");cx.font="12px sans-serif";const up=$("attr").style.display==="block"?$("attr").offsetHeight+4:0;cx.fillText(km+" km",W-16-w,H-16-up);cx.fillRect(W-16-w,H-12-up,w,2)}
+
+export { HID, LCAT, anim, bbox, catOn, coastPath, draw, fcol, flyTo, glyph, heat, heatLegend, legSync, repaint, scaleBar, zoomAt };

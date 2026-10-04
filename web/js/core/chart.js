@@ -1,5 +1,8 @@
 /* Shared chart helpers: mean / past, SVG line and area paths, chart frame, arrows, m/s formatting, hour under the cursor, tooltip.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { COUNTRIES, F, RGOF, S, isReg } from "./data.js";
+import { $ } from "./util.js";
+import { N0, NP, NT } from "./feed.js";
 const mean=a=>{const v=a.filter(x=>x!=null);return v.length?v.reduce((x,y)=>x+y,0)/v.length:null};
 const past=a=>a.slice(0,NP),fut=a=>a.slice(NP);
 function line(vals,max,W,H,pad){const x=h=>pad+(W-2*pad)*h/(NT-1),y=v=>H-2-(H-6)*Math.min(1,Math.max(0,v/max));
@@ -18,3 +21,5 @@ const arrow=d=>d==null?"":"<span class='arr' style='transform:rotate("+d+"deg)' 
 const ms=u=>u==null?"–":u.toFixed(1)+" m/s";
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
+
+export { CO, UMAX, aggW, arrow, chartSVG, dtip, fut, hourAt, line, mean, ms, past };

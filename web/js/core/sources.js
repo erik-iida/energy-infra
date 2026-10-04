@@ -1,5 +1,6 @@
 /* Sources and notes: every tab's source / disclaimer notes fold into one collapsed block at the end of the tab.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $ } from "./util.js";
 /* ---------- Sources and notes: every tab's source / disclaimer notes (.srcnote) move into one collapsed block at its end ---------- */
 const SRCOPEN={};
 function foldSrc(el){const ns=[...el.querySelectorAll(":scope > .srcnote, :scope > div > .srcnote")].filter(n=>!n.closest(".srcd"));if(!ns.length)return;

@@ -1,5 +1,6 @@
 /* In-browser wake models (Jensen, Bastankhah, TurbOPark) and turbine power / thrust curves; must match pipeline/wake.py (tests/test_wake_parity.py).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { TY } from "./data.js";
 const URG=11.5,PC=(u,R,ur)=>u<3||u>25?0:R*Math.min(1,u/(ur||URG))**3;
 const CT=(u,ur)=>u<3||u>25?.05:u<=ur?.8:Math.max(.05,.8*Math.pow(ur/u,3));
 /* ---------- in-browser wake models (map heatmap + what-if) ---------- */
@@ -29,12 +30,13 @@ function gavg(c,dz,R,sg){if(Math.hypot(c,dz)-R>6*sg)return 0;if(!R)return Math.e
  for(let i=0;i<n;i++){const t=-Math.PI/2+(i+.5)*w,y=R*Math.sin(t),h=R*Math.cos(t);a+=Math.exp(-((c+y)*(c+y))/(2*sg*sg))*sg*Math.sqrt(Math.PI/2)*(erf((dz+h)/k)-erf((dz-h)/k))*h*w}
  return a/(Math.PI*R*R)}
 let WTI=.06,WHH=100; // ambient turbulence intensity and hub height of the farm being computed
+function wakeFarm(f){WTI=f.on?.10:.06;WHH=f.h||100} // set them for farm f (onshore demo farms: TI 10 %)
 function tpDef(A,D,ct,s,c,R){const I=WTI,al=1.5*I,be=.8*I/Math.sqrt(Math.max(ct,1e-20)),x=s/D,t1=Math.sqrt((al+be*x)**2+1),t2=Math.sqrt(1+al*al);
  const sg=(A*I/be*(t1-t2-Math.log((t1+1)*al/((t2+1)*(al+be*x)))))*D+.25*Math.sqrt(.5*(1+Math.sqrt(1-Math.min(.96,ct)))/Math.sqrt(1-Math.min(.96,ct)))*D;
  const d0=Math.min(1,2*(.5*(1-Math.sqrt(1-Math.min(1,ct*D*D/(8*sg*sg))))));
  const a=d0*gavg(c,0,R,sg),b=d0*gavg(c,2*WHH,R,sg);return Math.sqrt(a*a+b*b)} // with its ground mirror (squared sum)
 function tinterp(xs,ys,x){const N=xs.length;if(!(x>=xs[0]&&x<=xs[N-1]))return 0;let lo=0,hi=N-1;while(hi-lo>1){const m=(lo+hi)>>1;if(xs[m]<=x)lo=m;else hi=m}const a=xs[lo],b=xs[hi];return b===a?ys[lo]:ys[lo]+(ys[hi]-ys[lo])*(x-a)/(b-a)}
-function run(f,m,U,dir,k){const t=dir*Math.PI/180,dx=-Math.sin(t),dy=-Math.cos(t);WTI=f.on?.10:.06;WHH=f.h||100;
+function run(f,m,U,dir,k){const t=dir*Math.PI/180,dx=-Math.sin(t),dy=-Math.cos(t);wakeFarm(f);
  if(!f.lay){const free=PC(U,f.cap,URG);return{P:[],u:[],ct:[],pw:free*(m==="n"?1:.9),free,dx,dy,U,Dt:[]}}
  const n=f.xy.length/2,P=[];for(let i=0;i<n;i++)P.push([f.xy[2*i],f.xy[2*i+1]]);
  const ord=P.map((p,i)=>i).sort((a,b)=>(P[a][0]*dx+P[a][1]*dy)-(P[b][0]*dx+P[b][1]*dy));
@@ -50,3 +52,5 @@ function run(f,m,U,dir,k){const t=dir*Math.PI/180,dx=-Math.sin(t),dy=-Math.cos(t
 function spacingOf(f){if(f.sp&&f.sp.min!=null)return f.sp;const n=f.xy.length/2;if(n<2)return null;const Dt=[...Array(n)].map((_,i)=>f.tix?TY[f.tix[i]].D:f.D),nn=[];
  for(let i=0;i<n;i++){let b=1e18;for(let j=0;j<n;j++)if(j!==i){const d=(f.xy[2*i]-f.xy[2*j])**2+(f.xy[2*i+1]-f.xy[2*j+1])**2;if(d<b)b=d}nn.push(Math.sqrt(b)/Dt[i])}
  return f.sp={min:Math.min(...nn),mean:nn.reduce((a,b)=>a+b,0)/n,max:Math.max(...nn)}}
+
+export { K_DEF, run, spacingOf, wakeFarm, wd };

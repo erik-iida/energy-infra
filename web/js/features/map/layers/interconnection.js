@@ -1,5 +1,12 @@
 /* Interconnection layer: cross-border flows per bidding-zone pair over land borders and DC links (data/browse/xflow.json).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $ } from "../../../core/util.js";
+import { HRS } from "../../../core/feed.js";
+import { P, cx, sl, viewBox } from "../canvas.js";
+import { GRID, gridLoad } from "./grid.js";
+import { dcFlow, dcZone } from "./dc.js";
+import { HID, catOn, repaint } from "../view.js";
+import { MZ, mzLoad } from "./zones.js";
 // ---- Interconnection layer: cross-border flows over land borders and on DC interconnectors, one value per border ----
 // Flows are per bidding-zone pair (browse/xflow.json: ENTSO-E A11 physical flows / Elexon, latest hour, from the data
 // store), so a border's land part and its subsea DC links are separate pairs where they connect different zones
@@ -41,3 +48,5 @@ function icDraw(){if(!catOn("ic"))return;if(!MZ.d)mzLoad();gridLoad();icLoad();i
   cx.fillStyle="#1d3b53";cx.strokeStyle="rgba(255,255,255,.9)";cx.lineWidth=1.5;cx.globalAlpha=.92;cx.stroke();cx.fill();cx.restore();
   if(lab)icLabel(icMW(f.v),x+uy*11,y-ux*11+4,"#1d3b53")});
  cx.restore();const nn=$("icnote");if(nn)nn.textContent=asof?"Net flow per border, "+new Date(asof*1000).toLocaleString([],{weekday:"short",hour:"2-digit",minute:"2-digit"})+(sys?" (some borders: System data, latest hour)":""):""}
+
+export { icDraw };

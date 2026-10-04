@@ -1,5 +1,16 @@
 /* System tab: generation mix, load, residual load, prices and cross-border flows per country; country cards and comparison chart.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { COUNTRIES, GROUPS, S, isReg } from "../../core/data.js";
+import { $, fmt } from "../../core/util.js";
+import { MK, N0, NP, NT, dl, hl } from "../../core/feed.js";
+import { CFLAG, flagHTML } from "../../core/flags.js";
+import { go } from "../map/sidebar.js";
+import { dtip } from "../../core/chart.js";
+import { CMP, cmpRender } from "../../core/cmp.js";
+import { HM, hmRender } from "../market/heatmap.js";
+import { axl, market, pathOf, pm, tsSVG } from "../market/market.js";
+import { capRefresh, keepScroll, makeSortable } from "../market/capture.js";
+import { gasCard, gieCard, gieOverview } from "./gie.js";
 /* ---------- System tab: generation mix, load, prices, cross-border flows ---------- */
 const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland",cz:"Czechia",sk:"Slovakia",hu:"Hungary",ro:"Romania",bg:"Bulgaria",si:"Slovenia",hr:"Croatia",rs:"Serbia",gr:"Greece",ba:"Bosnia and Herzegovina",me:"Montenegro",mk:"North Macedonia",ee:"Estonia",lv:"Latvia",lt:"Lithuania",fi:"Finland",es:"Spain",pt:"Portugal",it:"Italy",gb:"United Kingdom",ie:"Ireland"};
 // stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
@@ -94,3 +105,5 @@ function sysVline(sv,k){let l=sv.querySelector("line.xh");const vb=sv.viewBox.ba
  if(!l){l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("class","xh");l.setAttribute("y1","0");l.setAttribute("pointer-events","none");sv.appendChild(l)}l.setAttribute("y2",vb.height);l.setAttribute("x1",xx);l.setAttribute("x2",xx)}
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");$("sys").querySelectorAll("svg.sx line.xh").forEach(l=>{if(l.parentNode!==sv)l.remove()});if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);sysVline(sv,k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none";$("sys").querySelectorAll("svg.sx line.xh").forEach(l=>l.remove())};
+
+export { MIXC, SYS, sysData, system };

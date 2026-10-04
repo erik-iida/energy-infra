@@ -1,5 +1,9 @@
 /* Shared comparison line chart (many series, grey lines, flag + label at the line end, ranked hover): Market price chart and System comparisons.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $ } from "./util.js";
+import { dl, hl } from "./feed.js";
+import { flagHTML, flagSVG } from "./flags.js";
+import { pathOf } from "../features/market/market.js";
 const CMP={};
 function niceRange(lo,hi){if(!(hi>lo)){hi=lo+1}const span=hi-lo,st=Math.pow(10,Math.floor(Math.log10(span/4))),m=[1,2,2.5,5,10].find(q=>span/(q*st)<=5)*st;return[Math.floor(lo/m)*m,Math.ceil(hi/m)*m,m]}
 // spec: {series:[{id,label,flag,v:[...]}], a, b (index range), unit, fmt(v), tipT(k)}
@@ -34,3 +38,5 @@ function cmpHover(e,sv){const C=CMP[sv.id];if(!C||!C.x)return;const r=sv.getBoun
 // rich tooltip (flags, highlighted row); same box and placement as dtip
 function dtipH(e,html){const d=$("dtip");d.style.display="block";d.innerHTML=html;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
 function cmpLeave(sv){const C=CMP[sv.id];if(C){C.hl=null;C.hk=null;cmpRender(sv.id)}$("dtip").style.display="none"}
+
+export { CMP, cmpHover, cmpLeave, cmpRender };

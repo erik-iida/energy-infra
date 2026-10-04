@@ -1,5 +1,8 @@
 /* Hourly time axis (24 h back, 24 h ahead), per-farm wind and PyWake series from feed.json (or the synthetic fallback), current wind and output.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { F, FEED, inC } from "./data.js";
+import { $ } from "./util.js";
+import { K_DEF, run } from "./wake.js";
 /* ---------- time series: pipeline feed, or synthetic fallback ---------- */
 const NP=24,NF=24,NT=NP+NF,N0=NP-1; // index N0 = now
 let HRS,MODELS,SRC;
@@ -16,3 +19,6 @@ const LIVE=()=>$("LV").checked;
 function curWind(f){return LIVE()&&f.U48[N0]!=null?[f.U48[N0],f.D48[N0]]:[+$("U").value,+$("D").value]}
 function cur(f){const m=$("M").value,[U,D]=curWind(f),k=+$("K").value,key=m+U+"|"+D+"|"+k;if(f._k!==key){f._k=key;f._r=run(f,m,U,D,k)}return f._r}
 const now=c=>F.filter(f=>!c||inC(f,c)).reduce((a,f)=>a+cur(f).pw,0);
+const MK=FEED&&FEED.market; // market block of the feed (prices, system data); null without a feed
+
+export { HRS, LIVE, MK, MODELS, N0, NP, NT, SRC, browserSeries, cur, curWind, dl, hl, now };

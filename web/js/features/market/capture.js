@@ -1,5 +1,13 @@
 /* Market tab: capture prices per technology (data/capture.json), sortable tables.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { GROUPS, S, isReg } from "../../core/data.js";
+import { $ } from "../../core/util.js";
+import { MK, N0 } from "../../core/feed.js";
+import { ZONEFLAG, flagHTML, selZones } from "../../core/flags.js";
+import { CMP, cmpRender } from "../../core/cmp.js";
+import { HMPOS, hmColor, lerpC } from "./heatmap.js";
+import { ZN, capStats, market, pm } from "./market.js";
+import { SYS } from "../system/system.js";
 /* ---------- capture prices per technology (ENTSO-E, web/data/capture.json) ---------- */
 const CAP={d:null,loading:false};
 function capLoad(){if(CAP.d||CAP.loading)return;CAP.loading=true;fetch("data/capture.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){CAP.d=j;if(S.tab==="mkt")market()}}).catch(()=>{})}
@@ -73,3 +81,5 @@ function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.que
  const ser=CAPT.filter(t=>t[4]&&ms.some(m=>Z[m]&&Z[m].t&&Z[m].t[t[0]])).map(([id,n,ck,dash])=>({id,label:n,col:"var(--m-"+ck+")",dash,v:ms.map(m=>Z[m]&&Z[m].t&&Z[m].t[id]?Z[m].t[id][0]:null)}));
  ser.push({id:"_b",label:"Baseload",col:"var(--ink)",dash:1,v:ms.map(m=>Z[m]?Z[m].b:null)});
  CMP[sv.id]={series:ser,a:0,b:ms.length-1,fmt:v=>Math.round(v)+"",H:280,right:150,xs:Math.max(1,Math.round(ms.length/8)),xl:k=>MON(ms[k]),tl:k=>MON(ms[k])+(ms[k]===curMonth()?" (so far)":"")+" · €/MWh",dots:1};cmpRender(sv.id)})}
+
+export { capDraw, capRefresh, capSection, fxNote, keepScroll, makeSortable };

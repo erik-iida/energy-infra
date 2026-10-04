@@ -1,5 +1,8 @@
 /* System tab: gas storage and LNG (GIE AGSI+ / ALSI, data/gie.json) and the gas-supply card (ENTSOG).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../core/data.js";
+import { GAS, gasLoad, gname } from "../map/layers/gas.js";
+import { system } from "./system.js";
 // ---- GIE: storage fill (AGSI+) and LNG send-out (ALSI), web/data/gie.json ----
 const GIE={d:null,loading:false};
 function gieLoad(){if(GIE.d||GIE.loading)return;GIE.loading=true;fetch("data/gie.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GIE.d=j;if(S.tab==="sys")system()}}).catch(()=>{})}
@@ -30,3 +33,5 @@ function gasCard(cc){gasLoad();if(!GAS.d)return"";const g=GAS.d.countries[cc==="
  return"<div class='card' style='cursor:default'><h3>Gas supply into the system<span>"+Math.round(tot)+" GWh/d on "+GAS.d.days[n-1]+"</span></h3><table class='mixtab'><thead><tr><th>Source</th><th style='width:45%'></th><th>Last day</th><th>8-day avg</th></tr></thead><tbody>"+
   rows.map(r=>"<tr><td>"+(r.s==="LNG"||r.s==="Production"||r.s==="Import"?r.s:gname(r.s))+"</td><td><i style='display:block;height:8px;width:"+(100*r.last/mx).toFixed(1)+"%;background:var(--m-gas);border-radius:0 3px 3px 0'></i></td><td>"+Math.round(r.last)+" GWh/d</td><td>"+Math.round(r.avg)+"</td></tr>").join("")+
   "</tbody></table><div class='mut' style='font-size:12px'>Daily entries into the national transmission system by origin (pipeline from neighbouring countries, LNG terminals, domestic production), ENTSOG. Includes gas in transit to other countries. 1 GWh/d ≈ 42 MW average.</div></div>"}
+
+export { gasCard, gieCard, gieOverview };

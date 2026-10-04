@@ -1,5 +1,7 @@
 /* DC interconnectors: ends placed in bidding zones, flow direction from the System data.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { MZ } from "./zones.js";
+import { SYS } from "../../system/system.js";
 // ---- DC interconnectors: flow direction from the System data (cross-border physical flows, country level) ----
 // Each DC link's two ends are placed in a bidding zone (zones.json, point in polygon, else nearest zone within ~0.6°);
 // links whose ends are in two countries get the latest hourly border flow between those countries (import positive on
@@ -14,3 +16,5 @@ function dcZone(x,y){let best=null,bd=0.36;for(const[z,Z]of Object.entries(MZ.d)
 function dcFlow(a,b){let best=null;[[a,b,1],[b,a,-1]].forEach(([p,q,sg])=>{const F=SYS[p]&&SYS[p].flows;if(!F)return;
   for(const[k,v]of Object.entries(F)){if(flKey(k)!==q||!Array.isArray(v))continue;let i=v.length-1;while(i>=0&&v[i]==null)i--;if(i<0)continue;
    const c={v:sg*v[i],i};if(!best||(best.v===0&&c.v!==0)||(c.v!==0&&c.i>best.i))best=c}});return best}
+
+export { dcFlow, dcZone };

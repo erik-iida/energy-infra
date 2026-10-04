@@ -1,5 +1,5 @@
 /* Site data, feed and shared state: DATA / FEED (loaded by index.html), farms F, zones Z, state S, turbine types TY, regions, groups, countries.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 const DATA=window.SITE,FEED=window.FEED||null;
 const F=DATA.farms,Z=DATA.zones,S={c:null,farm:null,hover:-1,zh:-1,tab:"map",hh:-1,sort:["now",-1]};
 const TY=DATA.types||[];
@@ -21,3 +21,5 @@ const CBOX={Czechia:[12,48.5,19,51.1],Slovakia:[16.8,47.7,22.6,49.6],Hungary:[16
  Montenegro:[18.4,41.8,20.4,43.6],"North Macedonia":[20.4,40.8,23.1,42.4],Austria:[9.5,46.3,17.2,49.1],Switzerland:[5.9,45.8,10.5,47.9],Italy:[6.6,36.6,18.6,47.1],
  Latvia:[20.9,55.6,28.3,58.1],Lithuania:[20.9,53.8,26.9,56.5]};
 Object.keys(CBOX).forEach(c=>{RGOF[c]=RGOF[c]||"Europe";if(!COUNTRIES.includes(c))COUNTRIES.push(c)});GROUPS["CEE / SEE"].forEach(c=>{RGOF[c]=RGOF[c]||"Europe";if(!COUNTRIES.includes(c))COUNTRIES.push(c)});
+
+export { CBOX, COUNTRIES, DATA, F, FEED, GROUPS, REGIONS, RGOF, S, TY, Z, inC, isReg, place, sum };

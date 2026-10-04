@@ -1,5 +1,8 @@
 /* High-voltage grid layer (data/grid.json).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $ } from "../../../core/util.js";
+import { P, cx, sl, viewBox } from "../canvas.js";
+import { HID, repaint } from "../view.js";
 // ---- high-voltage grid (web/data/grid.json: [kV (0 = DC), flags, coords]) ----
 const GRID={d:null,b:null,loading:false};
 const GCLS=[[700,"#004da8",1.7],[450,"#b81245",1.6],[350,"#e3262d",1.3],[270,"#f29d00",1.1],[200,"#38a800",.9],[0,"#777",.7]];
@@ -17,3 +20,5 @@ function gridDraw(){if(!$("GR").checked)return;gridLoad();if(!GRID.d)return;cons
  for(let k=5;k>=0;k--)for(const uc of[0,1]){const st=k===6?["#d660d6",1.3]:[GCLS[k][1],GCLS[k][2]];cx.strokeStyle=st[0];cx.lineWidth=st[1]*zw;cx.setLineDash(uc?[5,3]:[]);cx.stroke(P2[k*2+uc])}
  for(const uc of[0,1]){cx.strokeStyle="#d660d6";cx.lineWidth=1.3*zw;cx.setLineDash(uc?[5,3]:[]);cx.stroke(P2[12+uc])}
  cx.restore()}
+
+export { GRID, gridDraw, gridLoad };

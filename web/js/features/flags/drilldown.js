@@ -1,5 +1,12 @@
 /* Flags drill-down panel: the CET day behind a signal (generation, load, price, event shading, what else was unusual, neighbours); deep links #flags/<zone>/<metric>/<day>.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../core/data.js";
+import { $ } from "../../core/util.js";
+import { ZONEFLAG, flagHTML } from "../../core/flags.js";
+import { dtip } from "../../core/chart.js";
+import { tab } from "../../core/router.js";
+import { FL, flagsTab } from "./table.js";
+import { dbJson } from "../data/data.js";
 /* ---------- Flags drill-down: click a fired signal to see the CET day behind it (spec 1, step 1) ---------- */
 /* Hourly series: web/data/browse/ts/<zone>.json (the Data tab export). Older days: browse/flags/<day>.json (FLAG_DAYS kept). */
 const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0};
@@ -233,3 +240,5 @@ addEventListener("keydown",e=>{if(e.key==="Escape"&&S.tab==="flg"&&FX.open){cons
 addEventListener("resize",()=>{if(S.tab==="flg"&&FX.open){clearTimeout(FX.rz);FX.rz=setTimeout(fxFill,150)}});
 
 addEventListener("hashchange",fxFromHash);setTimeout(fxFromHash,0);  // deep link #flags/<zone>/<metric>/<day>, once main() has set up the page
+
+export { FX, fxDayLbl, fxFill, fxHash };

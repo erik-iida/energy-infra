@@ -1,5 +1,13 @@
 /* Zone colours: bidding zones (data/zones.json) coloured by day-ahead price, TB2 / TB4 or a technology's share of load.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../../core/data.js";
+import { $, css } from "../../../core/util.js";
+import { MK, N0, NT } from "../../../core/feed.js";
+import { P, cx, viewBox } from "../canvas.js";
+import { BM } from "../tiles.js";
+import { legSync, repaint } from "../view.js";
+import { HMNEG, HMPOS, lerpC, tbn } from "../../market/heatmap.js";
+import { MIXC, SYS, sysData } from "../../system/system.js";
 // ---- market overlay: bidding zones coloured by day-ahead price or BESS spread (web/data/zones.json) ----
 const MZ={d:null,loading:false,paths:[]};let MO="now";  // the site always opens on the current price
 const MOL={now:"Day-ahead price now",avg:"Day-ahead price, last 24 h average",next:"Day-ahead price, tomorrow's average",tb2:"TB2 spread, last 24 h",tb4:"TB4 spread, last 24 h"};
@@ -42,3 +50,5 @@ function moSet(m){MO=m;if(m!=="off")S.moLast=m;document.querySelectorAll("#mosel
  const sel=$("mocol");if(sel){if(sel.options.length<3){const og=sel.querySelector("optgroup");MIXC.forEach(([k,n])=>{const o=document.createElement("option");o.value="s:"+k;o.textContent=n;og.appendChild(o)})}
   if(m!=="off")sel.value=m.startsWith("s:")?m:"price";$("mosel").style.display=m.startsWith("s:")?"none":""}
  legSync();repaint()}
+
+export { MO, MZ, moDraw, moSet, moTip, mzLoad };

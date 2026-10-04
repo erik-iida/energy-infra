@@ -1,5 +1,8 @@
 /* Newsletter tab: the daily draft (data/newsletter/*.md), local edits and ratings, feedback as a GitHub issue.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../core/data.js";
+import { $ } from "../../core/util.js";
+import { dbJson } from "../data/data.js";
 /* ---------- Newsletter tab: the daily draft (web/data/newsletter/*.md, built by scripts/build_newsletter_site.py), local edits and feedback.
    Edits and ratings live in this browser (localStorage); "Send to Claude" opens a prefilled GitHub issue labelled newsletter-feedback, which is
    where a later chat reads them (DEVNOTES: Newsletter tab). ---------- */
@@ -56,3 +59,5 @@ $("nws").addEventListener("input",e=>{const t=e.target;
  else if(t.id==="nwnote"){const fb=nwFb();fb.note=t.value;nwSave(fb)}
  else if(t.classList.contains("nwc")){const fb=nwFb();fb.b=fb.b||{};const x=fb.b[t.dataset.nb]=fb.b[t.dataset.nb]||{};x.c=t.value;x.open=true;nwSave(fb)}});
 $("nws").addEventListener("change",e=>{if(e.target.id==="nwday"){NW.day=e.target.value;nwsTab()}});
+
+export { nwsTab };

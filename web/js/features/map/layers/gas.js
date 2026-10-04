@@ -1,5 +1,10 @@
 /* Gas layer: ENTSOG interconnection points, LNG terminals and production entries (data/gas.json).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../../core/data.js";
+import { css } from "../../../core/util.js";
+import { P, cx, viewBox } from "../canvas.js";
+import { HID, repaint } from "../view.js";
+import { system } from "../../system/system.js";
 // ---- gas: ENTSOG interconnection points, LNG terminals, production entry (web/data/gas.json, daily GWh/d) ----
 const GAS={d:null,loading:false,pts:[]};window.GAS=GAS;
 const GCN={DE:"Germany",DK:"Denmark",NL:"Netherlands",BE:"Belgium",FR:"France",PL:"Poland",AT:"Austria",CZ:"Czechia",SK:"Slovakia",HU:"Hungary",IT:"Italy",ES:"Spain",PT:"Portugal",
@@ -16,3 +21,5 @@ function gasHit(x,y){let b=-1,bd=1e9;GAS.pts.forEach(p=>{const d=Math.hypot(p[0]
 function gasTip(i){const p=GAS.d.points[i],n=p.v.length,last=p.v[n-1],avg=p.v.reduce((a,b)=>a+b,0)/n,ty={ip:"interconnection point",imp:"import point",lng:"LNG terminal",prod:"production entry"}[p.t];
  const dir=p.d&&p.d[1]?(p.d[0]?gname(p.d[0])+" → ":(p.from?p.from+" → ":"into "))+gname(p.d[1]):"";
  return p.n+" · gas "+ty+" · "+Math.round(last)+" GWh/d on "+GAS.d.days[n-1]+(dir?" ("+dir+")":"")+" · 8-day avg "+Math.round(avg)+" GWh/d · position approximate"}
+
+export { GAS, gasDraw, gasHit, gasLoad, gasTip, gname };

@@ -1,5 +1,7 @@
 /* Data tab: time-series browser (any zones x any variables, CSV) and the installed-capacity / capacity-factor view (data/browse/*).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../core/data.js";
+import { $ } from "../../core/util.js";
 /* ---------- Data tab: one flexible time-series browser (any variables x any zones) plus the installed-capacity view ---------- */
 /* web/data/browse/{index.json, ts/<zone>.json, capacity.json}, built from the `store` release by scripts/build_browse.py */
 const DB={idx:null,err:0,busy:0,mode:"ts",zs:["RO"],on:null,days:7,tz:"CET",desc:true,cache:{},open:{},tok:0,cap:null,cv:"cf",cf:"all",cur:null};
@@ -86,3 +88,5 @@ $("dat").addEventListener("click",e=>{let b;
  else if(b=e.target.closest("#cpv button")){DB.cv=b.dataset.v;capView()}
  else if(e.target.closest("#cpcsv"))capCsv()});
 $("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.value;capView()}else if(e.target.id==="dbn"){DB.days=+e.target.value;tsRender()}});
+
+export { dataTab, dbJson };

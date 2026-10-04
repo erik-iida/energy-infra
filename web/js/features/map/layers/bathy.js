@@ -1,5 +1,10 @@
 /* Bathymetry underlay: EMODnet depth grid (data/bathy.png) coloured in the browser, WMS contours when zoomed in.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../../core/data.js";
+import { $, css } from "../../../core/util.js";
+import { H0, P, Pinv, V, W0, cx } from "../canvas.js";
+import { BM } from "../tiles.js";
+import { repaint } from "../view.js";
 // Bathymetry underlay: EMODnet Bathymetry WMS (EPSG:4326 maps linearly onto this projection), requested for the
 // visible area after panning/zooming settles; depth contours added when zoomed in.
 const BATHY_URL="https://ows.emodnet-bathymetry.eu/wms";let bathyT=0;S.bathy=null;S.bathyKey="";
@@ -33,3 +38,5 @@ function drawLatLonImg(img,b){const n=48,H=img.height,W=img.width;for(let k=0;k<
 function bathyDraw(){if(!$("BY").checked)return;const al=(+css("--bathy-a")||.75)*(BM()==="simple"?1:BM()==="sat"?.45:.55);cx.imageSmoothingEnabled=true;
  if(BG.meta&&bathyHere()){const b=BG.meta.bbox,[x0,y0]=P(b[0],b[3]),[x1,y1]=P(b[2],b[1]);cx.globalAlpha=al;drawLatLonImg(BG.cv,b)}
  const B=S.bathy;if(B){const[x0,y0]=P(B.b[0],B.b[3]),[x1,y1]=P(B.b[2],B.b[1]);cx.globalAlpha=B.lines?.8:al;drawLatLonImg(B.img,B.b)}cx.globalAlpha=1}
+
+export { bathyColour, bathyDraw, bathyWant };

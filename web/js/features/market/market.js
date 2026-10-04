@@ -1,7 +1,16 @@
 /* Market tab: day-ahead prices per zone, model check against actual offshore output, tab render.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { F, S, inC, sum } from "../../core/data.js";
+import { $, fmt } from "../../core/util.js";
+import { MK, MODELS, N0, NP, NT, dl } from "../../core/feed.js";
+import { ZONEFLAG, selZones } from "../../core/flags.js";
+import { series } from "../compare/compare.js";
+import { dtip } from "../../core/chart.js";
+import { CMP, cmpRender } from "../../core/cmp.js";
+import { HM, hmRender } from "./heatmap.js";
+import { capDraw, capSection, fxNote, makeSortable } from "./capture.js";
 /* ---------- Market tab (day-ahead prices + actual generation) ---------- */
-const MK=FEED&&FEED.market,ZN={"DK1":"Denmark West (DK1)","DK2":"Denmark East (DK2)","DE-LU":"Germany–Luxembourg","NL":"Netherlands","BE":"Belgium","FR":"France","SE4":"Sweden South (SE4)","IE(SEM)":"Ireland (SEM)","PT":"Portugal","ES":"Spain"};
+const ZN={"DK1":"Denmark West (DK1)","DK2":"Denmark East (DK2)","DE-LU":"Germany–Luxembourg","NL":"Netherlands","BE":"Belgium","FR":"France","SE4":"Sweden South (SE4)","IE(SEM)":"Ireland (SEM)","PT":"Portugal","ES":"Spain"};
 const CCN={de:"Germany",nl:"Netherlands",be:"Belgium",dk:"Denmark",fr:"France",se:"Sweden",ie:"Ireland",pt:"Portugal",es:"Spain",uk:"United Kingdom"};
 const HN={de:"Germany (DE-LU)",nl:"Netherlands",be:"Belgium",dk:"Denmark (DK1/DK2 blend)",fr:"France"};
 F.forEach(f=>{f.zone=MK?MK.farm_zone[String(f.id)]:null});
@@ -48,3 +57,5 @@ function market(){series();const el=$("mkt");TIPS=[];
  }
 $("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=TIPS[+sv.dataset.t](k);if(t)dtip(e,t);else $("dtip").style.display="none"};
 $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
+
+export { ZN, axl, capStats, eur, farmCap, market, pathOf, pm, tsSVG };

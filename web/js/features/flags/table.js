@@ -1,5 +1,9 @@
 /* Flags tab: fired signals table and the zone x metric percentile matrix (data/browse/flags.json).
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { S } from "../../core/data.js";
+import { $ } from "../../core/util.js";
+import { FX, fxDayLbl, fxFill, fxHash } from "./drilldown.js";
+import { dbJson } from "../data/data.js";
 /* ---------- Flags tab: signals and metric overview (web/data/browse/flags.json, built from the `store` release by scripts/build_browse.py with newsletter/signals.py) ---------- */
 const FL={j:null,err:0,busy:0,all:false};
 function flFmt(v,u){if(v==null)return"–";return v.toLocaleString("en",{maximumFractionDigits:Math.abs(v)>=100?0:1})}
@@ -34,3 +38,5 @@ function flagsTab(){const el=$("flg");
  el.innerHTML=h;fxFill()}
 
 $("flg").addEventListener("change",e=>{if(e.target.id==="flz"){FL.all=e.target.value==="a";flagsTab()}});
+
+export { FL, flagsTab };

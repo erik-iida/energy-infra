@@ -1,5 +1,8 @@
 /* Basemap tile layers (CARTO, OpenStreetMap, satellite, terrain hillshade) reprojected into the map view.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { $, css } from "../../core/util.js";
+import { H0, P, V, W0, cx, viewBox } from "./canvas.js";
+import { repaint } from "./view.js";
 // ---- web-mercator tile layers, reprojected into this map's equirectangular view ----
 // OpenStreetMap standard tiles (basemap) and Mapterhorn terrain (terrarium elevation -> hillshade computed here).
 // CARTO raster basemaps need a key (watermark without one). The deploy job writes it in place of the placeholder from the
@@ -50,3 +53,5 @@ function bmSet(v){BMV=TL[v]||v==="simple"?v:"simple";try{localStorage.setItem("w
  $("bmlab").textContent=opt.textContent;document.querySelectorAll(".bmo").forEach(b=>b.classList.toggle("on",b.dataset.bm===BMV));attrib();repaint()}
 function attrib(){const a=[];if(BM()==="sat")a.push("<a href='https://s2maps.eu' target='_blank' rel='noopener'>Sentinel-2 cloudless 2024</a> by EOX IT Services GmbH (modified Copernicus Sentinel data)");if(["voyager","light","lightnl","dark"].includes(BM()))a.push("© <a href='https://www.openstreetmap.org/copyright' target='_blank' rel='noopener'>OpenStreetMap</a> contributors © <a href='https://carto.com/attributions' target='_blank' rel='noopener'>CARTO</a>");if(BM()==="osm")a.push("© <a href='https://www.openstreetmap.org/copyright' target='_blank' rel='noopener'>OpenStreetMap</a> contributors");
  if($("HS").checked)a.push("<a href='https://mapterhorn.com/attribution' target='_blank' rel='noopener'>© Mapterhorn</a>");$("attr").innerHTML=a.join(" · ");$("attr").style.display=a.length?"block":"none"}
+
+export { BM, attrib, bmSet, isDark, tilesDraw };

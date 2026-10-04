@@ -1,5 +1,10 @@
 /* Compare tab: PyWake model selector, per-farm series, country aggregation and the dashboard cards / farm table.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { F, FEED, S, inC, place } from "../../core/data.js";
+import { $, fg, fmt } from "../../core/util.js";
+import { MODELS, N0, NT, SRC, browserSeries, dl, hl } from "../../core/feed.js";
+import { CO, UMAX, aggW, arrow, chartSVG, fut, line, mean, ms, past } from "../../core/chart.js";
+import { eur, farmCap } from "../market/market.js";
 /* ---------- Compare tab ---------- */
 S.fm=MODELS.turbopark?"turbopark":"jensen";
 $("FM").innerHTML=Object.keys(MODELS).map(m=>"<option value='"+m+"'>"+MODELS[m]+"</option>").join("");$("FM").value=S.fm;
@@ -24,3 +29,5 @@ function dash(){series();const fs=F.filter(f=>inC(f,S.c)),A=agg(fs),lay=fs.filte
  const cols=[["n","Farm"],["c","Country"],["inst","Installed"],["now","Now"],["cf","CF now"],["wl","Wake loss"],["cp","Capture 24 h"],["wc","Wake cost 24 h"],["u","Wind now"],["sp","Output ±24 h"],["sw","Wind ±24 h"],["avg","Last 24 h"],["nx","Next 24 h"]];
  $("ftab").tHead.rows[0].innerHTML=cols.map(q=>"<th data-k='"+q[0]+"'>"+q[1]+(S.sort[0]===q[0]?(S.sort[1]>0?" ▲":" ▼"):"")+"</th>").join("");
  $("ftab").tBodies[0].innerHTML=rows.map(r=>{const L=line(r.f.P.map(p=>p==null?null:p/r.f.inst),1,104,22,2);return"<tr data-i='"+r.i+"' class='"+(r.f.lay?"":"est")+"'><td>"+r.f.n+"</td><td>"+r.f.c+"</td><td>"+fmt(r.f.inst)+"</td><td>"+fmt(r.now)+"</td><td>"+(r.cf==null?"–":(100*r.cf).toFixed(0)+"%")+"</td><td>"+(r.wl==null?"–":Math.max(0,100*r.wl).toFixed(1)+"%")+"</td><td>"+(r.cp==null?"–":r.cp.toFixed(1)+" €/MWh")+"</td><td>"+eur(r.wc)+"</td><td>"+ms(r.u)+arrow(r.f.D48[N0])+"</td><td><svg viewBox='0 0 104 22' data-i='"+r.i+"'><line class='nowl' x1='"+L.x(N0)+"' x2='"+L.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+L.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+L.f+"'/></svg></td><td>"+(()=>{const W=line(r.f.U48.map(u=>u==null?null:u/UMAX),1,104,22,2);return"<svg class='w' viewBox='0 0 104 22' data-i='"+r.i+"' data-w='1'><line class='nowl' x1='"+W.x(N0)+"' x2='"+W.x(N0)+"' y1='0' y2='22'/><path class='ln' style='stroke-width:1.5' d='"+W.p+"'/><path class='ln fc' style='stroke-width:1.5' d='"+W.f+"'/></svg>"})()+"</td><td>"+fmt(r.avg)+"</td><td>"+fmt(r.nx)+"</td></tr>"}).join("")}
+
+export { agg, dash, series };

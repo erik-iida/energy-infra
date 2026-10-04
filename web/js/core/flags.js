@@ -1,5 +1,7 @@
 /* Country flags: round flag glyphs (FLAGS / CFLAG / flagSVG / flagHTML), the searchable country picker (flagSel, csSync) and zone -> flag lookup.
-   Spec 3 step 2, push 3: moved from the former single page script unchanged; classic script, shared global scope. */
+   ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { GROUPS, S, isReg } from "./data.js";
+import { $ } from "./util.js";
 const GLOBE="<svg class='fsi' viewBox='0 0 20 20' width='20' height='20' fill='none' stroke='currentColor' stroke-width='1.3'><circle cx='10' cy='10' r='8.2'/><ellipse cx='10' cy='10' rx='3.6' ry='8.2'/><path d='M2 10h16M3.6 5.8h12.8M3.6 14.2h12.8'/></svg>";
 function flagSel(sel){const ico=v=>{const c=CFLAG[v];return c&&FLAGS[c]?"<span class='fsi'>"+flagHTML(c,9)+"</span>":GLOBE};
  const wrap=document.createElement("div");wrap.className="fsel keep";sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);sel.style.display="none";
@@ -64,3 +66,5 @@ let FLAGN=0;
 function flagSVG(code,x,y,r){const id="fg"+(FLAGN++),k=r/10;
  return"<g><clipPath id='"+id+"'><circle cx='"+x+"' cy='"+y+"' r='"+r+"'/></clipPath><g clip-path='url(#"+id+")'><g transform='translate("+(x-15*k)+","+(y-10*k)+") scale("+k+")'>"+(FLAGS[code]||"<rect width='30' height='20' fill='#999'/>")+"</g></g><circle cx='"+x+"' cy='"+y+"' r='"+r+"' fill='none' stroke='var(--line)' stroke-width='1'/></g>"}
 const flagHTML=(code,r=8)=>"<svg width='"+(2*r+2)+"' height='"+(2*r+2)+"' style='vertical-align:middle;display:inline-block;width:"+(2*r+2)+"px;height:"+(2*r+2)+"px'>"+flagSVG(code,r+1,r+1,r)+"</svg>";
+
+export { CFLAG, ZONEFLAG, csSync, flagHTML, flagSVG, flagSel, selZones };

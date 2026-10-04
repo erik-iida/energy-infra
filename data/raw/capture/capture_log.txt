@@ -1,1 +1,3 @@
-ENTSOE_TOKEN not set
+0 (zone, month) cells to fetch
+fetched 0 cells with 0 calls in 0 s; 0 left for the next run
+wrote data/static/capture.json: 44 zones, 24 months, 359 kB

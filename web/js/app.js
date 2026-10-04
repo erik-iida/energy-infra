@@ -1,10 +1,20 @@
 /* Start-up: wires the tab bar, cards and farm table, sets the initial view and draws. Loaded last by index.html.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
-// every page module in the original load order (modules that export nothing still run their start-up code)
+// every page module, core first, then the features in the order of the old single-file page (modules that export nothing still run their start-up code)
 import "./core/data.js";
 import "./core/util.js";
+import "./core/load.js";
 import "./core/wake.js";
 import "./core/feed.js";
+import "./core/sysdata.js";
+import "./core/gasdata.js";
+import "./core/colours.js";
+import "./core/chart.js";
+import "./core/flags.js";
+import "./core/table.js";
+import "./core/cmp.js";
+import "./core/router.js";
+import "./core/sources.js";
 import "./features/map/canvas.js";
 import "./features/map/tiles.js";
 import "./features/map/layers/gas.js";
@@ -12,15 +22,11 @@ import "./features/map/layers/grid.js";
 import "./features/map/layers/dc.js";
 import "./features/map/layers/interconnection.js";
 import "./features/map/view.js";
-import "./core/flags.js";
 import "./features/map/layers/bathy.js";
 import "./features/map/layers/zones.js";
 import "./features/map/paint.js";
 import "./features/map/sidebar.js";
 import "./features/compare/compare.js";
-import "./core/chart.js";
-import "./core/router.js";
-import "./core/cmp.js";
 import "./features/market/heatmap.js";
 import "./features/market/market.js";
 import "./features/market/capture.js";
@@ -29,20 +35,17 @@ import "./features/system/gie.js";
 import "./features/map/events.js";
 import "./features/flags/table.js";
 import "./features/flags/drilldown.js";
-import "./core/sources.js";
 import "./features/data/data.js";
 import "./features/newsletter/newsletter.js";
 import { F, FEED, S, inC } from "./core/data.js";
 import { $, fg, fmt } from "./core/util.js";
 import { K_DEF } from "./core/wake.js";
-import { N0, SRC, dl } from "./core/feed.js";
-import { HOME, V, clampV, fit, size } from "./features/map/canvas.js";
-import { draw } from "./features/map/view.js";
-import { MO, moSet } from "./features/map/layers/zones.js";
-import { go } from "./features/map/sidebar.js";
-import { agg, dash } from "./features/compare/compare.js";
+import { N0, SRC, agg, dl } from "./core/feed.js";
 import { aggW, dtip, hourAt, ms } from "./core/chart.js";
-import { tab } from "./core/router.js";
+import { draw, go, tab } from "./core/router.js";
+import { HOME, V, clampV, fit, size } from "./features/map/canvas.js";
+import { MO, moSet } from "./features/map/layers/zones.js";
+import { dash } from "./features/compare/compare.js";
 document.body.dataset.tab=S.tab||"map";$("footd").ontoggle=()=>{if($("footd").open)$("foot2").innerHTML=$("foot").innerHTML};
 
 $("tabs").onclick=e=>{const b=e.target.closest("button[data-t]");if(b)tab(b.dataset.t)};

@@ -1,18 +1,16 @@
 /* Market tab: price heatmap of every bidding zone x hour, with TB2 / TB4 and the optional spark column.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { $ } from "../../core/util.js";
-import { MK, dl, hl } from "../../core/feed.js";
-import { ZONEFLAG, flagSVG } from "../../core/flags.js";
+import { MK, dl, hl, tbn } from "../../core/feed.js";
+import { HMNEG, HMPOS, lerpC } from "../../core/colours.js";
 import { dtip } from "../../core/chart.js";
+import { ZONEFLAG, flagSVG } from "../../core/flags.js";
 import { cmpHover, cmpLeave } from "../../core/cmp.js";
 // ---- price heatmap: every bidding zone (rows, sorted by mean) x hour (columns) ----
 // One warm sequential hue for prices >= 0 (light -> dark), a separate cool hue for negative prices.
-const HMPOS=[[253,238,220],[250,201,148],[240,145,82],[214,88,38],[160,48,20],[96,24,12]],HMNEG=[[214,232,250],[42,120,214]];
-const lerpC=(R,t)=>{t=Math.max(0,Math.min(1,t))*(R.length-1);const i=Math.min(R.length-2,Math.floor(t)),f=t-i;return"rgb("+[0,1,2].map(k=>Math.round(R[i][k]+(R[i+1][k]-R[i][k])*f)).join(",")+")"};
 const HM={};
 function hmColor(v,top,low){return v<0?lerpC(HMNEG,low<0?v/low:1):lerpC(HMPOS,v/top)}
 // TBn: mean of the n highest hourly prices minus mean of the n lowest (BESS arbitrage indication); needs 20+ priced hours
-function tbn(v,n){const o=v.filter(x=>x!=null).sort((a,b)=>a-b);if(o.length<20)return null;const m=a=>a.reduce((p,q)=>p+q,0)/a.length;return m(o.slice(-n))-m(o.slice(0,n))}
 const HMTB=[122,166,210],HMTW=42;
 function hmRender(id){const C=HM[id],sv=document.getElementById(id);if(!sv)return;const SPK=MK.spark&&MK.spark.zones,SPW=C.a===0?"past":"next",W=sv.clientWidth||700,L=SPK?258:214,R=58,T=4,rh=14,B=22,sk=(C.sort==="sp"&&!SPK)?"m":(C.sort||"m");
  const rows=C.zones.map(z=>{const v=MK.prices[z].slice(C.a,C.b+1),ok=v.filter(x=>x!=null);return{z,v,m:ok.length?ok.reduce((a,b)=>a+b,0)/ok.length:null,tb2:tbn(v,2),tb4:tbn(v,4),sp:SPK&&SPK[z]&&SPK[z][SPW]?SPK[z][SPW].top4:null}}).filter(r=>r.m!=null).sort((p,q)=>(q[sk]??-1e9)-(p[sk]??-1e9));
@@ -42,4 +40,4 @@ document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.clo
 document.addEventListener("mousemove",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv)cmpHover(e,sv)});
 document.addEventListener("mouseout",e=>{const sv=e.target.closest&&e.target.closest("svg.cmp");if(sv&&!sv.contains(e.relatedTarget))cmpLeave(sv)});
 
-export { HM, HMNEG, HMPOS, hmColor, hmRender, lerpC, tbn };
+export { HM, hmColor, hmRender };

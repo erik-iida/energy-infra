@@ -1,9 +1,9 @@
 """Front-end module rules (spec 3): a feature imports only from js/core/ and its own folder; core never imports a feature;
 every module is reachable from js/app.js.
 
-The page was cut into modules mechanically (step 2, push 4), so some cross-feature imports remain from the single-file
-days. They are listed in KNOWN below and are removed one by one (step 2, push 6: shared code moves to core/). The test
-fails on any NEW cross-feature import, and reminds you to shorten the list when one has gone.
+Shared code lives in js/core/ (data, feed, chart helpers, colours, tables, router). A feature talks to another feature
+only through core: the router's registerTab / registerMap, shared state S, or data modules. If two features need the
+same function, move it to core/ rather than importing across. KNOWN is the (empty) list of tolerated exceptions.
 """
 import re
 from pathlib import Path
@@ -12,34 +12,8 @@ ROOT = Path(__file__).resolve().parents[1]
 JS = ROOT / "web" / "js"
 IMPORT = re.compile(r'^import (?:\{[^}]*\} from )?["\']([^"\']+)["\'];', re.M)
 
-# (importing module, imported module) pairs that still cross a feature boundary; shrink, never grow
-KNOWN = {
-    ("core/cmp.js", "features/market/market.js"),
-    ("core/router.js", "features/map/view.js"),
-    ("features/compare/compare.js", "features/market/market.js"),
-    ("features/flags/drilldown.js", "features/data/data.js"),
-    ("features/flags/table.js", "features/data/data.js"),
-    ("features/map/events.js", "features/system/system.js"),
-    ("features/map/layers/dc.js", "features/system/system.js"),
-    ("features/map/layers/gas.js", "features/system/system.js"),
-    ("features/map/layers/zones.js", "features/market/heatmap.js"),
-    ("features/map/layers/zones.js", "features/system/system.js"),
-    ("features/map/sidebar.js", "features/compare/compare.js"),
-    ("features/map/view.js", "features/compare/compare.js"),
-    ("features/map/view.js", "features/market/market.js"),
-    ("features/map/view.js", "features/system/system.js"),
-    ("features/map/view.js", "features/flags/table.js"),
-    ("features/map/view.js", "features/data/data.js"),
-    ("features/map/view.js", "features/newsletter/newsletter.js"),
-    ("features/market/capture.js", "features/system/system.js"),
-    ("features/market/market.js", "features/compare/compare.js"),
-    ("features/newsletter/newsletter.js", "features/data/data.js"),
-    ("features/system/gie.js", "features/map/layers/gas.js"),
-    ("features/system/system.js", "features/map/sidebar.js"),
-    ("features/system/system.js", "features/market/heatmap.js"),
-    ("features/system/system.js", "features/market/market.js"),
-    ("features/system/system.js", "features/market/capture.js"),
-}
+# (importing module, imported module) pairs allowed to cross a feature boundary: none since step 2 push 6
+KNOWN: set[tuple[str, str]] = set()
 
 
 def modules() -> dict[str, list[str]]:

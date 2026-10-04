@@ -21,5 +21,13 @@ const arrow=d=>d==null?"":"<span class='arr' style='transform:rotate("+d+"deg)' 
 const ms=u=>u==null?"–":u.toFixed(1)+" m/s";
 function hourAt(sv,e,pad){const r=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,x=(e.clientX-r.left)/r.width*vb.width;return Math.max(0,Math.min(NT-1,Math.round((x-pad)/(vb.width-2*pad)*(NT-1))))}
 function dtip(e,t){const d=$("dtip");d.style.display="block";d.textContent=t;const w=d.offsetWidth,hh=d.offsetHeight;d.style.left=(e.clientX+14+w>innerWidth-8?Math.max(8,e.clientX-14-w):e.clientX+14)+"px";d.style.top=Math.max(8,Math.min(e.clientY+14,innerHeight-hh-8))+"px"}
+function pathOf(v,x,y,a,b){let d="",on=false;for(let h=a;h<=b;h++){const q=v[h];if(q==null){on=false;continue}d+=(on?"L":"M")+x(h).toFixed(1)+","+y(q).toFixed(1);on=true}return d}
+function tsSVG(W,H,n,series,lo,hi,now,lbl){const x=i=>3+(W-6)*i/Math.max(1,n-1),y=v=>H-2-(H-6)*(Math.min(hi,Math.max(lo,v))-lo)/((hi-lo)||1);
+ let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+lbl+"</text>";
+ if(lo<0)s+="<line class='ax' stroke-dasharray='2 3' x1='3' x2='"+(W-3)+"' y1='"+y(0)+"' y2='"+y(0)+"'/><text class='tl' x='"+(W-3)+"' y='"+(y(0)-3)+"' text-anchor='end'>0</text>";
+ if(now!=null)s+="<line class='nowl' x1='"+x(now)+"' x2='"+x(now)+"' y1='0' y2='"+H+"'/>";
+ series.forEach(se=>{const b=now==null?n-1:now;s+="<path class='ln "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,0,b)+"'/>";if(now!=null&&now<n-1)s+="<path class='ln fc "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,now,n-1)+"'/>"});
+ return s}
+const axl=(W,H,a,m,b,mx)=>"<text class='tl' x='3' y='"+(H+11)+"'>"+a+"</text>"+(m?"<text class='tl' x='"+mx+"' y='"+(H+11)+"' text-anchor='middle'>"+m+"</text>":"")+"<text class='tl' x='"+(W-3)+"' y='"+(H+11)+"' text-anchor='end'>"+b+"</text>";
 
-export { CO, UMAX, aggW, arrow, chartSVG, dtip, fut, hourAt, line, mean, ms, past };
+export { CO, UMAX, aggW, arrow, axl, chartSVG, dtip, fut, hourAt, line, mean, ms, past, pathOf, tsSVG };

@@ -5,16 +5,8 @@ import { $, css } from "../../core/util.js";
 import { wakeFarm, wd } from "../../core/wake.js";
 import { cur } from "../../core/feed.js";
 import { COASTL, COASTLB, D2R, M, P, Pinv, V, WORLD, clampV, cx, mercInv, mercY, pxm, sl, viewBox, zMin } from "./canvas.js";
-import { csSync } from "../../core/flags.js";
 import { MO } from "./layers/zones.js";
 import { paint } from "./paint.js";
-import { sidebar } from "./sidebar.js";
-import { dash } from "../compare/compare.js";
-import { market } from "../market/market.js";
-import { system } from "../system/system.js";
-import { flagsTab } from "../flags/table.js";
-import { dataTab } from "../data/data.js";
-import { nwsTab } from "../newsletter/newsletter.js";
 let anim=0,paintReq=0; // fly-to animation frame and pending repaint frame (moved here from canvas.js: only this file sets them)
 function coastPath(){const p=new Path2D(),v=viewBox();for(let q=0;q<COASTL.length;q++){const r=COASTL[q],b=COASTLB[q];if(b[2]<v[0]||b[0]>v[2]||b[3]<v[1]||b[1]>v[3])continue;let lx=1e9,ly=1e9;for(let i=0;i<r.length;i+=2){const[x,y]=P(r[i],r[i+1]);if(!i){p.moveTo(x,y);lx=x;ly=y}else if(Math.abs(x-lx)+Math.abs(y-ly)>1.2||i>=r.length-2){p.lineTo(x,y);lx=x;ly=y}}}return p}
 function bbox(c){if(GROUPS[c]){let a=[180,90,-180,-90];GROUPS[c].forEach(m=>{const b=bbox(m);if(b[2]-b[0]<200){a=[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])]}});return a}
@@ -27,7 +19,6 @@ function flyTo(t,ms=500){cancelAnimationFrame(anim);const a={lon:V.lon,lat:V.lat
 function zoomAt(x,y,f){const[lon,lat]=Pinv(x,y);V.s=Math.min(4e5,Math.max(zMin(),V.s*f));const[l2,a2]=Pinv(x,y);V.lon+=lon-l2;V.lat=mercInv(mercY(V.lat)+mercY(lat)-mercY(a2));clampV();repaint()}
 function repaint(){if(!paintReq)paintReq=requestAnimationFrame(()=>{paintReq=0;paint()})}
 // Country / region picker with flags: the native <select> stays the source of truth (hidden), this draws a searchable list over it
-function draw(){csSync();if(S.tab==="cmp"){dash();sidebar();return}if(S.tab==="mkt"){market();sidebar();return}if(S.tab==="sys"){system();sidebar();return}if(S.tab==="flg"){flagsTab();sidebar();return}if(S.tab==="nws"){nwsTab();sidebar();return}if(S.tab==="dat"){dataTab();sidebar();return}paint();sidebar()}
 // Wake deficit field on a grid aligned with the wind: fine across the wakes, coarser along them, so thin
 // streaks stay crisp. Colour = one sequential ramp; tiny deficits fully transparent (no box edge).
 const RAMP=[[68,1,84],[72,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[109,205,89],[180,222,44],[253,231,37]]; // viridis
@@ -67,4 +58,4 @@ function glyph(f,r,x,y,i){const Ro=ringR(f),cf=Math.max(0,Math.min(1,r.pw/Math.m
 function scaleBar(W,H){const pm=pxm();let km=[1,2,5,10,20,50,100,200,500].find(v=>v*1000*pm>=70)||500;const w=km*1000*pm;
  cx.fillStyle=css("--ink");cx.font="12px sans-serif";const up=$("attr").style.display==="block"?$("attr").offsetHeight+4:0;cx.fillText(km+" km",W-16-w,H-16-up);cx.fillRect(W-16-w,H-12-up,w,2)}
 
-export { HID, LCAT, anim, bbox, catOn, coastPath, draw, fcol, flyTo, glyph, heat, heatLegend, legSync, repaint, scaleBar, zoomAt };
+export { HID, LCAT, anim, bbox, catOn, coastPath, fcol, flyTo, glyph, heat, heatLegend, legSync, repaint, scaleBar, zoomAt };

@@ -2,12 +2,12 @@
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { S } from "../../../core/data.js";
 import { $, css } from "../../../core/util.js";
-import { MK, N0, NT } from "../../../core/feed.js";
+import { MK, N0, NT, tbn } from "../../../core/feed.js";
+import { MIXC, SYS, sysData } from "../../../core/sysdata.js";
+import { HMNEG, HMPOS, lerpC } from "../../../core/colours.js";
 import { P, cx, viewBox } from "../canvas.js";
 import { BM } from "../tiles.js";
 import { legSync, repaint } from "../view.js";
-import { HMNEG, HMPOS, lerpC, tbn } from "../../market/heatmap.js";
-import { MIXC, SYS, sysData } from "../../system/system.js";
 // ---- market overlay: bidding zones coloured by day-ahead price or BESS spread (web/data/zones.json) ----
 const MZ={d:null,loading:false,paths:[]};let MO="now";  // the site always opens on the current price
 const MOL={now:"Day-ahead price now",avg:"Day-ahead price, last 24 h average",next:"Day-ahead price, tomorrow's average",tb2:"TB2 spread, last 24 h",tb4:"TB4 spread, last 24 h"};

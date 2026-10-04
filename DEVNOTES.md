@@ -19,7 +19,8 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   (ct2a_madsen + area-overlap + squared sum for NOJ; ceps 0.2, ctlim 0.899, ct2a_mom1d, linear sum on effective
   ws for Bastankhah). Verified within 0.12 % of farm power against PyWake on 30 farm/wind cases. Keep them in sync
   if pipeline/wake.py changes. Model names are identical in both places.
-- Web page is plain HTML/JS in `web/index.html` (no build step). It loads `data/site.json` + `data/feed.json`.
+- Web page is plain HTML/JS with no build step: `web/index.html` (shell + bootstrap), `web/css/base.css`, ES modules under
+  `web/js/` (see "Spec 3 step 2" below and docs/ARCHITECTURE.md). It loads `data/site.json` + `data/feed.json`.
   Map heatmap uses in-browser Jensen/Gaussian; Compare tab uses the PyWake numbers from the feed.
 
 ## Market module (pipeline/market.py)
@@ -184,8 +185,8 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 ## Late Oct 2-3 2026: GridEconomics
 - Renamed "GridEconomics" (page title, heading, README); repo and URL stay energy-infra
   (https://erik-iida.github.io/energy-infra/ - the bare erik-iida.github.io has no site).
-- web/index.html is the only page source (one file: CSS + HTML + JS). Edit it directly; check the script with
-  `node --check` on the extracted <script> and test with playwright against `python -m http.server` in web/.
+- Page source: `web/index.html` + `web/css/base.css` + `web/js/**` (since 4 Oct 2026; one file before). Check with
+  `python -m pytest tests -q` (incl. node --check of every module) and the smoke test, or playwright against `python -m http.server` in web/.
   The committed web/data/feed.json is stale (the hourly workflow deploys a fresh one without committing it):
   for local tests inject a `market` block into a copy, never commit it.
 - Map projection is Web Mercator (V.s = px per degree of longitude, sl() = px per degree of latitude at the
@@ -697,7 +698,7 @@ Nothing visible changed on the site. Added:
 - `.github/workflows/checks.yml`: ruff (errors only: E9,F63,F7,F82), pytest, smoke test, screenshots as artifact. Separate
   from hourly-feed: a red check never blocks a deploy.
 - Wake parity test extracts code between `const URG=` .. `const CT=` and the `/* in-browser wake models */` block up to
-  `function spacingOf`: keep those markers (or update the test) when splitting index.html in step 2.
+  `function spacingOf` from the page JavaScript (`tests/pagejs.py`, today `web/js/core/wake.js`): keep those markers or update the test.
 
 ## Spec 3 step 5: fast deploy (Oct 4 2026)
 - `hourly.yml` = build job (pipeline, Data-tab export, newsletter, meta.json, private Cloudflare copy) that uploads the
@@ -760,11 +761,39 @@ that all failed (circuit breaker), ENTSO-E 4 s for 20 countries. The System tab 
   the 2-hourly schedule runs `auto`: backfill while ended months are missing, else `recent` (last 2 days + tomorrow).
   Daily 12:35 UTC keeps the 4-day window for revisions.
 
+## Spec 3 step 2: index.html split into modules (Oct 4 2026)
+Six pushes, no visual change (15 baseline screenshots pixel-identical after each). Decisions: docs/DECISIONS.md; layout and
+rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
+- `web/index.html` = tab bar, panes, `<link css/base.css>`, `<script config.js>` and a bootstrap that fetches site.json /
+  feed.json (`window.SITE` / `window.FEED`) and then loads `js/app.js` as `<script type="module">`. 42 lines.
+- `web/js/core/` (data, util, load, wake, feed, sysdata, gasdata, colours, chart, flags, table, cmp, router, sources) and
+  `web/js/features/{map (+layers/), compare, market, system, flags, data, newsletter}/`. 37 modules, every one with a
+  header line saying what it holds. Imports / exports were generated from scope analysis (every free name = import), so
+  they are exact; the module evaluation order equals the old script order (`app.js` imports every module in that order)
+  and was checked for load-time forward references.
+- The former `function main(DATA,FEED){...}` closure is gone: module scope replaces it. Consequence: nothing is a global
+  any more (`F`, `S`, `tab()` are not reachable from the console; use the module imports, or `window.GAS` which was
+  already exposed).
+- Router registry (`core/router.js`): tabs call `registerTab(id,{el,render})`, the map calls `registerMap({paint,pane,goto})`;
+  `tab()`, `draw()`, `go()` live there and name no feature. Zero cross-feature imports (`tests/test_modules.py`).
+- Only logic edits: `anim`/`paintReq` owned by `map/view.js`; `wakeFarm(f)` in `core/wake.js` sets WTI/WHH (was assigned
+  from `heat()` too); `MK` declared in `core/feed.js`; `gasLoad` calls `draw()` instead of `repaint()`+`system()`; the
+  Market tab's click handler moved from the System section to `market/market.js`.
+- `web/config.js` (git-ignored) replaces the `sed` on `__CARTO_KEY__`: `scripts/build_config.py` writes `window.CFG`
+  (cartoKey, builtAt, schema) in hourly.yml and deploy.yml; `tiles.js` reads it and keys the basemap thumbnails.
+- Tests: `tests/pagejs.py` (where the page JS lives), `test_page_syntax` (node --check per module; Node 22 in checks.yml),
+  `test_modules.py` (import rules, reachability from app.js). Local pixel comparison against the baseline was done with a
+  throw-away script; a permanent screenshot-diff assertion in the smoke test is a small follow-up.
+- Not done in this step (spec 3): the map-layer contract (`draw/hitTest/legend/needs`), per-feature CSS, long minified
+  lines inside the modules (median 130 chars, a few > 1,000: a format-only commit is possible now that the files are small).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".
-- Flags drill-down Phase 2: "copy context as text" first, congestion marker once NTC is in the store, starred story
-  candidates (browser-only).
+- Flags drill-down Phase 2: "copy context as text" first (spec 4 step 3; goes into `js/features/flags/`), congestion marker once
+  NTC is in the store, starred story candidates (browser-only).
+- Spec 3 next: step 3 (source vs build: `data/static/`, `dist/`, no script writes into `web/`), then step 4 (`common/`,
+  collect / derive / render) and the rest of step 6 (dataset registry, pinned dependencies, freshness labels from meta.json).
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,
   whether the border was at its limit. Revisit names for multi-zone countries in tables.
 - Neighbour load: one ts file is 90-340 KB raw (~50 KB gzipped); DE-LU opens 11 neighbours. Add `browse/day/<day>.json`

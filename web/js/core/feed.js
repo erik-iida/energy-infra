@@ -1,6 +1,6 @@
 /* Hourly time axis (24 h back, 24 h ahead), per-farm wind and PyWake series from feed.json (or the synthetic fallback), current wind and output.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
-import { F, FEED, inC } from "./data.js";
+import { F, FEED, S, inC } from "./data.js";
 import { $ } from "./util.js";
 import { K_DEF, run } from "./wake.js";
 /* ---------- time series: pipeline feed, or synthetic fallback ---------- */
@@ -20,5 +20,14 @@ function curWind(f){return LIVE()&&f.U48[N0]!=null?[f.U48[N0],f.D48[N0]]:[+$("U"
 function cur(f){const m=$("M").value,[U,D]=curWind(f),k=+$("K").value,key=m+U+"|"+D+"|"+k;if(f._k!==key){f._k=key;f._r=run(f,m,U,D,k)}return f._r}
 const now=c=>F.filter(f=>!c||inC(f,c)).reduce((a,f)=>a+cur(f).pw,0);
 const MK=FEED&&FEED.market; // market block of the feed (prices, system data); null without a feed
+function series(){if(!FEED){browserSeries(S.fm);browserSeries("nowake")}F.forEach(f=>{f.P=f.S[S.fm];f.Fr=f.S.nowake})}
+function agg(fs){const P=Array(NT).fill(null),Fr=Array(NT).fill(null);let inst=0;
+ fs.forEach(f=>{inst+=f.inst;for(let h=0;h<NT;h++){if(f.P[h]!=null)P[h]=(P[h]||0)+f.P[h];if(f.lay&&f.Fr[h]!=null)Fr[h]=(Fr[h]||0)+f.Fr[h]}});return{P,inst,Fr}}
+function tbn(v,n){const o=v.filter(x=>x!=null).sort((a,b)=>a-b);if(o.length<20)return null;const m=a=>a.reduce((p,q)=>p+q,0)/a.length;return m(o.slice(-n))-m(o.slice(0,n))}
+function capStats(fs,price,a,b){let e=0,rev=0,sp=0,np=0,wc=0;
+ for(let h=a;h<=b;h++){const p=price[h];if(p==null)continue;np++;sp+=p;let g=0;
+  fs.forEach(f=>{const v=f.P[h];if(v!=null){g+=v;if(f.lay&&f.Fr[h]!=null)wc+=(f.Fr[h]-v)*p}});e+=g;rev+=g*p}
+ return{base:np?sp/np:null,cap:e>0?rev/e:null,e,wc,np}}
+function farmCap(f){const pr=MK&&f.zone&&MK.prices[f.zone];if(!pr)return{cap:null,wc:null};const s=capStats([f],pr,0,N0);return{cap:s.cap,wc:f.lay?s.wc:null}}
 
-export { HRS, LIVE, MK, MODELS, N0, NP, NT, SRC, browserSeries, cur, curWind, dl, hl, now };
+export { HRS, LIVE, MK, MODELS, N0, NP, NT, SRC, agg, capStats, cur, curWind, dl, farmCap, hl, now, series, tbn };

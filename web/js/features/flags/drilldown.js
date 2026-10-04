@@ -2,11 +2,11 @@
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { S } from "../../core/data.js";
 import { $ } from "../../core/util.js";
-import { ZONEFLAG, flagHTML } from "../../core/flags.js";
+import { dbJson } from "../../core/load.js";
 import { dtip } from "../../core/chart.js";
+import { ZONEFLAG, flagHTML } from "../../core/flags.js";
 import { tab } from "../../core/router.js";
 import { FL, flagsTab } from "./table.js";
-import { dbJson } from "../data/data.js";
 /* ---------- Flags drill-down: click a fired signal to see the CET day behind it (spec 1, step 1) ---------- */
 /* Hourly series: web/data/browse/ts/<zone>.json (the Data tab export). Older days: browse/flags/<day>.json (FLAG_DAYS kept). */
 const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0};

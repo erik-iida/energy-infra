@@ -1,35 +1,21 @@
 /* Market tab: day-ahead prices per zone, model check against actual offshore output, tab render.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
-import { F, S, inC, sum } from "../../core/data.js";
+import { COUNTRIES, F, S, inC, sum } from "../../core/data.js";
 import { $, fmt } from "../../core/util.js";
-import { MK, MODELS, N0, NP, NT, dl } from "../../core/feed.js";
-import { ZONEFLAG, selZones } from "../../core/flags.js";
-import { series } from "../compare/compare.js";
-import { dtip } from "../../core/chart.js";
+import { MK, MODELS, N0, NP, NT, dl, series } from "../../core/feed.js";
+import { axl, dtip, tsSVG } from "../../core/chart.js";
+import { CFLAG, ZONEFLAG, selZones } from "../../core/flags.js";
+import { keepScroll, makeSortable } from "../../core/table.js";
 import { CMP, cmpRender } from "../../core/cmp.js";
+import { go, registerTab } from "../../core/router.js";
 import { HM, hmRender } from "./heatmap.js";
-import { capDraw, capSection, fxNote, makeSortable } from "./capture.js";
+import { capDraw, capRefresh, capSection, fxNote } from "./capture.js";
 /* ---------- Market tab (day-ahead prices + actual generation) ---------- */
 const ZN={"DK1":"Denmark West (DK1)","DK2":"Denmark East (DK2)","DE-LU":"Germany–Luxembourg","NL":"Netherlands","BE":"Belgium","FR":"France","SE4":"Sweden South (SE4)","IE(SEM)":"Ireland (SEM)","PT":"Portugal","ES":"Spain"};
 const CCN={de:"Germany",nl:"Netherlands",be:"Belgium",dk:"Denmark",fr:"France",se:"Sweden",ie:"Ireland",pt:"Portugal",es:"Spain",uk:"United Kingdom"};
 const HN={de:"Germany (DE-LU)",nl:"Netherlands",be:"Belgium",dk:"Denmark (DK1/DK2 blend)",fr:"France"};
 F.forEach(f=>{f.zone=MK?MK.farm_zone[String(f.id)]:null});
 let TIPS=[];
-const eur=v=>v==null||!isFinite(v)?"–":(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+" M€":Math.abs(v)>=1e4?Math.round(v/1e3)+" k€":Math.round(v).toLocaleString()+" €");
-const pm=v=>v==null||!isFinite(v)?"–":v.toFixed(1)+" €/MWh";
-function capStats(fs,price,a,b){let e=0,rev=0,sp=0,np=0,wc=0;
- for(let h=a;h<=b;h++){const p=price[h];if(p==null)continue;np++;sp+=p;let g=0;
-  fs.forEach(f=>{const v=f.P[h];if(v!=null){g+=v;if(f.lay&&f.Fr[h]!=null)wc+=(f.Fr[h]-v)*p}});e+=g;rev+=g*p}
- return{base:np?sp/np:null,cap:e>0?rev/e:null,e,wc,np}}
-function farmCap(f){const pr=MK&&f.zone&&MK.prices[f.zone];if(!pr)return{cap:null,wc:null};const s=capStats([f],pr,0,N0);return{cap:s.cap,wc:f.lay?s.wc:null}}
-function pathOf(v,x,y,a,b){let d="",on=false;for(let h=a;h<=b;h++){const q=v[h];if(q==null){on=false;continue}d+=(on?"L":"M")+x(h).toFixed(1)+","+y(q).toFixed(1);on=true}return d}
-function tsSVG(W,H,n,series,lo,hi,now,lbl){const x=i=>3+(W-6)*i/Math.max(1,n-1),y=v=>H-2-(H-6)*(Math.min(hi,Math.max(lo,v))-lo)/((hi-lo)||1);
- let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+lbl+"</text>";
- if(lo<0)s+="<line class='ax' stroke-dasharray='2 3' x1='3' x2='"+(W-3)+"' y1='"+y(0)+"' y2='"+y(0)+"'/><text class='tl' x='"+(W-3)+"' y='"+(y(0)-3)+"' text-anchor='end'>0</text>";
- if(now!=null)s+="<line class='nowl' x1='"+x(now)+"' x2='"+x(now)+"' y1='0' y2='"+H+"'/>";
- series.forEach(se=>{const b=now==null?n-1:now;s+="<path class='ln "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,0,b)+"'/>";if(now!=null&&now<n-1)s+="<path class='ln fc "+(se.cls||"")+"' d='"+pathOf(se.v,x,y,now,n-1)+"'/>"});
- return s}
-const axl=(W,H,a,m,b,mx)=>"<text class='tl' x='3' y='"+(H+11)+"'>"+a+"</text>"+(m?"<text class='tl' x='"+mx+"' y='"+(H+11)+"' text-anchor='middle'>"+m+"</text>":"")+"<text class='tl' x='"+(W-3)+"' y='"+(H+11)+"' text-anchor='end'>"+b+"</text>";
 function modSum(fs,k){let s=0,n=0;fs.forEach(f=>{if(f.P[k]!=null){s+=f.P[k];n++}});return n?s:null}
 function market(){series();const el=$("mkt");TIPS=[];
  if(!MK){el.innerHTML="<div class='feednote'><b>No market data yet.</b> The pipeline adds it on its next run with a real forecast source.</div>";return}
@@ -57,5 +43,10 @@ function market(){series();const el=$("mkt");TIPS=[];
  }
 $("mkt").onmousemove=e=>{const sv=e.target.closest("svg.mk,svg.mh");if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=TIPS[+sv.dataset.t](k);if(t)dtip(e,t);else $("dtip").style.display="none"};
 $("mkt").onmouseleave=()=>{$("dtip").style.display="none"};
+registerTab("mkt",{el:"mkt",render:market});
+$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;keepScroll(market);return}
+ const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;HM.hmPrice.sort=S.hms;hs.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===hs));hmRender("hmPrice");return}
+ const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;capRefresh();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;capRefresh();return}
+ const tr=e.target.closest("tr[data-cf]");if(tr){const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===tr.dataset.cf&&COUNTRIES.includes(n));if(nm)go(nm,null)}});
 
-export { ZN, axl, capStats, eur, farmCap, market, pathOf, pm, tsSVG };
+export { ZN, market };

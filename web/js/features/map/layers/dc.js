@@ -1,7 +1,7 @@
 /* DC interconnectors: ends placed in bidding zones, flow direction from the System data.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
+import { SYS } from "../../../core/sysdata.js";
 import { MZ } from "./zones.js";
-import { SYS } from "../../system/system.js";
 // ---- DC interconnectors: flow direction from the System data (cross-border physical flows, country level) ----
 // Each DC link's two ends are placed in a bidding zone (zones.json, point in polygon, else nearest zone within ~0.6°);
 // links whose ends are in two countries get the latest hourly border flow between those countries (import positive on

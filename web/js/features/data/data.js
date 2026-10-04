@@ -2,11 +2,12 @@
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { S } from "../../core/data.js";
 import { $ } from "../../core/util.js";
+import { dbJson } from "../../core/load.js";
+import { registerTab } from "../../core/router.js";
 /* ---------- Data tab: one flexible time-series browser (any variables x any zones) plus the installed-capacity view ---------- */
 /* web/data/browse/{index.json, ts/<zone>.json, capacity.json}, built from the `store` release by scripts/build_browse.py */
 const DB={idx:null,err:0,busy:0,mode:"ts",zs:["RO"],on:null,days:7,tz:"CET",desc:true,cache:{},open:{},tok:0,cap:null,cv:"cf",cf:"all",cur:null};
 const DBFIRST=["PL","CZ","SK","HU","RO","BG","SI","HR","RS","GR","BA","ME","MK","EE","LV","LT","DE-LU"];
-function dbJson(u){return fetch(u).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()})}
 function dbFmt(t,tz){if(tz==="UTC")return new Date(t*1000).toISOString().slice(0,16).replace("T"," ");return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Berlin",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(t*1000))}
 function dbNum(v,u){return v==null?"–":v.toLocaleString("en",{maximumFractionDigits:u&&u.endsWith("/MWh")?2:1})}
 function dbZonesAll(){const z=DB.idx.zones;return DBFIRST.filter(x=>z.includes(x)).concat(z.filter(x=>!DBFIRST.includes(x)))}
@@ -88,5 +89,4 @@ $("dat").addEventListener("click",e=>{let b;
  else if(b=e.target.closest("#cpv button")){DB.cv=b.dataset.v;capView()}
  else if(e.target.closest("#cpcsv"))capCsv()});
 $("dat").addEventListener("change",e=>{if(e.target.id==="cpf"){DB.cf=e.target.value;capView()}else if(e.target.id==="dbn"){DB.days=+e.target.value;tsRender()}});
-
-export { dataTab, dbJson };
+registerTab("dat",{el:"dat",render:dataTab});

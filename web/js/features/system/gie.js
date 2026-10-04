@@ -1,7 +1,7 @@
 /* System tab: gas storage and LNG (GIE AGSI+ / ALSI, data/gie.json) and the gas-supply card (ENTSOG).
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { S } from "../../core/data.js";
-import { GAS, gasLoad, gname } from "../map/layers/gas.js";
+import { GAS, gasLoad, gname } from "../../core/gasdata.js";
 import { system } from "./system.js";
 // ---- GIE: storage fill (AGSI+) and LNG send-out (ALSI), web/data/gie.json ----
 const GIE={d:null,loading:false};

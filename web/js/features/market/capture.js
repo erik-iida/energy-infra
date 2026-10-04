@@ -1,13 +1,15 @@
 /* Market tab: capture prices per technology (data/capture.json), sortable tables.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { GROUPS, S, isReg } from "../../core/data.js";
-import { $ } from "../../core/util.js";
-import { MK, N0 } from "../../core/feed.js";
+import { $, pm } from "../../core/util.js";
+import { MK, N0, capStats } from "../../core/feed.js";
+import { SYS } from "../../core/sysdata.js";
+import { HMPOS, lerpC } from "../../core/colours.js";
 import { ZONEFLAG, flagHTML, selZones } from "../../core/flags.js";
+import { colIsText, keepScroll, makeSortable, sortTab } from "../../core/table.js";
 import { CMP, cmpRender } from "../../core/cmp.js";
-import { HMPOS, hmColor, lerpC } from "./heatmap.js";
-import { ZN, capStats, market, pm } from "./market.js";
-import { SYS } from "../system/system.js";
+import { hmColor } from "./heatmap.js";
+import { ZN, market } from "./market.js";
 /* ---------- capture prices per technology (ENTSO-E, web/data/capture.json) ---------- */
 const CAP={d:null,loading:false};
 function capLoad(){if(CAP.d||CAP.loading)return;CAP.loading=true;fetch("data/capture.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){CAP.d=j;if(S.tab==="mkt")market()}}).catch(()=>{})}
@@ -57,24 +59,11 @@ function capSection(){capLoad();const D=CAP.d,cz=capCountry();
  else h+="<div class='tw' style='max-height:none'><table class='captab sortable' id='capAll'><thead><tr><th style='text-align:left' data-t='txt'>Zone</th>"+ms.map(m=>"<th>"+MON(m).replace(" ","<br>")+"</th>").join("")+"<th>12 m</th></tr></thead><tbody>"+rows.map(r=>"<tr data-cf='"+(ZONEFLAG[r.z]||"")+"'><td class='z'>"+flagHTML(ZONEFLAG[r.z]||"",6)+" "+r.z+"</td>"+ms.map(m=>{const v=val(r.z,m),c=D.zones[r.z][m],t=c&&c.t&&c.t[S.capt];return"<td style='"+col(v)+"' title='"+r.z+" · "+MON(m)+(m===cm?" (so far)":"")+(t?" · capture "+t[0].toFixed(1)+" €/MWh · baseload "+(c.b!=null?c.b.toFixed(1):"–")+" €/MWh · "+(c.b>0?Math.round(100*t[0]/c.b)+"%":"–")+" · "+Math.round(t[1]).toLocaleString()+" GWh · "+(100*(t[2]||0)).toFixed(1)+"% of output at negative prices":"")+"' data-v='"+(v==null?"":v.toFixed(2))+"'>"+(v==null?"":Math.round(v))+"</td>"}).join("")+"<td class='av' data-v='"+(r.a==null?"":r.a.toFixed(2))+"'>"+r0(r.a)+"</td></tr>").join("")+"</tbody></table></div>";
  h+="<div class='mut' style='font-size:12px'>"+(S.capm==="eur"?"Capture price":"Capture price as a share of the month's baseload (mean day-ahead) price")+" per bidding zone and month"+(ms.includes(cm)?"; the last month is so far":"")+". 12 m = output-weighted over the 12 latest complete months"+(l12.length<12?" ("+l12.length+" so far)":"")+"; zones sorted by it. Hover a cell for details; click a zone for all its technologies; click a column header to sort."+(D.complete?"":" Older months are still being filled in.")+"</div></div>";
  return h}
-function keepScroll(fn){const y=window.scrollY,els=[...document.querySelectorAll("#mkt,#main,main,.wrap")].map(e=>[e,e.scrollTop]);fn();els.forEach(([e,t])=>e.scrollTop=t);window.scrollTo(0,y)}
 function capRefresh(){const b=$("capbox");if(!b){market();return}keepScroll(()=>{b.innerHTML=capSection();capDraw();makeSortable($("mkt"))})}
 // sortable tables: click a header; numbers sort high-to-low first, text A-Z; rows with class 'pin' stay last
 S.tsort=S.tsort||{};
 // value of a cell for sorting: data-v if set, else the number in the text scaled by its unit (MW/GW, GWh/TWh, k€/M€)
-const UNIT={kW:1e-3,MW:1,GW:1e3,TW:1e6,kWh:1e-6,MWh:1e-3,GWh:1,TWh:1e3,"k€":1e3,"M€":1e6};
-function cellNum(c){if(!c)return null;let v=c.dataset.v!=null?c.dataset.v:c.textContent.trim();if(v===""||v==="–"||v==="n/a")return null;
- const m=String(v).replace(/,/g,"").replace(/−/g,"-").match(/(-?\d+(?:\.\d+)?)\s*(kWh|MWh|GWh|TWh|kW|MW|GW|TW|k€|M€)?/);if(!m)return null;return parseFloat(m[1])*(UNIT[m[2]]||1)}
-function colIsText(t,col){const th=t.tHead.rows[0].cells[col];if(th&&th.dataset.t==="txt")return true;const cs=[...t.tBodies[0].rows].map(r=>r.cells[col]).filter(c=>c&&c.textContent.trim()&&c.textContent.trim()!=="–");
- return cs.filter(c=>cellNum(c)!=null&&/^[\s\d.,−+\-]/.test(c.textContent.trim())).length<cs.length/2}
-function sortTab(t,col,dir){const tb=t.tBodies[0];if(!tb||!t.tHead)return;const all=[...tb.rows],rows=all.filter(r=>!r.classList.contains("pin")),pin=all.filter(r=>r.classList.contains("pin"));
- const txt=colIsText(t,col),num=r=>cellNum(r.cells[col]);
- rows.sort((a,b)=>{if(txt)return dir*(a.cells[col]?a.cells[col].textContent.trim():"").localeCompare(b.cells[col]?b.cells[col].textContent.trim():"");const x=num(a),y=num(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return-1;return dir*(x-y)});
- rows.concat(pin).forEach(r=>tb.appendChild(r));[...t.tHead.rows[0].cells].forEach((th,i)=>th.dataset.s=i===col?(dir>0?"a":"d"):"")}
 // every table with a header row in a tab becomes sortable; its sort is kept (by its headers) when the tab re-renders
-function makeSortable(root){if(!root)return;root.querySelectorAll("table").forEach(t=>{if(t.id==="ftab"||!t.tHead||!t.tBodies[0])return;t.classList.add("sortable");
- if(!t.id)t.id=root.id+":"+[...t.tHead.rows[0].cells].map(x=>x.textContent.trim()).join("|")});sortApply(root)}
-function sortApply(root){(root||document).querySelectorAll("table.sortable[id]").forEach(t=>{const q=S.tsort[t.id];if(q)sortTab(t,q.col,q.dir)})}
 document.addEventListener("click",e=>{const th=e.target.closest("table.sortable th");if(!th)return;const t=th.closest("table"),col=th.cellIndex,q=S.tsort[t.id],txt=colIsText(t,col);
  const dir=q&&q.col===col?-q.dir:(txt?1:-1);S.tsort[t.id]={col,dir};sortTab(t,col,dir)});
 function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.querySelectorAll("#mkt svg.cmp[data-z]").forEach(sv=>{const Z=D.zones[sv.dataset.z];if(!Z)return;
@@ -82,4 +71,4 @@ function capDraw(){const D=CAP.d;if(!D)return;const ms=D.months||[];document.que
  ser.push({id:"_b",label:"Baseload",col:"var(--ink)",dash:1,v:ms.map(m=>Z[m]?Z[m].b:null)});
  CMP[sv.id]={series:ser,a:0,b:ms.length-1,fmt:v=>Math.round(v)+"",H:280,right:150,xs:Math.max(1,Math.round(ms.length/8)),xl:k=>MON(ms[k]),tl:k=>MON(ms[k])+(ms[k]===curMonth()?" (so far)":"")+" · €/MWh",dots:1};cmpRender(sv.id)})}
 
-export { capDraw, capRefresh, capSection, fxNote, keepScroll, makeSortable };
+export { capDraw, capRefresh, capSection, fxNote };

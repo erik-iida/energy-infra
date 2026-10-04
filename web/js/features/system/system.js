@@ -1,42 +1,18 @@
 /* System tab: generation mix, load, residual load, prices and cross-border flows per country; country cards and comparison chart.
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { COUNTRIES, GROUPS, S, isReg } from "../../core/data.js";
-import { $, fmt } from "../../core/util.js";
+import { $, fmt, pm } from "../../core/util.js";
 import { MK, N0, NP, NT, dl, hl } from "../../core/feed.js";
-import { CFLAG, flagHTML } from "../../core/flags.js";
-import { go } from "../map/sidebar.js";
-import { dtip } from "../../core/chart.js";
+import { MIXC, SYS, SYSN, sysData } from "../../core/sysdata.js";
+import { axl, dtip, pathOf, tsSVG } from "../../core/chart.js";
+import { flagHTML } from "../../core/flags.js";
+import { keepScroll, makeSortable } from "../../core/table.js";
 import { CMP, cmpRender } from "../../core/cmp.js";
-import { HM, hmRender } from "../market/heatmap.js";
-import { axl, market, pathOf, pm, tsSVG } from "../market/market.js";
-import { capRefresh, keepScroll, makeSortable } from "../market/capture.js";
+import { go, registerTab } from "../../core/router.js";
 import { gasCard, gieCard, gieOverview } from "./gie.js";
 /* ---------- System tab: generation mix, load, prices, cross-border flows ---------- */
-const SYS=MK&&MK.system||{},SYSN={de:"Germany",fr:"France",nl:"Netherlands",be:"Belgium",dk:"Denmark",no:"Norway",se:"Sweden",pl:"Poland",at:"Austria",ch:"Switzerland",cz:"Czechia",sk:"Slovakia",hu:"Hungary",ro:"Romania",bg:"Bulgaria",si:"Slovenia",hr:"Croatia",rs:"Serbia",gr:"Greece",ba:"Bosnia and Herzegovina",me:"Montenegro",mk:"North Macedonia",ee:"Estonia",lv:"Latvia",lt:"Lithuania",fi:"Finland",es:"Spain",pt:"Portugal",it:"Italy",gb:"United Kingdom",ie:"Ireland"};
 // stack order chosen so every adjacent pair passes the colour-vision checks in light and dark mode
-const MIXC=[["nuc","Nuclear",["nuclear"]],["coal","Coal & lignite",["fossil_brown_coal_lignite","fossil_hard_coal","fossil_coal_derived_gas"]],["hyd","Hydro",["hydro_run_of_river","hydro_water_reservoir","hydro_pumped_storage"]],
- ["bio","Biomass & waste",["biomass","waste"]],["gas","Gas",["fossil_gas"]],["oil","Oil",["fossil_oil"]],["woff","Wind offshore",["wind_offshore"]],["won","Wind onshore",["wind_onshore"]],["sol","Solar",["solar"]],
- ["oth","Other",["geothermal","others"]]];
-const NOTGEN=new Set(["load","residual_load","cross_border_electricity_trading","hydro_pumped_storage_consumption"]);
-const RENEW=["hydro_run_of_river","hydro_water_reservoir","biomass","geothermal","wind_offshore","wind_onshore","solar"];
 let STIPS=[];S.sys=null;
-function sysData(c){const d=SYS[c];if(!d||!d.series)return null;const se=d.series,known=new Set(MIXC.flatMap(m=>m[2]));
- const mix={};MIXC.forEach(([k,,ids])=>{mix[k]=[...Array(NP)].map((_,h)=>{let s=0,any=false;ids.forEach(i=>{const v=se[i]&&se[i][h];if(v!=null){s+=Math.max(0,v);any=true}});return any?s:0})});
- Object.keys(se).forEach(id=>{if(!known.has(id)&&!NOTGEN.has(id))se[id].forEach((v,h)=>{if(v!=null&&v>0)mix.oth[h]+=v})});
- const gen=[...Array(NP)].map((_,h)=>MIXC.reduce((a,[k])=>a+mix[k][h],0)),load=se.load||null;
- const ren=[...Array(NP)].map((_,h)=>RENEW.reduce((a,i)=>a+Math.max(0,(se[i]&&se[i][h])||0),0));
- let last=NP-1;while(last>0&&gen[last]===0)last--;
- // TSOs publish technologies at different speeds: the hours after a technology's last report are "not yet reported", not zero.
- // `last` = latest hour at which every material technology (>= 3 % of the window's energy) has reported, so shares and the stack stay valid.
- const lastRep={},tot=gen.reduce((a,b)=>a+b,0)||1;let lastOk=NP-1;
- MIXC.forEach(([k,,ids])=>{let l=-1;for(let h=0;h<NP;h++)if(ids.some(i=>se[i]&&se[i][h]!=null))l=h;
-  if(l>=0&&l<NP-1&&mix[k][l]<=0.02*Math.max(...mix[k]))l=NP-1;  // last reported value ~0 (night solar): omitted zeros, not a lag
-  lastRep[k]=l;if(l>=0&&l<NP-1&&mix[k].reduce((a,b)=>a+b,0)/tot>=0.03)lastOk=Math.min(lastOk,l)});
- last=Math.max(0,Math.min(last,lastOk));
- // residual load = load - wind - solar (as newsletter/registry.py), only where load and the technologies have reported
- const vreOk=["won","woff","sol"].some(k=>lastRep[k]>=0),res=load&&vreOk?[...Array(NP)].map((_,h)=>h<=last&&load[h]!=null?load[h]-mix.won[h]-mix.woff[h]-mix.sol[h]:null):null;
- const fl=d.flows||{},net=fl.sum||null,nb=Object.keys(fl).filter(k=>k!=="sum");
- return{c,mix,gen,load,ren,last,lastRep,res,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[],lag:d.lag_h||0}}
 const v1=v=>v==null||!isFinite(v)?"–":fmt(v);
 function stackSVG(D,W,H){const n=NP,x=i=>3+(W-6)*i/(n-1);let mx=1;for(let h=0;h<n;h++)mx=Math.max(mx,h<=D.last?D.gen[h]:0,D.load?D.load[h]||0:0);mx=Math.ceil(mx/1000)*1000;
  const y=v=>H-2-(H-6)*v/mx;let s="<line class='ax' x1='3' x2='"+(W-3)+"' y1='"+(H-2)+"' y2='"+(H-2)+"'/><text class='tl' x='3' y='9'>"+fmt(mx)+"</text>";
@@ -97,13 +73,10 @@ function system(){const el=$("sys");STIPS=[];
 }
 $("sys").onchange=e=>{if(e.target.id==="tcT"){S.tcT=e.target.value;keepScroll(system)}};
 $("sys").onclick=e=>{const b=e.target.closest("button[data-om]");if(b){S.offm=b.dataset.om;keepScroll(system);return}const c=e.target.closest(".card[data-s]");if(c){S.sys=c.dataset.s;const nm=SYSN[c.dataset.s];if(nm&&COUNTRIES.includes(nm)){go(nm,null)}else system()}};
-$("mkt").addEventListener("click",e=>{const b=e.target.closest("button[data-pr]");if(b&&!b.disabled){S.prng=b.dataset.pr;keepScroll(market);return}
- const hs=e.target.closest("button[data-hs]");if(hs){S.hms=hs.dataset.hs;HM.hmPrice.sort=S.hms;hs.parentNode.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===hs));hmRender("hmPrice");return}
- const ct=e.target.closest("button[data-ct]");if(ct){S.capt=ct.dataset.ct;capRefresh();return}const cm=e.target.closest("button[data-cm]");if(cm){S.capm=cm.dataset.cm;capRefresh();return}
- const tr=e.target.closest("tr[data-cf]");if(tr){const nm=Object.keys(CFLAG).find(n=>CFLAG[n]===tr.dataset.cf&&COUNTRIES.includes(n));if(nm)go(nm,null)}});
 function sysVline(sv,k){let l=sv.querySelector("line.xh");const vb=sv.viewBox.baseVal,n=+sv.dataset.n,xx=3+(vb.width-6)*k/Math.max(1,n-1);
  if(!l){l=document.createElementNS("http://www.w3.org/2000/svg","line");l.setAttribute("class","xh");l.setAttribute("y1","0");l.setAttribute("pointer-events","none");sv.appendChild(l)}l.setAttribute("y2",vb.height);l.setAttribute("x1",xx);l.setAttribute("x2",xx)}
 $("sys").onmousemove=e=>{const sv=e.target.closest("svg.sx");$("sys").querySelectorAll("svg.sx line.xh").forEach(l=>{if(l.parentNode!==sv)l.remove()});if(!sv){$("dtip").style.display="none";return}const n=+sv.dataset.n,r=sv.getBoundingClientRect(),k=Math.max(0,Math.min(n-1,Math.round((e.clientX-r.left)/r.width*(n-1)))),t=STIPS[+sv.dataset.t](k);sysVline(sv,k);if(t)dtip(e,t)};
 $("sys").onmouseleave=()=>{$("dtip").style.display="none";$("sys").querySelectorAll("svg.sx line.xh").forEach(l=>l.remove())};
+registerTab("sys",{el:"sys",render:system});
 
-export { MIXC, SYS, sysData, system };
+export { system };

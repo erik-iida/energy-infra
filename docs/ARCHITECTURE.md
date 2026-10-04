@@ -1,7 +1,7 @@
 # How GridEconomics is put together
 
 A plain-language map of the project: where the numbers come from, how they become files, and how the page turns
-those files into tabs. Kept current with every structural change (spec 3). Last update: 4 Oct 2026.
+those files into tabs. Kept current with every structural change (spec 3). Last update: 4 Oct 2026 (page split into modules).
 
 ## The short version
 
@@ -14,7 +14,8 @@ So there are two halves:
 
 - **Back end** (Python, in `pipeline/`, `collector/`, `newsletter/`, `scripts/`): fetches and computes. Runs on GitHub
   Actions on a timetable.
-- **Front end** (`web/index.html`: HTML, CSS and JavaScript in one file today): shows. Runs in your browser.
+- **Front end** (`web/`: `index.html` as the shell, `css/base.css`, one JavaScript module per feature under `js/`): shows.
+  Runs in your browser.
 
 The **data contract** (`docs/DATA_CONTRACT.md`) is the list of files between the two halves.
 
@@ -47,7 +48,7 @@ flowchart LR
     F3["site.json grid.json zones.json\ncapture.json gas.json gie.json bathy.*"]
   end
 
-  subgraph Page["web/index.html (front end)"]
+  subgraph Page["web/ (front end: one module per tab)"]
     T1["Map"] --- T2["Compare"] --- T3["Market"] --- T4["System"] --- T5["Flags"] --- T6["Newsletter"] --- T7["Data"]
   end
 
@@ -102,7 +103,7 @@ flowchart LR
 
 | Folder | What |
 |---|---|
-| `web/` | the page (today one file) and its `data/` folder |
+| `web/` | the page: `index.html` (shell + bootstrap), `css/base.css`, `js/core/` (shared), `js/features/<feature>/` (one folder per tab or map layer), `data/` |
 | `pipeline/` | the hourly job: forecasts, wake model, market and system data |
 | `collector/` | the data store and the collectors that fill it |
 | `newsletter/` | daily metrics, signal rules (Flags), the newsletter draft |
@@ -111,9 +112,40 @@ flowchart LR
 | `docs/` | this page, the data contract, the decision log |
 | `.github/workflows/` | the jobs above |
 
+## How the page is built (front end)
+
+`index.html` holds only the tab bar, the panes and a small bootstrap that loads `data/site.json` and `data/feed.json`
+and then `js/app.js`, the one entry module. Everything else is an **ES module**: a file that states at the top what it
+needs from other files (`import`) and at the end what it offers (`export`). The browser loads them itself; there is no
+build step or framework.
+
+```
+web/js/core/        shared by everyone
+  data.js           site data, feed, shared state S (selected country, farm, tab, ...)
+  feed.js           the 48-hour time axis, per-farm wind and PyWake series, market block MK, farm aggregation
+  sysdata.js        System data per country (generation mix, load, flows), technology groups and colours
+  gasdata.js        gas data (ENTSOG), loaded once on demand
+  wake.js           in-browser wake models (must match pipeline/wake.py; tested)
+  chart.js colours.js table.js cmp.js   SVG chart helpers, colour ramps, sortable tables, the many-series line chart
+  flags.js          country flags and the country picker
+  router.js         tab(t), draw(), go(country, farm); tabs and the map register themselves here
+  load.js util.js sources.js            JSON loading, $ / formatting, the folded "Sources and notes"
+web/js/features/
+  map/              canvas + projection, tiles, paint, side pane, events, and layers/ (gas, grid, dc, interconnection, bathy, zones)
+  compare/ market/ system/ flags/ data/ newsletter/   one folder per tab
+web/js/app.js       imports every module in order and runs the start-up code
+```
+
+Rules (checked by `tests/test_modules.py`): a feature imports only from `core/` and its own folder, never from another
+feature; `core/` never imports a feature; every module is reachable from `app.js`. A tab is a folder that calls
+`registerTab("id", {el: "<pane id>", render})`; the map calls `registerMap({paint, pane, goto})`. The router draws
+whichever is active and knows no tab by name, so adding a tab touches one new folder plus one line in `app.js`.
+
+Settings that differ per deploy (the CARTO basemap key, build time, schema versions) come from `web/config.js`, written
+by `scripts/build_config.py` at deploy time and never committed. Without it the page still works (keyless basemaps).
+
 ## Known weak spots (being addressed in spec 3)
 
-- `web/` is both source and output: about a dozen scripts write into `web/data/`.
-- Every push runs the whole hourly pipeline before the site updates (median ~6 min, often 15+; step 0 numbers in
-  DEVNOTES.md). Planned fix: a separate fast deploy for page changes.
-- The page is one 1,500-line file; planned split into one folder per tab.
+- `web/` is both source and output: about a dozen scripts write into `web/data/` (step 3 moves committed inputs to
+  `data/static/` and builds `dist/`).
+- The map's layers do not yet share one `draw / hitTest / legend` contract; planned with the next layer (power plants).

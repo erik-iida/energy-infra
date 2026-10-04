@@ -2,8 +2,8 @@
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
 import { $ } from "./util.js";
 import { dl, hl } from "./feed.js";
+import { pathOf } from "./chart.js";
 import { flagHTML, flagSVG } from "./flags.js";
-import { pathOf } from "../features/market/market.js";
 const CMP={};
 function niceRange(lo,hi){if(!(hi>lo)){hi=lo+1}const span=hi-lo,st=Math.pow(10,Math.floor(Math.log10(span/4))),m=[1,2,2.5,5,10].find(q=>span/(q*st)<=5)*st;return[Math.floor(lo/m)*m,Math.ceil(hi/m)*m,m]}
 // spec: {series:[{id,label,flag,v:[...]}], a, b (index range), unit, fmt(v), tipT(k)}

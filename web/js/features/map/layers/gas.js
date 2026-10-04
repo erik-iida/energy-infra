@@ -1,17 +1,10 @@
 /* Gas layer: ENTSOG interconnection points, LNG terminals and production entries (data/gas.json).
    ES module (spec 3 step 2): imports name what this file needs from other modules, the export list at the end what it offers. */
-import { S } from "../../../core/data.js";
 import { css } from "../../../core/util.js";
+import { GAS, gasLoad, gname } from "../../../core/gasdata.js";
 import { P, cx, viewBox } from "../canvas.js";
-import { HID, repaint } from "../view.js";
-import { system } from "../../system/system.js";
+import { HID } from "../view.js";
 // ---- gas: ENTSOG interconnection points, LNG terminals, production entry (web/data/gas.json, daily GWh/d) ----
-const GAS={d:null,loading:false,pts:[]};window.GAS=GAS;
-const GCN={DE:"Germany",DK:"Denmark",NL:"Netherlands",BE:"Belgium",FR:"France",PL:"Poland",AT:"Austria",CZ:"Czechia",SK:"Slovakia",HU:"Hungary",IT:"Italy",ES:"Spain",PT:"Portugal",
- SI:"Slovenia",HR:"Croatia",RO:"Romania",BG:"Bulgaria",GR:"Greece",LT:"Lithuania",LV:"Latvia",EE:"Estonia",FI:"Finland",SE:"Sweden",IE:"Ireland",UK:"United Kingdom",LU:"Luxembourg",
- CH:"Switzerland",AL:"Albania (TAP)",UA:"Ukraine",TR:"Türkiye",RS:"Serbia",MD:"Moldova",MK:"North Macedonia",NO:"Norway"};
-const gname=c=>GCN[c]||c;
-function gasLoad(){if(GAS.d||GAS.loading)return;GAS.loading=true;fetch("data/gas.json",{cache:"no-cache"}).then(r=>r.ok?r.json():null).then(j=>{if(j){GAS.d=j;repaint();if(S.tab==="sys")system()}}).catch(()=>{})}
 function gasDraw(){gasLoad();GAS.pts=[];if(!GAS.d)return;const v=viewBox(),gc=css("--m-gas"),pn=css("--panel");
  GAS.d.points.forEach((p,i)=>{const key=p.t==="lng"?"glng":p.t==="prod"?"gprod":"gip";if(HID.has(key))return;if(p.lon<v[0]||p.lon>v[2]||p.lat<v[1]||p.lat>v[3])return;
   const val=p.v[p.v.length-1]||0,r=2.5+Math.sqrt(val)/2.3,[x,y]=P(p.lon,p.lat);cx.beginPath();
@@ -22,4 +15,4 @@ function gasTip(i){const p=GAS.d.points[i],n=p.v.length,last=p.v[n-1],avg=p.v.re
  const dir=p.d&&p.d[1]?(p.d[0]?gname(p.d[0])+" → ":(p.from?p.from+" → ":"into "))+gname(p.d[1]):"";
  return p.n+" · gas "+ty+" · "+Math.round(last)+" GWh/d on "+GAS.d.days[n-1]+(dir?" ("+dir+")":"")+" · 8-day avg "+Math.round(avg)+" GWh/d · position approximate"}
 
-export { GAS, gasDraw, gasHit, gasLoad, gasTip, gname };
+export { gasDraw, gasHit, gasTip };

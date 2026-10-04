@@ -228,6 +228,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
     zones = core | set(ALL_PRICE_ZONES)
     countries = {COUNTRY_CODE[f["c"]] for f in farms if f["c"] in COUNTRY_CODE}
     rec = recent(cl, zones, countries, hours)
+    t_ec = round(time.time() - cl.t0, 1)
     lic = rec["licence"]
     open_zones = {z for z in zones if is_open(lic.get(f"price:{z}"))}
     market = {
@@ -242,8 +243,9 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
                        "zones": SYSTEM_COUNTRIES[c]}
                    for c, d in rec["system"].items()},
         "licences": {k: v for k, v in sorted(lic.items())},
-        "diag": {"calls": cl.calls, "errors": cl.errors[-10:]},
+        "diag": {"calls": cl.calls, "errors": cl.errors[-10:], "seconds": {"energy_charts": t_ec}},
     }
+    t1 = time.time()
     if entsoe.token():  # ENTSO-E fills the zones and countries Energy-Charts can't publish (CEE / SEE first)
         try:
             ec = entsoe.Client()
@@ -268,6 +270,8 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
         except Exception as ex:  # never block the feed
             market.setdefault("diag", {})["entsoe"] = {"error": repr(ex)[:300]}
             print(f"entsoe: failed {ex!r}")
+    market["diag"]["seconds"]["entsoe"] = round(time.time() - t1, 1)
+    t1 = time.time()
     try:  # Great Britain and Ireland: open sources without keys (Elexon BMRS, EirGrid); never blocks the feed
         from . import gbie_live
         gf = gbie_live.fetch(hours)
@@ -291,6 +295,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
     except Exception as ex:
         market.setdefault("diag", {})["gbie"] = {"error": repr(ex)[:300]}
         print(f"gbie: failed {ex!r}")
+    market["diag"]["seconds"]["gb_ie"] = round(time.time() - t1, 1)
     print(f"market: {cl.calls} calls, {len(cl.errors)} errors, open zones {sorted(open_zones)}, "
           f"restricted {market['restricted_zones']}")
     return market

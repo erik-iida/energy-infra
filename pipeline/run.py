@@ -60,6 +60,8 @@ def main(argv=None) -> None:
         k = cell_key(f["lat"], f["lon"])
         cells[k] = tuple(float(v) for v in k.split(","))
     fc_cells = get_forecasts(cells, args.source)
+    secs = {"forecast": round(time.time() - t0, 1)}  # wall time per stage, written to feed["timing_s"] (find slow stages)
+    t1 = time.time()
 
     now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
     past = [now - timedelta(hours=h) for h in range(config.HISTORY_HOURS - 1, -1, -1)]
@@ -96,6 +98,7 @@ def main(argv=None) -> None:
         results[str(f["id"])] = (ws, wd, P)
     if missing:
         print(f"warning: {missing} farms had no forecast")
+    secs["wake"] = round(time.time() - t1, 1)
 
     # write the past hours into the rolling history
     for i, d in enumerate(need_past):
@@ -140,6 +143,7 @@ def main(argv=None) -> None:
         "fc_hours": [iso(d) for d in future],
         "farms": feed_farms,
     }
+    t1 = time.time()
     if config.MARKET and args.source != "synthetic":
         try:
             from . import market
@@ -157,14 +161,20 @@ def main(argv=None) -> None:
             feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read
         except Exception as e:  # market data must never stop the wind feed
             print(f"market: failed ({e!r}); feed written without market data")
+    secs["market"] = round(time.time() - t1, 1)
+    secs["total_before_write"] = round(time.time() - t0, 1)
+    feed["timing_s"] = secs
     feed = {"schema": 1, **feed}  # data contract version (docs/DATA_CONTRACT.md); bump when a field the page reads changes
     config.FEED_JSON.write_text(json.dumps(feed, separators=(",", ":")), encoding="utf-8")
+    t1 = time.time()
     if os.environ.get("COLLECT_FARMS") == "1" and args.source != "synthetic":
         try:  # data store: per-farm wind and wake output (collector/farms.py); never blocks the feed
             from collector import farms as collect_farms
             collect_farms.record(feed, site, args.source)
         except Exception as e:
             print(f"collector: farm data not stored ({e!r})"[:300])
+    secs["store"] = round(time.time() - t1, 1)
+    print("timing (s): " + ", ".join(f"{k} {v}" for k, v in secs.items()))
     tot = sum(results[k][2]["turbopark"][np_ - 1] for k in results if np.isfinite(results[k][2]["turbopark"][np_ - 1]))
     print(f"{args.source}: {len(results)} farms, {len(times)} time steps, all farms now {tot / 1000:.2f} GW (TurbOPark), "
           f"{time.time() - t0:.0f} s -> {config.FEED_JSON.relative_to(config.ROOT)}")

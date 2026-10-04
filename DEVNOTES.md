@@ -915,7 +915,8 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
   (tiny file), plus `n_*` day counts (shown in the tooltip). 1 y therefore covers what the metrics table holds (backfill
   from 2024-01 is in the store; the daily metrics follow the metrics job).
 - New daily metric `gen_total` (registry VERSION 5, mean hourly generation of all types) for self-sufficiency: run the
-  metrics workflow with mode=all once so every past day gets it (until then `self` is empty in agg.json).
+  metrics workflow with mode=all once so every past day gets it (until then `self` is empty in agg.json). Done 4 Oct 2026
+  22:00: metrics mode=all + `rebuild_tabs`; live agg.json has `self` for all 46 zones, 1 y windows hold ~362 days.
 - `zones.js`: MO = metric, MWIN = period; legacy keys now/avg/next/tb2/tb4 still accepted by moSet; `S.moLast` holds the metric.
 
 ## Known gaps / next ideas

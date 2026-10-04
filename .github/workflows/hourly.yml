@@ -133,7 +133,7 @@ jobs:
         env:
           CARTO_KEY: ${{ secrets.CARTO_KEY }}
         run: |
-          if [ -n "$CARTO_KEY" ]; then sed -i "s/__CARTO_KEY__/${CARTO_KEY}/g" web/index.html web/js/app.js; echo "CARTO key set";
+          if [ -n "$CARTO_KEY" ]; then sed -i "s/__CARTO_KEY__/${CARTO_KEY}/g" web/index.html web/js/features/map/tiles.js; echo "CARTO key set";
           else echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
 
       # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.

@@ -30,5 +30,39 @@
   try{const r=await fetch("data/feed.json",{cache:"no-store"});if(r.ok)feed=await r.json()}catch(e){feed=null}
  }
  window.SITE=site;window.FEED=feed;
- const sc=document.createElement("script");sc.src="js/app.js";document.body.appendChild(sc)})();
+ // page script files, in load order (classic scripts sharing one global scope; push 4 turns them into ES modules)
+ const JS=[
+  "core/data.js",
+  "core/util.js",
+  "core/wake.js",
+  "core/feed.js",
+  "features/map/canvas.js",
+  "features/map/tiles.js",
+  "features/map/layers/gas.js",
+  "features/map/layers/grid.js",
+  "features/map/layers/dc.js",
+  "features/map/layers/interconnection.js",
+  "features/map/view.js",
+  "core/flags.js",
+  "features/map/layers/bathy.js",
+  "features/map/layers/zones.js",
+  "features/map/paint.js",
+  "features/map/sidebar.js",
+  "features/compare/compare.js",
+  "core/chart.js",
+  "core/router.js",
+  "core/cmp.js",
+  "features/market/heatmap.js",
+  "features/market/market.js",
+  "features/market/capture.js",
+  "features/system/system.js",
+  "features/system/gie.js",
+  "features/map/events.js",
+  "features/flags/table.js",
+  "features/flags/drilldown.js",
+  "core/sources.js",
+  "features/data/data.js",
+  "features/newsletter/newsletter.js",
+  "app.js"];
+ for(const f of JS){const sc=document.createElement("script");sc.src="js/"+f;sc.async=false;document.body.appendChild(sc)}})();
 </script></body></html>

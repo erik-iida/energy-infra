@@ -1,0 +1,88 @@
+# Publish the site (spec 3 step 5, "fast deploy"): the page from main + the data from the newest successful hourly build.
+#
+# Runs when the page changes (push to web/**), after a data job has committed new data (bot commits), by hand, and as the
+# last job of every hourly-feed run (workflow_call with that run's id). ~1 minute; it never runs the pipeline.
+# Data: the `built-data` artifact (public files only: feed.json without spark spreads, market_history.json, browse/,
+# newsletter/, meta.json) uploaded by hourly-feed's build job; everything else comes from the checkout.
+# If a data run fails, nothing new is uploaded and every deploy keeps using the last good artifact (kept 3 days).
+# Rollback: delete this file and restore `push` + the workflow_run list in hourly.yml (docs/DECISIONS.md).
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/deploy.yml"]
+  workflow_run:            # bot commits don't trigger push events: redeploy when a data job has finished
+    workflows: [gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture]
+    types: [completed]
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      run_id:
+        description: hourly-feed run whose built-data to deploy (empty = newest available)
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+  actions: read     # download the built-data artifact
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # one deploy at a time; a waiting deploy is replaced by a newer one (which fetches the newest data anyway)
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      # always the latest main: an hourly run that started before a page push must not publish the older page
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Data from the hourly build
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          if [ -z "$RUN_ID" ]; then
+            RUN_ID=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=built-data&per_page=20" \
+              -q '[.artifacts[] | select(.expired | not)][0].workflow_run.id')
+          fi
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "::error::no built-data artifact available (no successful hourly build in the last 3 days)"; exit 1
+          fi
+          echo "built-data from hourly run $RUN_ID"
+          rm -rf web/data/browse web/data/newsletter "$RUNNER_TEMP/bd"
+          gh run download "$RUN_ID" -n built-data -D "$RUNNER_TEMP/bd"   # gh refuses to overwrite files: unpack aside, then copy
+          cp -r "$RUNNER_TEMP/bd/." web/data/
+          ls -la web/data | head -30
+
+      - name: Check the site is complete
+        run: |
+          for f in web/index.html web/data/site.json web/data/feed.json; do
+            [ -s "$f" ] || { echo "::error::$f missing or empty; not deploying"; exit 1; }
+          done
+          [ -s web/data/browse/index.json ] || echo "::warning::no Data tab export in this build (Data/Flags tabs empty)"
+          python -c "import json; d=json.load(open('web/data/feed.json')); assert 'spark' not in (d.get('market') or {}), 'spark in public feed'; print('feed', d.get('generated'))"
+
+      # CARTO raster basemaps: the key is client-side by nature but stays out of the repo (see hourly.yml history)
+      - name: Basemap key (CARTO)
+        env:
+          CARTO_KEY: ${{ secrets.CARTO_KEY }}
+        run: |
+          if [ -n "$CARTO_KEY" ]; then sed -i "s/__CARTO_KEY__/${CARTO_KEY}/g" web/index.html; echo "CARTO key set";
+          else echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+      - id: deploy
+        uses: actions/deploy-pages@v4

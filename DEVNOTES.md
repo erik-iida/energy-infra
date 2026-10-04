@@ -698,6 +698,19 @@ Nothing visible changed on the site. Added:
 - Wake parity test extracts code between `const URG=` .. `const CT=` and the `/* in-browser wake models */` block up to
   `function spacingOf`: keep those markers (or update the test) when splitting index.html in step 2.
 
+## Spec 3 step 5: fast deploy (Oct 4 2026)
+- `hourly.yml` = build job (pipeline, Data-tab export, newsletter, meta.json, private Cloudflare copy) that uploads the
+  public data as artifact `built-data` (feed.json without spark, market_history.json, meta.json, browse/, newsletter/;
+  3 days), then calls `deploy.yml` with its run id.
+- `deploy.yml`: checkout of **main** (never an older SHA), newest `built-data` (or the given run's), completeness check
+  (site.json, feed.json, no spark in feed), CARTO key, Pages. Triggers: push to `web/**`, bot workflows completed, manual,
+  workflow_call. Concurrency `pages-deploy`, no cancelling.
+- hourly push trigger ignores `web/**`, `docs/**`, `tests/**`, `**/*.md`; per-step timeouts (pipeline 30, export 10,
+  newsletter 10).
+- Gotchas: `gh run download` refuses to overwrite, so it unpacks into $RUNNER_TEMP first. Artifacts can't be downloaded
+  from the cloud workspace (blob host blocked): check deploys on the live site. If no hourly build succeeded for 3 days,
+  deploy.yml fails with "no built-data artifact" (run hourly-feed by hand).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

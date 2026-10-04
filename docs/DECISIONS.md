@@ -13,3 +13,16 @@ rename, a deleted file group, a changed workflow trigger) need Erik's go-ahead a
 | 2026-10-04 | Public site content unchanged during the restructuring (`--no-fuel` / `SPARK` rules stay, no new public data) | Restructuring must not change what is published | — | Erik (default 6) |
 | 2026-10-04 | Order of work: step 0 (done) → step 1 safety net → step 5 fast deploy → step 2 split `index.html` → step 3 source/build → step 4 with spec 2 → step 6 | Step 0 showed the delay is the full pipeline on every push (median ~6, p90 ~17 min), not queueing; the fast deploy speeds up every later step | Spec order: steps 0–3, 4 with spec 2, 5 last | Erik (default 7, changed after step 0) |
 | 2026-10-04 | Folder names as in spec 3's target layout: `web/css`, `web/js/core`, `web/js/features/<feature>`, `common/`, `tools/probes/`, `data/static/`, `docs/`, `tests/fixtures`, `tests/e2e`, `dist/` | — | — | Erik (kickoff) |
+
+## Spec 3 step 5: fast deploy (4 Oct 2026)
+| Decision | Choice |
+|---|---|
+| Page-only pushes (`web/`, `docs/`, `tests/`, `*.md`) | `deploy.yml` only (~1 min), no pipeline |
+| Bot commits from data jobs (capture, gas, grid, osm-world, bathymetry, turbines) | `deploy.yml` only (Erik, 4 Oct) |
+| Deploy concurrency | one group `pages-deploy`; deploys wait instead of cancelling each other (Erik, 4 Oct) |
+| Data handed from build to deploy | `built-data` artifact, 3 days, **public files only** (spark stripped before upload: artifacts of a public repo are downloadable by any GitHub user) |
+| Private Cloudflare site | still deployed by the hourly build job only (page-only pushes reach it at the next hourly run) |
+| Follow-ups | 5b fewer API calls, 5c remove market_history.json: separate pushes after the deploy is verified |
+
+Rollback: delete `.github/workflows/deploy.yml`; in `hourly.yml` remove `paths-ignore`, restore the `workflow_run` list
+(gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture) and the Pages steps at the end of the job.

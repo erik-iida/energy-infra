@@ -249,7 +249,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   tier is non-commercial: farm wind/wake data needs a paid plan or another source once the product earns money.
 
 ### Findings from the first collect probe (Oct 3 2026)
-- A44 `classificationSequence` (probe: scripts/probe_seq.py -> data/raw/entsoe/probe_seq_log.txt). Position 1 (or
+- A44 `classificationSequence` (probe: tools/probes/probe_seq.py -> data/raw/entsoe/probe_seq_log.txt). Position 1 (or
   untagged) is the auction result: the site's DE-LU price equals seq 1 to the cent (max diff 0.005). AT, DE-LU, DK2
   and ES also carry a position-2 series: it differs from seq 1 by ~10 EUR/MWh on average (max 56), covers days whose
   auction has not run (at 00:44 UTC on 3 Oct it ran to the end of 5 Oct), has gaps (e.g. 5 missing quarter-hours on
@@ -262,7 +262,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   baseload and TB2/TB4 for AT, DE-LU, DK2 and ES were wrong. Both now use entsoe.price_seq(); capture cells carry
   `sq: 1`, older cells are refetched (all zones, 24 months, resumable) and AT/DE-LU/DK2/ES are left out of
   capture.json until their cells are redone (SEQ2_ZONES in fetch_capture.py).
-- A75 lag (scripts/probe_lag.py, uses the collector's parser): RO publishes ~41 h late (newest 1 Oct 07:30 UTC at
+- A75 lag (tools/probes/probe_lag.py, uses the collector's parser): RO publishes ~41 h late (newest 1 Oct 07:30 UTC at
   00:53 UTC on 3 Oct), AL and MK ~28 h, every other zone < 6 h. 29-30 Sep are complete for RO, so the lag is
   1.5-2.5 days, well inside the 4-day daily window (each day gets four retries). Note A03 curves: raw point counts
   per type say nothing about completeness, always check after forward-fill. The daily run now logs
@@ -358,7 +358,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   marginal technology inference; flags per day history table once metrics_daily has a year.
 
 ## Fuel prices and spark spreads (Oct 3 2026)
-- Gas: yfinance `TTF=F` (Yahoo, ICE Endex front month, EUR/MWh, daily since Oct 2017; probe: scripts/probe_yf.py ->
+- Gas: yfinance `TTF=F` (Yahoo, ICE Endex front month, EUR/MWh, daily since Oct 2017; probe: tools/probes/probe_yf.py ->
   data/raw/fuel/probe_yf_log.txt). Carbon: NO free EUA series on Yahoo (KEUA, EUA=F returned nothing; KRBN is a USD
   global-carbon ETF, only a rough proxy, not used). Optional manual carbon input: newsletter/eua_manual.csv
   (date,eua_eur_t; gitignored); without it spreads are FUEL-ONLY and the brief says so.
@@ -452,7 +452,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 
 ## Great Britain and Ireland (Oct 3 2026)
 - `collector/gbie.py` + `.github/workflows/collect-gbie.yml` (daily 12:50 UTC, backfill every 2 h from BACKFILL_FROM, state `gbie_state_v2.json`, same
-  concurrency group as the ENTSO-E collector). No keys. Probe log: data/raw/gbie/probe_log.txt (scripts/probe_gbie.py).
+  concurrency group as the ENTSO-E collector). No keys. Probe log: data/raw/gbie/probe_log.txt (tools/probes/probe_gbie.py).
 - **GB** (zone `GB`, Elexon BMRS Insights `data.elexon.co.uk/bmrs/api/v1`, 30 min): `gen_actual` from FUELHH (CCGT+OCGT -> B04, coal B05, oil B06,
   PS B10, NPSHYD B11, nuclear B14, biomass B01, other B20) and B1630 `/generation/actual/per-type/wind-and-solar` (solar B16, wind on/offshore B19/B18,
   incl. the embedded estimate; FUELHH WIND is not used, it would double count); `flows` from FUELHH interconnector fuels (INTFR+INTELEC+INTIFA2 -> FR,
@@ -478,7 +478,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 
 ## GB open data: the free equivalent of a paid GB API (Oct 3 2026)
 Erik asked for the data of a paid GB API (energydashboard.co.uk: its terms forbid redistributing raw data, so it can't feed the public store) from free
-sources. Probes 2-6 (scripts/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.txt) mapped what is open.
+sources. Probes 2-6 (tools/probes/probe_gb2..6.py, logs in data/raw/gbie/probe*_log.txt) mapped what is open.
 - `collector/gbunits.py` + `collect-gbunits.yml` (daily 13:10 UTC, backfill every 2 h from BACKFILL_FROM, state `gbunits_state.json`, concurrency group
   `store-gbopen`): **unit_output** store dataset = Elexon B1610 metered output per BM unit (`/datasets/B1610/stream?from&to&bmUnit=...` repeated; 25 units
   x 10 days per request; mw = MWh x 2, signed; `run` = settlement run). About 750 units: any BM unit with a fuel type except interconnectors, plus T/E/M
@@ -848,13 +848,32 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - Tests: `tests/test_store_s3.py` against a fake S3 (moto): merge, json, cache versioning, migration + verification.
   `boto3` is in requirements-collect.txt; `pull_store.py` still reads the public release (fine while that exists).
 
+## Spec 3 step 4D-E: Render packaging, probes (Oct 4 2026)
+- `Dockerfile` (python 3.12-slim + uv + `requirements.lock`, compiled from `requirements.in` = requirements.txt +
+  requirements-newsletter.txt; recompile with `uv pip compile requirements.in -o requirements.lock --python-version 3.12
+  --upgrade`), `.dockerignore`, `render.yaml` (cron jobs: hourly, collect entsoe auto / daily, metrics, gb-ie, gb-units,
+  gb-hist; env var group `gridecon`, secrets `sync: false`), `docs/DEPLOY.md` (what runs where, the one-time setup, the
+  variable table, the cutover and rollback). The image could not be built in the cloud session (no Docker daemon);
+  `docker-build.yml` builds it on Actions and runs the tests inside it (on Dockerfile / lock changes and by hand).
+- `jobs.hourly` = the whole hourly run in one command for Render: state pull, derive feed, tabs (every 3 h, mark in
+  state/), render site, `jobs.publish pages`, state push. `jobs/_state.py` mirrors `state/` to `<STORE_PREFIX>-state/` in
+  the bucket (STATE_SYNC=1) because Render cron jobs start from an empty machine (the earlier idea of a persistent disk
+  does not apply to cron jobs; the bucket does the same job). The 3-hourly tab files ride along in `state/tabs/`.
+- `jobs.publish pages`: zips `build/data` into asset `built-data.zip` of release `built-data` and dispatches `deploy.yml`
+  with `source=release`; deploy.yml downloads that instead of the Actions artifact. Needs a fine-grained GH_TOKEN on Render.
+- Probes: `scripts/probe_*.py` -> `tools/probes/`; the eleven `probe-*.yml` / `entsoe-probe.yml` replaced by one `probe.yml`
+  (workflow_dispatch, input `script`). Logs still land in `data/raw/*/probe*_log.txt`.
+- What stays on GitHub after the cutover: deploy.yml, checks.yml, docker-build.yml, probe.yml and the bots that commit
+  `data/static/` (capture, gas, grid, osm-world, bathymetry, turbines). Reason: they commit to git and are cheap.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".
 - Flags drill-down Phase 2: "copy context as text" first (spec 4 step 3; goes into `js/features/flags/`), congestion marker once
   NTC is in the store, starred story candidates (browser-only).
-- Spec 3 next: step 4 (`common/`, collect / derive / render entrypoints, probes to `tools/probes/`) and the rest of step 6
-  (dataset registry with `publishable`, pinned dependencies, freshness labels from meta.json, screenshot-diff assertion).
+- Spec 3 remaining (step 6): dataset registry with `publishable: true/false` enforced by `build_dist`, freshness labels on the
+  page from meta.json, a screenshot-diff assertion in the smoke test, failure notifications. Spec 2: the cutover itself
+  (docs/DEPLOY.md), then `jobs.publish cloudflare` when the public site moves next to the private one.
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,
   whether the border was at its limit. Revisit names for multi-zone countries in tables.
 - Neighbour load: one ts file is 90-340 KB raw (~50 KB gzipped); DE-LU opens 11 neighbours. Add `browse/day/<day>.json`

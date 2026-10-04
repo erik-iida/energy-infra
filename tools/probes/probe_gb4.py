@@ -7,7 +7,7 @@ from pathlib import Path
 
 import requests
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "gbie" / "probe4_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "gbie" / "probe4_log.txt"
 UA = {"User-Agent": "GridEconomics hobby project (erikiida10@gmail.com)"}
 out = []
 

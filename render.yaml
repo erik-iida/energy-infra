@@ -1,0 +1,123 @@
+# Render blueprint (https://render.com/docs/blueprint-spec): the back end as cron jobs, one Docker image (Dockerfile).
+# Connect the repo in the Render dashboard ("New > Blueprint"), fill the environment variables marked sync: false there
+# (docs/DEPLOY.md lists what each one is), and approve. Schedules are UTC, the same as the GitHub Actions ones today.
+#
+# What runs where after the cutover (docs/DEPLOY.md):
+#   Render   hourly feed + site, ENTSO-E and GB collectors, daily metrics            (this file)
+#   GitHub   deploy to Pages (1 min, dispatched by jobs.publish), the slow bots that commit data/static/
+#            (capture, gas, grid, osm-world, bathymetry, turbines), the checks on every push
+services:
+  - type: cron
+    name: gridecon-hourly
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "7 * * * *"
+    dockerCommand: python -m jobs.hourly
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-collect-entsoe
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "50 */2 * * *"          # auto = backfill while months are missing, else the last 2 days + tomorrow
+    dockerCommand: python -m jobs.collect entsoe auto
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-collect-entsoe-daily
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "35 12 * * *"           # the 4-day window: late TSO revisions (RO, MK publish 1-2 days late)
+    dockerCommand: python -m jobs.collect entsoe daily
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-metrics
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "10 13 * * *"           # after the daily collect; recomputes the last 10 days and fills finished months
+    dockerCommand: python -m jobs.derive metrics
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-collect-gb-ie
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "20 */2 * * *"
+    dockerCommand: python -m jobs.collect gb-ie auto
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-collect-gb-units
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "40 */2 * * *"
+    dockerCommand: python -m jobs.collect gb-units auto
+    envVars:
+      - fromGroup: gridecon
+  - type: cron
+    name: gridecon-collect-gb-hist
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    schedule: "20 14 * * *"
+    dockerCommand: python -m jobs.collect gb-hist daily
+    envVars:
+      - fromGroup: gridecon
+
+envVarGroups:
+  - name: gridecon
+    envVars:
+      # --- where data lives
+      - key: STORE_BACKEND
+        value: s3
+      - key: STORE_BUCKET
+        sync: false                   # the bucket name (Cloudflare R2 / Backblaze B2 / AWS S3)
+      - key: STORE_PREFIX
+        value: store
+      - key: STORE_S3_ENDPOINT
+        sync: false                   # R2: https://<account id>.r2.cloudflarestorage.com ; B2: https://s3.<region>.backblazeb2.com ; AWS: leave empty
+      - key: STORE_S3_REGION
+        value: auto
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: STATE_SYNC
+        value: "1"                    # forecast / wake / ENTSO-E caches mirrored to <STORE_PREFIX>-state/ in the bucket
+      # --- data sources
+      - key: ENTSOE_TOKEN
+        sync: false
+      - key: GIE_KEY
+        sync: false
+      - key: WM_SOURCE
+        value: openmeteo
+      - key: WM_OPENMETEO_MODEL
+        value: ecmwf_ifs
+      - key: WM_DAILY_CALL_CAP
+        value: "3000"
+      - key: ENTSOE_PER_MIN
+        value: "240"
+      - key: COLLECT_PER_MIN
+        value: "150"
+      - key: BACKFILL_FROM
+        value: "2024-01"
+      - key: COLLECT_FARMS
+        value: "1"
+      # --- publishing
+      - key: GITHUB_REPOSITORY
+        value: erik-iida/energy-infra
+      - key: GH_TOKEN
+        sync: false                   # fine-grained token: this repo only, Contents read/write + Actions read/write (jobs.publish)
+      - key: CARTO_KEY
+        sync: false
+      - key: SPARK
+        value: ""                     # "", "private" or "public" (DEVNOTES: private-data rule)
+      - key: TZ
+        value: UTC

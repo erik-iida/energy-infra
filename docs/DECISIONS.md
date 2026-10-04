@@ -63,3 +63,17 @@ Erik approved the step as proposed (including deleting tracked files from `web/d
 | Bot workflows | capture, gas, grid, osm-world, bathymetry, extra-turbines commit to `data/static/`; deploy.yml triggers on `data/static/**`; hourly.yml ignores it |
 | Rollback | revert the commit (restores files and workflows); re-run the bots |
 
+## Spec 3 step 4: back-end packages, jobs, bucket, Render (4 Oct 2026)
+Erik: go ahead; repo goes private once the back end runs on Render; bucket vendor and public host undecided (R2 and
+"keep Pages for now" recommended); probes folded into one workflow; caches: Claude to decide (bucket, see below).
+| Decision | Choice |
+|---|---|
+| Shared back-end code | `common/` (paths, ENTSO-E client, FX, store); `collector/` and `newsletter/` no longer import `pipeline/`; `pipeline/` may still import `collector/` and `newsletter/` (tested) |
+| Entrypoints | `jobs.collect / derive / render` (+ `jobs.hourly`, `jobs.publish`), running the existing code via runpy; every workflow calls them; old commands kept |
+| Store backend | `STORE_BACKEND=github|s3|local`, S3-compatible so the vendor stays open; `tools/store_migrate.py` with row-count verification |
+| Caches on Render | mirrored to the bucket (`<prefix>-state/`), not a persistent disk: Render cron jobs start empty and have no disk |
+| Publishing from Render | release asset `built-data.zip` + dispatch of `deploy.yml` (`source=release`); GitHub Pages kept for now; Cloudflare Pages target later |
+| What stays on GitHub | deploy, checks, docker-build, probe, and the bots that commit `data/static/` |
+| Probes | `tools/probes/` + one `probe.yml` (eleven workflows removed) |
+| Dependencies | `requirements.lock` (uv compile of requirements.in) for the image; workflows keep the per-area files until the cutover |
+

@@ -1,0 +1,11 @@
+.git
+.github
+build
+dist
+site_private
+state
+web/data
+tests/e2e/out
+**/__pycache__
+data/raw/*.zip
+data/raw/*.geojson

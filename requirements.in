@@ -1,0 +1,6 @@
+# Everything the back-end jobs need (pipeline, collector, newsletter, scripts, jobs). Pinned into requirements.lock with
+#   uv pip compile requirements.in -o requirements.lock --python-version 3.12 --upgrade
+# and installed with `uv pip install --system -r requirements.lock` (Dockerfile; the workflows still use the per-area files).
+# ECMWF open-data download (WM_SOURCE=ecmwf) is not included: requirements-ecmwf.txt.
+-r requirements.txt
+-r requirements-newsletter.txt

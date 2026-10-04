@@ -1,0 +1,44 @@
+# One-off probes of an external API (tools/probes/*.py): run by hand, the log file the probe writes under data/raw/ is
+# committed so it can be read from a cloud session (Actions logs are not). Replaces the eleven probe-*.yml of Oct 2026.
+name: probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "probe to run (file name in tools/probes/ without .py)"
+        type: choice
+        options: [probe_entsoe, probe_seq, probe_lag, probe_gbie, probe_gb2, probe_gb3, probe_gb4, probe_gb5, probe_gb6, probe_gb7, probe_yf]
+        default: probe_lag
+
+permissions:
+  contents: write
+
+concurrency:
+  group: probe
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: false
+      - run: uv pip install --system -r requirements-newsletter.txt
+      - name: Run ${{ inputs.script }}
+        env:
+          ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/probes/${{ inputs.script }}.py || true
+      - name: Commit the log
+        run: |
+          git config user.name "wake-monitor-bot"
+          git config user.email "wake-monitor-bot@users.noreply.github.com"
+          git add data/raw/*/probe*_log.txt data/raw/*/*probe*_log.txt 2>/dev/null || true
+          git commit -m "${{ inputs.script }} log" || echo "no changes"
+          git pull --rebase && git push

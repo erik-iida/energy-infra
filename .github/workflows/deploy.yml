@@ -16,6 +16,12 @@ on:
     workflows: [gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      source:
+        description: "artifact = newest hourly-feed built-data (default); release = asset built-data.zip of release built-data (written by jobs.publish from Render)"
+        type: choice
+        options: [artifact, release]
+        default: artifact
   workflow_call:
     inputs:
       run_id:
@@ -50,7 +56,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_ID: ${{ inputs.run_id }}
+          SOURCE: ${{ inputs.source || 'artifact' }}
         run: |
+          if [ "$SOURCE" = "release" ]; then   # written by `python -m jobs.publish pages` on Render
+            rm -rf build; mkdir -p build/data
+            gh release download built-data -p built-data.zip -D "$RUNNER_TEMP" --clobber
+            unzip -q -o "$RUNNER_TEMP/built-data.zip" -d build/data
+            echo "built-data from release asset ($(stat -c %y "$RUNNER_TEMP/built-data.zip"))"; ls -la build/data | head -30; exit 0
+          fi
           if [ -z "$RUN_ID" ]; then
             RUN_ID=$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=built-data&per_page=20" \
               -q '[.artifacts[] | select(.expired | not)][0].workflow_run.id')

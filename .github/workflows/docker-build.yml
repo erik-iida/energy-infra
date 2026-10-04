@@ -1,0 +1,22 @@
+# Builds the back-end image (Dockerfile) and runs the test suite inside it: proves the image Render will build works.
+# Runs when the Dockerfile or the lock file changes, and by hand. Nothing is pushed anywhere.
+name: docker-build
+
+on:
+  push:
+    branches: [main]
+    paths: [Dockerfile, requirements.lock, requirements.in, .dockerignore, .github/workflows/docker-build.yml]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t gridecon .
+      - name: Smoke test inside the image
+        run: |
+          docker run --rm gridecon python -m jobs
+          docker run --rm -e STORE_BACKEND=local -e STORE_DIR=/tmp/s gridecon python -m jobs.render dist
+          docker run --rm gridecon python -m pytest tests --ignore=tests/e2e -q -p no:cacheprovider

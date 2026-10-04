@@ -7,7 +7,7 @@ from pathlib import Path
 
 import requests
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "gbie" / "probe3_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "gbie" / "probe3_log.txt"
 UA = {"User-Agent": "GridEconomics hobby project (erikiida10@gmail.com)"}
 now = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 day = lambda n: (now - timedelta(days=n)).strftime("%Y-%m-%d")

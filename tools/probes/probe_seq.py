@@ -10,7 +10,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "entsoe" / "probe_seq_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "entsoe" / "probe_seq_log.txt"
 tok = os.environ.get("ENTSOE_TOKEN", "")
 URL = "https://web-api.tp.entsoe.eu/api"
 DE, RO = "10Y1001A1001A82H", "10YRO-TEL------P"
@@ -234,7 +234,7 @@ for z, eic in (("FR", "10YFR-RTE------C"), ("PL", "10YPL-AREA-----S"), ("BG", "1
 
 # ---------------------------------------------------------------- 6. A75 lateness over all zones
 P("\n=== A75 actual generation, latest published timestamp per zone (lag vs now), window today-5 .. today+1")
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from common.entsoe import ZONE_EIC
 lagrows = []
 for z, eic in ZONE_EIC.items():

@@ -4,11 +4,11 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import pandas as pd
 from collector import collect as c
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "entsoe" / "probe_lag_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "entsoe" / "probe_lag_log.txt"
 now = datetime.now(timezone.utc)
 today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 data, calls, errors = c.fetch_window(today - timedelta(days=4), today + timedelta(days=2), borders=[])

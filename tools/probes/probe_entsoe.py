@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "entsoe" / "probe_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "entsoe" / "probe_log.txt"
 tok = os.environ.get("ENTSOE_TOKEN", "")
 end = datetime.now(timezone.utc).replace(minute=0, second=0, microsecond=0)
 f = lambda d: d.strftime("%Y%m%d%H%M")

@@ -98,6 +98,8 @@ flowchart LR
 | gas | daily | ENTSOG and GIE -> `gas.json`, `gie.json` |
 | grid, bathymetry, osm-world, turbines | monthly / on change | map layers -> `grid.json`, `bathy.*`, `site.json` |
 | checks | every push | page syntax, Python tests, browser smoke test, code tidiness (no deploy) |
+| docker-build | Dockerfile / lock changes, by hand | builds the back-end image and runs the tests inside it |
+| probe | by hand | one of `tools/probes/*.py`, commits its log |
 
 ## Where things live
 
@@ -112,7 +114,9 @@ flowchart LR
 | `pipeline/` | the hourly job: forecasts, wake model, market and system data |
 | `collector/` | the data store and the collectors that fill it |
 | `newsletter/` | daily metrics, signal rules (Flags), the newsletter draft |
-| `scripts/` | one-off and scheduled data jobs, probes |
+| `scripts/` | the data jobs the `jobs` commands run (fetch_*, build_*) |
+| `tools/` | not part of any job: `probes/` (one-off API probes, run by the `probe` workflow), `store_migrate.py` (copy the store between backends) |
+| `Dockerfile`, `render.yaml`, `requirements.lock` | the back end as one image and Render's cron jobs (`docs/DEPLOY.md`) |
 | `tests/` | Python tests, test data (`tests/fixtures/data/`), browser smoke test (`tests/e2e/`) |
 | `docs/` | this page, the data contract, the decision log |
 | `.github/workflows/` | the jobs above |

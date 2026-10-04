@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-LOG = Path(__file__).resolve().parents[1] / "data" / "raw" / "fuel" / "probe_yf_log.txt"
+LOG = Path(__file__).resolve().parents[2] / "data" / "raw" / "fuel" / "probe_yf_log.txt"
 CANDIDATES = {"TTF=F": "Dutch TTF gas front month (EUR/MWh expected)", "KRBN": "KraneShares global carbon ETF (proxy)",
               "KEUA": "KraneShares European carbon ETF (proxy)", "EUA=F": "guess: EUA futures",
               "CFI2Z6.NYB": "guess", "NG=F": "Henry Hub gas (control, USD/MMBtu)", "EURUSD=X": "control FX"}

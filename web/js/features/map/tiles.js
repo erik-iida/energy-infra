@@ -6,8 +6,9 @@ import { repaint } from "./view.js";
 // ---- web-mercator tile layers, reprojected into this map's equirectangular view ----
 // OpenStreetMap standard tiles (basemap) and Mapterhorn terrain (terrarium elevation -> hillshade computed here).
 // CARTO raster basemaps need a key (watermark without one). The deploy job writes it in place of the placeholder from the
-// CARTO_KEY Actions secret (hourly.yml); without it the old keyless host is used (tiles carry the watermark).
-const CARTO_KEY="__CARTO_KEY__",cartoOk=!/^__/.test(CARTO_KEY);
+// CARTO_KEY Actions secret -> web/config.js (hourly.yml, deploy.yml); without it the old keyless host is used (tiles carry the watermark).
+const CARTO_KEY=(window.CFG&&window.CFG.cartoKey)||"",cartoOk=!!CARTO_KEY; // web/config.js, written at deploy by scripts/build_config.py
+if(cartoOk)document.querySelectorAll(".bmt[data-carto]").forEach(t=>{t.style.backgroundImage="url(https://basemaps.cartocdn.com/rastertiles/"+t.dataset.carto+"/5/16/10.png?key="+CARTO_KEY+")"}); // basemap picker thumbnails
 const cartoUrl=(st,z,x,y)=>{const r=(devicePixelRatio||1)>1.2?"@2x":"";return cartoOk?"https://basemaps.cartocdn.com/rastertiles/"+st+"/"+z+"/"+x+"/"+y+r+".png?key="+CARTO_KEY:"https://"+"abcd"[(x+y)&3]+".basemaps.cartocdn.com/"+st+"/"+z+"/"+x+"/"+y+r+".png"};
 const TL={sat:{url:(z,x,y)=>"https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2024_3857/default/g/"+z+"/"+y+"/"+x+".jpg",T:256,zmax:15,cache:new Map(),max:400,nocors:true},
  osm:{url:(z,x,y)=>"https://tile.openstreetmap.org/"+z+"/"+x+"/"+y+".png",T:256,zmax:19,cache:new Map(),max:400},

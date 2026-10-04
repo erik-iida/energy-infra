@@ -128,13 +128,13 @@ jobs:
         run: python scripts/build_meta.py || echo "::warning::meta.json not written"
 
       # CARTO raster basemaps: the key is client-side by nature (it ends up in the served page) but stays out of the repo:
-      # written in place of __CARTO_KEY__ from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
-      - name: Basemap key (CARTO)
+      # written to web/config.js (window.CFG) from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
+      - name: Page settings (web/config.js, CARTO key)
         env:
           CARTO_KEY: ${{ secrets.CARTO_KEY }}
         run: |
-          if [ -n "$CARTO_KEY" ]; then sed -i "s/__CARTO_KEY__/${CARTO_KEY}/g" web/index.html web/js/features/map/tiles.js; echo "CARTO key set";
-          else echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
+          python scripts/build_config.py   # web/config.js: window.CFG (CARTO key, build time, schema versions)
+          if [ -z "$CARTO_KEY" ]; then echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
 
       # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.
       - name: Split public / private site

@@ -589,8 +589,9 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - CARTO raster tiles now need a key (keyless tiles carry an "API key required" watermark). Tiles come from
   `basemaps.cartocdn.com/rastertiles/<style>/{z}/{x}/{y}[@2x].png?key=...` (styles checked from Erik's browser:
   voyager, voyager_nolabels, light_all, light_nolabels, dark_all, dark_nolabels; positron / dark_matter do not exist there).
-  The key is client-side (visible in the served page) but kept out of git: index.html has `__CARTO_KEY__`, hourly.yml
-  replaces it from the **CARTO_KEY** Actions secret; no secret = old keyless host (watermark). Voyager added as a basemap.
+  The key is client-side (visible in the served page) but kept out of git: `scripts/build_config.py` writes it into
+  `web/config.js` (`window.CFG.cartoKey`, not committed) from the **CARTO_KEY** Actions secret in hourly.yml and deploy.yml;
+  no secret = old keyless host (watermark). (Until 4 Oct 2026 a `sed` on `__CARTO_KEY__` in index.html did this.) Voyager added as a basemap.
 - Newsletter: whole numbers everywhere (`build._i`, half up), correlations keep two decimals; "Baseload" column is
   "Avg. power price", "% of load" is "% of consumption" (text too).
 

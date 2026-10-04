@@ -17,4 +17,4 @@
 374/416 tiles: 374 ok, 0 failed
 396/416 tiles: 396 ok, 0 failed
 valid cells 100.0%; elevation range -5979 to 4310 m
-wrote web/data/bathy.png 2496x1536, 0.64 MB
+wrote data/static/bathy.png 2496x1536, 0.64 MB

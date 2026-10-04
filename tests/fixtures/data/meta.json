@@ -1,0 +1,89 @@
+{
+ "schema": 1,
+ "built": "2026-10-04T12:08:07+00:00",
+ "contract": "docs/DATA_CONTRACT.md",
+ "files": {
+  "site.json": {
+   "schema": 1,
+   "bytes": 291631
+  },
+  "feed.json": {
+   "schema": 1,
+   "bytes": 60091,
+   "generated": "2026-10-04T11:50:00+00:00",
+   "last_data": "2026-10-04T11:00:00Z"
+  },
+  "market_history.json": {
+   "schema": 1,
+   "bytes": 23
+  },
+  "zones.json": {
+   "schema": 1,
+   "bytes": 122052
+  },
+  "capture.json": {
+   "schema": 1,
+   "bytes": 42264,
+   "generated": "2026-10-04T05:50:48+00:00",
+   "last_data": "2026-10"
+  },
+  "gas.json": {
+   "schema": 1,
+   "bytes": 25818,
+   "last_data": "2026-10-02"
+  },
+  "gie.json": {
+   "schema": 1,
+   "bytes": 73897,
+   "last_data": "2026-10-01"
+  },
+  "grid.json": {
+   "schema": 1,
+   "bytes": 271109
+  },
+  "bathy.json": {
+   "schema": 1,
+   "bytes": 280
+  },
+  "browse/index.json": {
+   "schema": 1,
+   "bytes": 26778,
+   "generated": "2026-10-04T09:57:34+00:00"
+  },
+  "browse/capacity.json": {
+   "schema": 1,
+   "bytes": 40396
+  },
+  "browse/flags.json": {
+   "schema": 1,
+   "bytes": 37429,
+   "generated": "2026-10-04T09:57:34+00:00",
+   "last_data": "2026-10-03"
+  },
+  "browse/xflow.json": {
+   "schema": 1,
+   "bytes": 17846,
+   "generated": "2026-10-04T09:57:34+00:00",
+   "last_data": "2026-10-03T12:00+00:00"
+  },
+  "newsletter/index.json": {
+   "schema": 1,
+   "bytes": 236,
+   "generated": "2026-10-03T17:52Z",
+   "last_data": "2026-10-02"
+  },
+  "browse/ts/<zone>.json": {
+   "schema": 1,
+   "count": 12
+  },
+  "browse/flags/<day>.json": {
+   "schema": 1,
+   "count": 3,
+   "days": [
+    "2026-10-01",
+    "2026-10-02",
+    "2026-10-03"
+   ]
+  }
+ }
+}

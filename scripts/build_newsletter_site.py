@@ -55,7 +55,7 @@ def main(argv=None) -> None:
         days.append({"day": d, "source": "editorial" if ed.exists() else "auto"})
     if not days:
         raise SystemExit("no newsletter day could be built")
-    (OUT / "index.json").write_text(json.dumps({
+    (OUT / "index.json").write_text(json.dumps({"schema": 1,
         "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "latest": days[0]["day"], "days": days,
         "repo": "erik-iida/energy-infra"}, indent=1) + "\n")
     print(f"newsletter: {[x['day'] for x in days]} written to {OUT}", file=sys.stderr)

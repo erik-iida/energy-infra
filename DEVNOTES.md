@@ -678,6 +678,26 @@ hourly-feed in detail (jobs API):
   changed after step 0: safety net (step 1), then the fast deploy (step 5), then the `index.html` split. Decision log:
   docs/DECISIONS.md. Every step: proposal to Erik, his go-ahead, build and test, show, push, verify, report.
 
+## Spec 3 step 1: safety net (Oct 4 2026)
+Nothing visible changed on the site. Added:
+- `docs/ARCHITECTURE.md` (plain-language map + diagram) and `docs/DATA_CONTRACT.md` (every file the page loads: writer,
+  cadence, reader, fields, public). `market_history.json` is loaded but unused (removal candidate, waiting for Erik).
+- Schema stamps: `"schema": 1` in feed.json, market_history.json, browse/* and newsletter/index.json;
+  `scripts/build_meta.py` writes `data/meta.json` (schema + newest data point per file) in hourly-feed before deploy
+  (never fails the job). Bump a schema number in build_meta.SCHEMAS **and** the contract table together.
+- Test data: `tests/fixtures/make_fixtures.py` -> `tests/fixtures/data` (20 farms, synthetic feed at NOW = 2026-10-04
+  11:00Z, trimmed static files, browse/flags/newsletter). Gotcha: farms point at turbine types by index (`ti`), so
+  trimming `types` needs the index remap (done in the script).
+- Tests: `test_wake_parity.py` (page's JS `run()` in node vs PyWake numbers in `tests/fixtures/wake_reference.json`,
+  rebuilt by `make_wake_reference.py`; agreement ~0.001 %, tolerance 0.5 %), `test_contract.py` (page fetches <-> contract
+  table <-> build_meta <-> fixture stamps), `test_page_syntax.py` (node --check), `tests/e2e/test_smoke.py` (playwright,
+  fixtures served as data/, external hosts blocked, clock fixed; all 7 tabs at 1536x864 @1.25 and 390 px phone, flags
+  deep link; baselines in tests/e2e/baseline, `UPDATE_BASELINE=1` rewrites them).
+- `.github/workflows/checks.yml`: ruff (errors only: E9,F63,F7,F82), pytest, smoke test, screenshots as artifact. Separate
+  from hourly-feed: a red check never blocks a deploy.
+- Wake parity test extracts code between `const URG=` .. `const CT=` and the `/* in-browser wake models */` block up to
+  `function spacingOf`: keep those markers (or update the test) when splitting index.html in step 2.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

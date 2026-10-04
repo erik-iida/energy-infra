@@ -96,7 +96,7 @@ class Frames:
             v = [[None if pd.isna(x) else round(float(x), 2) for x in w[c]] for c in cols]
             p = OUT / "ts" / f"{z}.json"
             p.parent.mkdir(parents=True, exist_ok=True)
-            p.write_text(json.dumps({"t0": int(self.idx[0].timestamp()), "step": 3600,
+            p.write_text(json.dumps({"schema": 1, "t0": int(self.idx[0].timestamp()), "step": 3600,
                                      "cols": [self.meta[z][c] for c in cols], "v": v}, separators=(",", ":")))
             avail[z] = cols
         return avail
@@ -267,7 +267,7 @@ def main() -> None:
                     continue
                 pairs.append([za, zb, int(net.index[-1].timestamp()), round(float(net.iloc[-1]), 1),
                               [None if pd.isna(x) else round(float(x), 1) for x in net.iloc[-24:]]])
-            (OUT / "xflow.json").write_text(json.dumps({"generated": now.isoformat(timespec="seconds"),
+            (OUT / "xflow.json").write_text(json.dumps({"schema": 1, "generated": now.isoformat(timespec="seconds"),
                                                        "note": "net physical flow a->b (MW, hourly mean), latest hour and last 24 h; ENTSO-E A11 / Elexon",
                                                        "pairs": sorted(pairs)}, separators=(",", ":")))
         except Exception as e:  # the map layer is optional
@@ -287,19 +287,20 @@ def main() -> None:
     vars_ = sorted(F.catalog.values(), key=vkey)
     index = {"generated": now.isoformat(timespec="seconds"), "window": [a.isoformat(), b.isoformat()], "step_s": 3600,
              "zones": sorted(avail), "groups": GROUPS, "vars": vars_, "avail": avail, "capacity": bool(capx)}
-    (OUT / "index.json").write_text(json.dumps(index, separators=(",", ":")))
+    (OUT / "index.json").write_text(json.dumps({"schema": 1, **index}, separators=(",", ":")))  # schema: docs/DATA_CONTRACT.md
     if capx:
-        (OUT / "capacity.json").write_text(json.dumps(capx, separators=(",", ":")))
+        (OUT / "capacity.json").write_text(json.dumps({"schema": 1, **capx}, separators=(",", ":")))
     try:
         fls = flags_export(now)
         if fls:
             days = [f["day"] for f in fls]
             for f in fls:
                 f["days"] = days
+                f["schema"] = 1
                 (OUT / "flags").mkdir(exist_ok=True)
                 (OUT / "flags" / f"{f['day']}.json").write_text(json.dumps(f, separators=(",", ":")))
             (OUT / "flags.json").write_text(json.dumps(fls[0], separators=(",", ":")))
-            (OUT / "flags" / "index.json").write_text(json.dumps({"days": days, "keep_days": FLAG_DAYS}))
+            (OUT / "flags" / "index.json").write_text(json.dumps({"schema": 1, "days": days, "keep_days": FLAG_DAYS}))
     except Exception as e:  # the flags tab is optional; the data browser must still ship
         print(f"flags export failed: {type(e).__name__}: {e}")
     n = sum(1 for _ in OUT.rglob("*.json"))

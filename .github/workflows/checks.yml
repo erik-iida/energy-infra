@@ -1,0 +1,46 @@
+# Safety net (spec 3 step 1): runs on every push and pull request, never deploys and never blocks a deploy.
+# A failure shows as a red cross on the commit; screenshots of every tab are kept as a run artifact.
+name: checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install
+        run: |
+          pip install -r requirements-newsletter.txt numpy pytest ruff playwright
+          python -m playwright install --with-deps chromium
+      - name: Python errors (ruff, errors only)
+        run: ruff check --select E9,F63,F7,F82 --output-format github .
+      - name: Unit tests, data contract, wake-model parity, page syntax
+        if: always()
+        run: python -m pytest tests --ignore=tests/e2e -q
+      - name: Browser smoke test (all tabs, 125 % scaling and phone)
+        if: always()
+        run: python -m pytest tests/e2e -q
+      - name: Keep screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: tests/e2e/out/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -19,3 +19,4 @@ web/data/newsletter/
 # manual carbon price input for spark spreads (newsletter/fuel.py)
 newsletter/eua_manual.csv
 newsletter/out/
+web/data/meta.json

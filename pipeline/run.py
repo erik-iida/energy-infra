@@ -156,9 +156,10 @@ def main(argv=None) -> None:
                     print(f"spark spreads: skipped ({type(e).__name__})")
             feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read
             (config.FEED_JSON.parent / "market_history.json").write_text(
-                json.dumps(hist, separators=(",", ":")), encoding="utf-8")
+                json.dumps({"schema": 1, **hist} if isinstance(hist, dict) else hist, separators=(",", ":")), encoding="utf-8")
         except Exception as e:  # market data must never stop the wind feed
             print(f"market: failed ({e!r}); feed written without market data")
+    feed = {"schema": 1, **feed}  # data contract version (docs/DATA_CONTRACT.md); bump when a field the page reads changes
     config.FEED_JSON.write_text(json.dumps(feed, separators=(",", ":")), encoding="utf-8")
     if os.environ.get("COLLECT_FARMS") == "1" and args.source != "synthetic":
         try:  # data store: per-farm wind and wake output (collector/farms.py); never blocks the feed

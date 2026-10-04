@@ -104,6 +104,10 @@ jobs:
             rm -rf web/data/browse web/data/newsletter
           fi
 
+      # data/meta.json: build time, schema version and newest data point per file (docs/DATA_CONTRACT.md); never fails
+      - name: Data freshness (meta.json)
+        run: python scripts/build_meta.py || echo "::warning::meta.json not written"
+
       # CARTO raster basemaps: the key is client-side by nature (it ends up in the served page) but stays out of the repo:
       # written in place of __CARTO_KEY__ from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
       - name: Basemap key (CARTO)

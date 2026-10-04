@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import collections
+import hashlib
 import json
 import os
 import time
@@ -22,6 +23,18 @@ from . import config, wake
 from .sources import cell_key, get_forecasts
 
 HIST = config.STATE_DIR / "history.json"
+WCACHE = config.STATE_DIR / "wake_cache.json"
+# Wake results are reused when a farm, its hour and its hub-height wind (speed, direction) are unchanged: the forecast is
+# cached between model updates, so most hourly runs repeat the previous run's inputs. Any change to wake.py, the turbine
+# types or a farm's layout gives a new signature and recomputes.
+WAKE_SIG = hashlib.sha1((config.ROOT / "pipeline" / "wake.py").read_bytes()).hexdigest()[:12]
+
+
+def farm_sig(f: dict, types: list[dict]) -> str:
+    keys = ("xy", "ti", "h", "mw", "D", "ur", "cap", "inst", "on")
+    used = sorted({f["ti"]} if isinstance(f.get("ti"), int) else set(f.get("ti") or []))
+    blob = json.dumps([WAKE_SIG, {k: f.get(k) for k in keys}, [types[g] for g in used if g < len(types)]], sort_keys=True)
+    return hashlib.sha1(blob.encode()).hexdigest()[:12]
 
 
 def iso(dt: datetime) -> str:
@@ -76,26 +89,57 @@ def main(argv=None) -> None:
     results = {}
     timing = {}  # farm id -> ({model: ms}, time steps)
     missing = 0
+    try:
+        wc_old = json.loads(WCACHE.read_text()) if WCACHE.exists() else {}
+    except Exception:
+        wc_old = {}
+    wc_new, reused, computed = {}, 0, 0
     for f in farms:
         fc = fc_cells.get(cell_key(f["lat"], f["lon"]))
         if not fc:
             missing += 1
             continue
+        fid = str(f["id"])
         lay = "xy" in f
         ws, wd = hub_wind(fc, tsec, f["h"] if lay else 100.0)
         ok = np.isfinite(ws)
         P = {m: np.full(len(times), np.nan) for m in models}
-        if ok.any():
+        sig = farm_sig(f, site["types"])
+        old = wc_old.get(fid) if (wc_old.get(fid) or {}).get("sig") == sig else None
+        ent = {"sig": sig, "h": {}, "ms": (old or {}).get("ms")}
+        todo = []
+        for i in np.flatnonzero(ok):
+            key = str(int(tsec[i]))
+            c = (old or {}).get("h", {}).get(key)
+            if c and abs(c[0] - ws[i]) < 1e-3 and abs(c[1] - wd[i]) < 1e-2:
+                for m, v in zip(models, c[2]):
+                    P[m][i] = v
+                ent["h"][key] = c
+                reused += 1
+            else:
+                todo.append(i)
+        if todo:
+            idx = np.array(todo)
             try:
-                pw = wake.farm_power(f, site["types"], ws[ok], wd[ok]) if lay else wake.estimate_no_layout(f, ws[ok])
+                pw = wake.farm_power(f, site["types"], ws[idx], wd[idx]) if lay else wake.estimate_no_layout(f, ws[idx])
             except Exception as ex:  # one bad layout must never stop the feed
                 print(f"warning: {f['n']}: {ex!r}"[:200])
-                pw = wake.estimate_no_layout({**f, "cap": f.get("inst", f.get("cap", 0))}, ws[ok])
+                pw = wake.estimate_no_layout({**f, "cap": f.get("inst", f.get("cap", 0))}, ws[idx])
             if "_ms" in pw:
-                timing[str(f["id"])] = (pw.pop("_ms"), int(ok.sum()))
+                ent["ms"] = [pw.pop("_ms"), len(todo)]
             for m in models:
-                P[m][ok] = pw[m]
-        results[str(f["id"])] = (ws, wd, P)
+                P[m][idx] = pw[m]
+            for i in todo:
+                ent["h"][str(int(tsec[i]))] = [round(float(ws[i]), 4), round(float(wd[i]), 3),
+                                              [None if not np.isfinite(P[m][i]) else float(P[m][i]) for m in models]]
+            computed += len(todo)
+        if ent["ms"]:
+            timing[fid] = tuple(ent["ms"])
+        wc_new[fid] = ent
+        results[fid] = (ws, wd, P)
+    config.STATE_DIR.mkdir(parents=True, exist_ok=True)
+    WCACHE.write_text(json.dumps(wc_new, separators=(",", ":")))
+    print(f"wake: {computed} farm-hours computed, {reused} reused from the previous run")
     if missing:
         print(f"warning: {missing} farms had no forecast")
     secs["wake"] = round(time.time() - t1, 1)

@@ -623,9 +623,26 @@ A link to a signal that did not fire, or to a zone outside the zone filter, open
 - The wake / forecast controls (#mapctl: forecast-wind checkbox, what-if sliders, wake model, expansion) show only
   when a farm is selected (S.farm), otherwise the pane starts with the totals and the legend.
 
+## Interconnection layer, technology colour map, System tab order (Oct 4 2026)
+- **Interconnection** is its own map layer (category `ic`, entries `xac` land border flow, `xdc` DC interconnector);
+  it replaces the grid layer's DC entry and the country-level land arrows (the grid layer now draws AC lines only).
+  Flows are per **bidding-zone pair** from `browse/xflow.json` (build_browse: net hourly physical flow a->b for every
+  zone pair in the store, latest hour + last 24 h; ENTSO-E A11 / Elexon). Because land borders and subsea DC links mostly
+  join different zone pairs (DK1-DE land vs DK2-DE Kontek, SE1-FI land vs SE3-FI Fenno-Skan, NO2-DE NordLink …), the
+  land arrow is the border flow without the offshore interconnector. Where a DC cable and the land border join the same
+  two zones (INELFE FR-ES, ALEGrO BE-DE, Savoie-Piemont FR-IT North: onshore DC) the land arrow carries the total and the
+  cable shows direction only. A pair missing in xflow.json (or older than 18 h) falls back to the System data when the two
+  countries meet at a single zone pair. Only pairs between different countries are drawn (no NO1-NO2 etc.).
+- **Zone colours** (legend, formerly "Day-ahead prices"): "Colour zones by" selects day-ahead price (Now / 24 h avg /
+  Tomorrow / TB2 / TB4) or any technology's output as % of load (`MO = "s:<tech>"`, `shareVal`: System data,
+  country level, latest hour every material technology has reported; colours from the technology palette `--m-<tech>`,
+  transparent to full colour, scale 0 to the 97th percentile).
+- System tab: opening it with no region selected sets the selector to Europe. Picking a country puts its generation mix
+  and load block first, above the country grid and the comparison chart.
+
 ## Known gaps / next ideas
-- DC arrows: per-link flows (ENTSO-E A11 per border is already per zone pair; per cable would need TSO data) and a hover
-  tooltip with the link name; time follows "latest hour", not the map's hover hour.
+- Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
+  utilisation; the map's hover hour instead of "latest hour".
 - Flags drill-down Phase 2: "copy context as text" first, congestion marker once NTC is in the store, starred story
   candidates (browser-only).
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,

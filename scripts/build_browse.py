@@ -253,6 +253,25 @@ def main() -> None:
               for c in wide.columns}
         for z, g in wide.groupby(level="zone"):
             F.add(z, g.droplevel("zone"), mt)
+        # latest net flow per zone pair for the map's interconnection layer (browse/xflow.json): a < b, mw > 0 = a -> b
+        try:
+            hf = d.assign(h=d["ts"].dt.floor("h")).groupby(["from_zone", "to_zone", "h"])["mw"].mean()
+            cut = pd.Timestamp(now) - pd.Timedelta(hours=48)
+            pairs = []
+            for za, zb in {tuple(sorted(k[:2])) for k in hf.index}:
+                ab = hf.loc[(za, zb)] if (za, zb) in hf.index.droplevel(2) else pd.Series(dtype=float)
+                ba = hf.loc[(zb, za)] if (zb, za) in hf.index.droplevel(2) else pd.Series(dtype=float)
+                net = ab.sub(ba, fill_value=0)
+                net = net[net.index >= cut]
+                if net.empty:
+                    continue
+                pairs.append([za, zb, int(net.index[-1].timestamp()), round(float(net.iloc[-1]), 1),
+                              [None if pd.isna(x) else round(float(x), 1) for x in net.iloc[-24:]]])
+            (OUT / "xflow.json").write_text(json.dumps({"generated": now.isoformat(timespec="seconds"),
+                                                       "note": "net physical flow a->b (MW, hourly mean), latest hour and last 24 h; ENTSO-E A11 / Elexon",
+                                                       "pairs": sorted(pairs)}, separators=(",", ":")))
+        except Exception as e:  # the map layer is optional
+            print(f"xflow export failed: {type(e).__name__}: {e}")
 
     avail = F.write()
     order = {g: i for i, g in enumerate(GROUPS)}

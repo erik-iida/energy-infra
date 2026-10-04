@@ -12,8 +12,9 @@ on:
         default: false
   push:
     branches: [main]       # re-run the pipeline when back-end code changes
-    paths-ignore:          # page, docs and tests only: deploy.yml publishes those in ~1 min without the pipeline
+    paths-ignore:          # page, static inputs, docs and tests only: deploy.yml publishes those in ~1 min without the pipeline
       - "web/**"
+      - "data/static/**"
       - "docs/**"
       - "tests/**"
       - "**/*.md"
@@ -73,8 +74,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            web/data/browse
-            web/data/newsletter
+            build/data/browse
+            build/data/newsletter
           key: browse-${{ steps.bucket.outputs.k }}${{ inputs.rebuild_tabs && format('-r{0}', github.run_id) || '' }}-${{ hashFiles('scripts/build_browse.py', 'scripts/build_newsletter_site.py', 'newsletter/*.py', 'newsletter/editorial/*') }}
       - name: Start Data tab + Newsletter export (background)
         if: steps.browsecache.outputs.cache-hit != 'true'
@@ -118,9 +119,9 @@ jobs:
       - name: Drop an incomplete Data tab export
         if: steps.browsecache.outputs.cache-hit != 'true'
         run: |
-          if [ ! -s web/data/browse/index.json ]; then
+          if [ ! -s build/data/browse/index.json ]; then
             echo "::warning::Data tab export failed; not caching it"
-            rm -rf web/data/browse web/data/newsletter
+            rm -rf build/data/browse build/data/newsletter
           fi
 
       # data/meta.json: build time, schema version and newest data point per file (docs/DATA_CONTRACT.md); never fails
@@ -128,15 +129,18 @@ jobs:
         run: python scripts/build_meta.py || echo "::warning::meta.json not written"
 
       # CARTO raster basemaps: the key is client-side by nature (it ends up in the served page) but stays out of the repo:
-      # written to web/config.js (window.CFG) from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
-      - name: Page settings (web/config.js, CARTO key)
+      # written to build/config.js (window.CFG) from the CARTO_KEY secret. Without the secret the page falls back to keyless tiles.
+      - name: Page settings (config.js, CARTO key)
         env:
           CARTO_KEY: ${{ secrets.CARTO_KEY }}
         run: |
-          python scripts/build_config.py   # web/config.js: window.CFG (CARTO key, build time, schema versions)
+          python scripts/build_config.py   # build/config.js: window.CFG (CARTO key, build time, schema versions)
           if [ -z "$CARTO_KEY" ]; then echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
 
-      # Private site: a full copy incl. data that must not be public (spark spreads). Public Pages build gets it stripped.
+      # dist/ = web/ + data/static/ + build/ (spec 3 step 3). The private site is a full copy of it incl. data that must not
+      # be public (spark spreads); the public feed (dist/ and the artifact) gets them stripped.
+      - name: Assemble the site (dist/)
+        run: python scripts/build_dist.py
       - name: Split public / private site
         env:
           SPARK: ${{ vars.SPARK }}
@@ -150,18 +154,18 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy site_private --project-name=${{ vars.CF_PAGES_PROJECT }} --branch=main
 
-      # Public data for the deploy: after split_private.py, so feed.json has no spark spreads (artifacts of a public repo
-      # can be downloaded by any GitHub user). Only what the build generates; the committed data comes from the checkout.
+      # Built data for the deploy: after split_private.py, so feed.json has no spark spreads (artifacts of a public repo
+      # can be downloaded by any GitHub user). Only what this run generated; page and committed data come from the checkout.
       - uses: actions/upload-artifact@v4
         with:
           name: built-data
           retention-days: 3
           if-no-files-found: error
           path: |
-            web/data/feed.json
-            web/data/meta.json
-            web/data/browse/
-            web/data/newsletter/
+            build/data/feed.json
+            build/data/meta.json
+            build/data/browse/
+            build/data/newsletter/
 
   deploy:
     needs: feed

@@ -1,6 +1,6 @@
 name: gas
 
-# Daily gas flows from the ENTSOG Transparency Platform (public API) -> data/raw/gas, web/data/gas.json
+# Daily gas flows from the ENTSOG Transparency Platform (public API) -> data/raw/gas, data/static/gas.json
 on:
   workflow_dispatch:
   schedule:
@@ -35,9 +35,9 @@ jobs:
           git config user.name "wake-monitor-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/raw/gas 2>/dev/null || true
-          git add web/data/gas.json 2>/dev/null || true
+          git add data/static/gas.json 2>/dev/null || true
           git add data/raw/gie/gie_log.txt data/raw/gie/agsi_about.json data/raw/gie/alsi_about.json 2>/dev/null || true
-          git add web/data/gie.json 2>/dev/null || true
+          git add data/static/gie.json 2>/dev/null || true
           git commit -m "Gas flows from ENTSOG" || echo "no changes"
           git pull --rebase
           git push

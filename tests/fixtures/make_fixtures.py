@@ -2,8 +2,8 @@
 
     python tests/fixtures/make_fixtures.py
 
-Inputs: the committed files in web/data/ (site, zones, capture, gas, gie, grid, bathy) and the generated ones the deploy
-builds (web/data/browse/, web/data/newsletter/: run `STORE_DIR=<store copy> python scripts/build_browse.py` and
+Inputs: the committed files in data/static/ (site, zones, capture, gas, gie, grid, bathy) and the generated ones the deploy
+builds (build/data/browse/, build/data/newsletter/: run `STORE_DIR=<store copy> python scripts/build_browse.py` and
 `python scripts/build_newsletter_site.py` first). feed.json is synthetic (same shape as the
 pipeline writes, values from smooth formulas), so the smoke test does not depend on live APIs. The fixed "now" of the
 fixtures is NOW below; the smoke test pins the browser clock to it.
@@ -20,7 +20,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "web" / "data"
+SRC = ROOT / "data" / "static"          # committed inputs
+BUILT = ROOT / "build" / "data"         # a local run of build_browse / build_newsletter_site (spec 3 step 3 layout)
 OUT = Path(__file__).resolve().parent / "data"
 NOW = datetime(2026, 10, 4, 11, 0, tzinfo=timezone.utc)  # last past hour of the synthetic feed
 FARMS = [23352, 23253, 6738, 6713, 6556, 6554, 6432, 6426, 6476, 6484, 6510, 900107, 850000, 850002, 6359, 6307,
@@ -162,7 +163,7 @@ def static() -> None:
 
 
 def browse() -> None:
-    src = SRC / "browse"
+    src = BUILT / "browse"
     idx = json.loads((src / "index.json").read_text())
     keep_days = 8
     zs = [z for z in TS_ZONES if (src / "ts" / f"{z}.json").exists()]
@@ -187,7 +188,7 @@ def browse() -> None:
 
 
 def newsletter() -> None:
-    src = SRC / "newsletter"
+    src = BUILT / "newsletter"
     idx = json.loads((src / "index.json").read_text())
     days = [d for d in idx["days"]][:2]
     for d in days:

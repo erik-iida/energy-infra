@@ -1,4 +1,4 @@
-"""Hourly job: forecast -> hub-height wind -> PyWake -> web/data/feed.json
+"""Hourly job: forecast -> hub-height wind -> PyWake -> build/data/feed.json
 
     python -m pipeline.run                        # Open-Meteo (default), free, no key
     python -m pipeline.run --source synthetic     # made-up weather, no network
@@ -225,6 +225,7 @@ def main(argv=None) -> None:
     secs["total_before_write"] = round(time.time() - t0, 1)
     feed["timing_s"] = secs
     feed = {"schema": 1, **feed}  # data contract version (docs/DATA_CONTRACT.md); bump when a field the page reads changes
+    config.FEED_JSON.parent.mkdir(parents=True, exist_ok=True)
     config.FEED_JSON.write_text(json.dumps(feed, separators=(",", ":")), encoding="utf-8")
     t1 = time.time()
     if os.environ.get("COLLECT_FARMS") == "1" and args.source != "synthetic":

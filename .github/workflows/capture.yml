@@ -1,7 +1,7 @@
 name: capture
 
 # Monthly capture prices per technology and BESS spreads (TB2/TB4) per bidding zone from ENTSO-E
-# -> web/data/capture.json. Resumable: runs every 3 hours, refreshes the current month once a day.
+# -> data/static/capture.json. Resumable: runs every 3 hours, refreshes the current month once a day.
 on:
   workflow_dispatch:
   schedule:
@@ -40,7 +40,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data/raw/capture/cells.json 2>/dev/null || true
           git add data/raw/capture/capture_log.txt 2>/dev/null || true
-          git add web/data/capture.json 2>/dev/null || true
+          git add data/static/capture.json 2>/dev/null || true
           git add data/fx.json 2>/dev/null || true
           git commit -m "Capture prices per technology (ENTSO-E)" || echo "no changes"
           for i in 1 2 3; do git pull --rebase && git push && break; sleep 5; done

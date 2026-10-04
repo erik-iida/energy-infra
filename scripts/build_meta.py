@@ -1,6 +1,6 @@
-"""Write web/data/meta.json: build time, schema version and freshness of every data file the page loads.
+"""Write build/data/meta.json: build time, schema version and freshness of every data file the page loads.
 
-    python scripts/build_meta.py [--data web/data]
+    python scripts/build_meta.py [--data DIR ...]     default: build/data and data/static (the first that has a file wins)
 
 The schema numbers here are the data contract (docs/DATA_CONTRACT.md): bump one when a field the page reads is renamed,
 removed or changes meaning, and update the page in the same push. `last_data` is the newest data point a file carries
@@ -11,10 +11,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402
 
 # file (relative to data/) -> schema version (see docs/DATA_CONTRACT.md)
 SCHEMAS = {
@@ -53,12 +56,18 @@ def last_data(name: str, d) -> str | None:
     return None
 
 
-def build(data: Path) -> dict:
+def build(dirs: list[Path]) -> dict:
+    """dirs: where the page's data files are looked up, first match wins (build output, then committed inputs)."""
+    def find(rel: str) -> Path:
+        for d in dirs:
+            if (d / rel).exists():
+                return d / rel
+        return dirs[0] / rel
     files = {}
     for name, ver in SCHEMAS.items():
         if "<" in name or name == "meta.json":
             continue
-        p = data / name
+        p = find(name)
         if not p.exists():
             files[name] = {"schema": ver, "missing": True}
             continue
@@ -76,9 +85,10 @@ def build(data: Path) -> dict:
         except Exception as ex:
             e["unreadable"] = type(ex).__name__
         files[name] = e
-    ts = sorted((data / "browse" / "ts").glob("*.json")) if (data / "browse" / "ts").exists() else []
+    tsd, fld = find("browse/ts"), find("browse/flags")
+    ts = sorted(tsd.glob("*.json")) if tsd.exists() else []
     files["browse/ts/<zone>.json"] = {"schema": SCHEMAS["browse/ts/<zone>.json"], "count": len(ts)}
-    fl = sorted((data / "browse" / "flags").glob("2*.json")) if (data / "browse" / "flags").exists() else []
+    fl = sorted(fld.glob("2*.json")) if fld.exists() else []
     files["browse/flags/<day>.json"] = {"schema": SCHEMAS["browse/flags/<day>.json"], "count": len(fl),
                                         "days": [f.stem for f in fl][-14:]}
     return {"schema": SCHEMAS["meta.json"], "built": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -87,11 +97,12 @@ def build(data: Path) -> dict:
 
 def main(argv=None) -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--data", default=str(ROOT / "web" / "data"))
+    ap.add_argument("--data", nargs="*", default=[str(config.BUILD_DATA), str(config.DATA_STATIC)])
     a = ap.parse_args(argv)
-    data = Path(a.data)
-    m = build(data)
-    (data / "meta.json").write_text(json.dumps(m, indent=1) + "\n", encoding="utf-8")
+    dirs = [Path(d) for d in a.data]
+    m = build(dirs)
+    dirs[0].mkdir(parents=True, exist_ok=True)
+    (dirs[0] / "meta.json").write_text(json.dumps(m, indent=1) + "\n", encoding="utf-8")
     miss = [k for k, v in m["files"].items() if v.get("missing")]
     print(f"meta.json: {len(m['files'])} files" + (f", missing: {', '.join(miss)}" if miss else ""))
 

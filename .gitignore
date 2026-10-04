@@ -12,12 +12,13 @@ data/raw/gas/interconnections.json
 data/raw/gie/*_eu.json
 data/raw/gie/*_countries.json
 
-# Data tab export, built by the deploy job from the store release
-web/data/browse/
-web/data/newsletter/
+# build output (spec 3 step 3): build/ = what one run generates (feed.json, browse/, newsletter/, meta.json, config.js),
+# dist/ = the assembled site that is deployed, site_private/ = its login-protected copy. web/ holds source only.
+build/
+dist/
+site_private/
+web/data/
 
 # manual carbon price input for spark spreads (newsletter/fuel.py)
 newsletter/eua_manual.csv
 newsletter/out/
-web/data/meta.json
-web/config.js

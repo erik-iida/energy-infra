@@ -2,7 +2,7 @@
 
     python scripts/fetch_bathymetry.py
 
-Writes web/data/bathy.png (8-bit greyscale) and web/data/bathy.json (bbox, size, encoding). The browser
+Writes data/static/bathy.png (8-bit greyscale) and data/static/bathy.json (bbox, size, encoding). The browser
 colours the grid itself, so the colour scale (depth range) can be changed with a slider.
 
 Encoding of each pixel value v:
@@ -26,8 +26,10 @@ import numpy as np
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT_PNG = ROOT / "web" / "data" / "bathy.png"
-OUT_JSON = ROOT / "web" / "data" / "bathy.json"
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
+OUT_PNG = config.static_file("bathy.png")
+OUT_JSON = config.static_file("bathy.json")
 LOG = ROOT / "data" / "raw" / "bathy_log.txt"
 WCS = "https://ows.emodnet-bathymetry.eu/wcs"
 BBOX = (-20.0, 34.0, 32.0, 66.0)  # west, south, east, north: all European offshore wind seas

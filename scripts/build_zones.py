@@ -1,4 +1,4 @@
-"""Bidding-zone outlines for the map's price / spread colouring -> web/data/zones.json
+"""Bidding-zone outlines for the map's price / spread colouring -> data/static/zones.json
 
     python scripts/build_zones.py
 
@@ -16,13 +16,16 @@ import json
 import subprocess
 import tempfile
 import urllib.request
+import sys
 from pathlib import Path
 
 from shapely.geometry import shape
 from shapely.ops import unary_union
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "web" / "data" / "zones.json"
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
+OUT = config.static_file("zones.json")
 EP = "https://raw.githubusercontent.com/EnergieID/entsoe-py/master/entsoe/geo/geojson/{}.geojson"
 NE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_units.geojson"
 EP_ZONES = {"AT": "AT", "BE": "BE", "BG": "BG", "CH": "CH", "CZ": "CZ", "DE-LU": "DE_LU", "DK1": "DK_1", "DK2": "DK_2",

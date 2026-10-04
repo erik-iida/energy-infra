@@ -1,6 +1,6 @@
 name: grid
 
-# Download the OSM-based high-voltage grid (PyPSA-Eur prebuilt network, Zenodo, ODbL) and build web/data/grid.json.
+# Download the OSM-based high-voltage grid (PyPSA-Eur prebuilt network, Zenodo, ODbL) and build data/static/grid.json.
 # Runs when the script changes, monthly, or manually. The raw CSVs (~20 MB) are not committed.
 on:
   workflow_dispatch:
@@ -32,7 +32,7 @@ jobs:
           git config user.name "wake-monitor-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data/raw/grid/grid_log.txt 2>/dev/null || true
-          git add web/data/grid.json 2>/dev/null || true
+          git add data/static/grid.json 2>/dev/null || true
           git commit -m "HV grid from OpenStreetMap (PyPSA-Eur prebuilt network)" || echo "no changes"
           git pull --rebase
           git push

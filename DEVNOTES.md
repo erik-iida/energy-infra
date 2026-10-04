@@ -20,7 +20,8 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   ws for Bastankhah). Verified within 0.12 % of farm power against PyWake on 30 farm/wind cases. Keep them in sync
   if pipeline/wake.py changes. Model names are identical in both places.
 - Web page is plain HTML/JS with no build step: `web/index.html` (shell + bootstrap), `web/css/base.css`, ES modules under
-  `web/js/` (see "Spec 3 step 2" below and docs/ARCHITECTURE.md). It loads `data/site.json` + `data/feed.json`.
+  `web/js/` (see "Spec 3 step 2" below and docs/ARCHITECTURE.md). It loads `data/site.json` + `data/feed.json` from the
+  assembled `dist/` (spec 3 step 3: `web/` is source only; `data/static/` holds committed inputs, `build/` a run's output).
   Map heatmap uses in-browser Jensen/Gaussian; Compare tab uses the PyWake numbers from the feed.
 
 ## Market module (pipeline/market.py)
@@ -187,8 +188,8 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   (https://erik-iida.github.io/energy-infra/ - the bare erik-iida.github.io has no site).
 - Page source: `web/index.html` + `web/css/base.css` + `web/js/**` (since 4 Oct 2026; one file before). Check with
   `python -m pytest tests -q` (incl. node --check of every module) and the smoke test, or playwright against `python -m http.server` in web/.
-  The committed web/data/feed.json is stale (the hourly workflow deploys a fresh one without committing it):
-  for local tests inject a `market` block into a copy, never commit it.
+  feed.json is not committed at all since 4 Oct 2026 (`build/data/feed.json`, built every hour and deployed via the
+  `built-data` artifact): for local tests inject a `market` block into a copy under `build/data/`.
 - Map projection is Web Mercator (V.s = px per degree of longitude, sl() = px per degree of latitude at the
   centre for zoom thresholds); north/south panning is clamped to the world edge (clampV). Hit-testing uses
   CSS-pixel paths with an identity transform (works at any display scaling).
@@ -313,7 +314,7 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
   capture price and rate) computed per CET day by `newsletter/metrics.py` and repeated on every hour of the day.
   Default on: day-ahead price, TB2, TB4, solar, onshore/offshore wind, actual load.
 - Data path: static site, release assets not CORS-readable, so `scripts/build_browse.py` (hourly.yml, cached 3 h,
-  continue-on-error) exports `web/data/browse/{index.json, ts/<zone>.json, capacity.json, flags.json}` (hourly means in
+  continue-on-error) exports `build/data/browse/{index.json, ts/<zone>.json, capacity.json, flags.json}` (served as `data/browse/`) (hourly means in
   UTC, last 30 days + days ahead, seq-1 prices only; one file per zone holds every variable; index.json has the variable
   catalogue and which variable exists in which zone). Not committed (.gitignore). Local test: `STORE_DIR=<folder> python
   scripts/build_browse.py`, serve web/.
@@ -787,13 +788,31 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
 - Not done in this step (spec 3): the map-layer contract (`draw/hitTest/legend/needs`), per-feature CSS, long minified
   lines inside the modules (median 130 chars, a few > 1,000: a format-only commit is possible now that the files are small).
 
+## Spec 3 step 3: source and build separated (Oct 4 2026)
+- `pipeline/config.py` is the one place that knows the folders: `WEB` (page source), `DATA_STATIC` = `data/static/` (committed
+  inputs: site, zones, grid, capture, gas, gie, bathy; `config.static_file(name)`), `BUILD_DATA` = `build/data/` (one run's
+  output: feed.json, meta.json, browse/, newsletter/; `config.build_file(...)`), `BUILD/config.js`, `DIST` = `dist/`. All
+  twelve writers take their path from it; nothing writes into `web/` any more (`web/data/` is git-ignored as a guard).
+- `scripts/build_dist.py` assembles `dist/` = `web/` + `data/static/` (as `data/`) + `build/` (as `data/` and `config.js`);
+  `--serve 8000` for a local look. `split_private.py` copies `dist/` to `site_private/` and strips spark from the public
+  feed in `dist/` and `build/`. deploy.yml downloads `built-data` into `build/data/`, runs build_config + build_dist, checks
+  `dist/` and publishes `dist/`. hourly.yml caches `build/data/{browse,newsletter}` and uploads `build/data/*` as the artifact.
+- git: `web/data/{site,grid,zones,capture,gas,gie,bathy.*}` moved to `data/static/` (history kept, `git log --follow`); the
+  stale committed `feed.json` removed. The six bot workflows commit to `data/static/` now; deploy.yml also triggers on
+  `data/static/**` pushes, hourly.yml ignores them.
+- The data store (`store` release) is untouched by this step.
+- `scripts/build_meta.py --data` takes several folders (default `build/data data/static`, first hit wins) and writes
+  `build/data/meta.json`. `tests/fixtures/make_fixtures.py` reads `data/static/` and `build/data/`.
+- Local page work: `python scripts/build_dist.py --serve 8000`; without a pipeline run `dist/data/feed.json` is missing (page
+  falls back to synthetic wind), so download the newest `built-data` artifact into `build/data/` for the real thing.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".
 - Flags drill-down Phase 2: "copy context as text" first (spec 4 step 3; goes into `js/features/flags/`), congestion marker once
   NTC is in the store, starred story candidates (browser-only).
-- Spec 3 next: step 3 (source vs build: `data/static/`, `dist/`, no script writes into `web/`), then step 4 (`common/`,
-  collect / derive / render) and the rest of step 6 (dataset registry, pinned dependencies, freshness labels from meta.json).
+- Spec 3 next: step 4 (`common/`, collect / derive / render entrypoints, probes to `tools/probes/`) and the rest of step 6
+  (dataset registry with `publishable`, pinned dependencies, freshness labels from meta.json, screenshot-diff assertion).
 - Newsletter: decoupling uses daily baseload; add the hourly view (max gap hour) and, once NTC data is in the store,
   whether the border was at its limit. Revisit names for multi-zone countries in tables.
 - Neighbour load: one ts file is 90-340 KB raw (~50 KB gzipped); DE-LU opens 11 neighbours. Add `browse/day/<day>.json`

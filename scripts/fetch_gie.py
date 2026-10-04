@@ -1,6 +1,6 @@
 """Gas storage (AGSI+) and LNG terminals (ALSI) from GIE. Needs a free API key in env GIE_KEY.
 
-    python scripts/fetch_gie.py           # last RECENT_DAYS days, merged into web/data/gie.json (needs GIE_KEY)
+    python scripts/fetch_gie.py           # last RECENT_DAYS days, merged into data/static/gie.json (needs GIE_KEY)
     python scripts/fetch_gie.py --full    # whole KEEP_DAYS window (automatic on Mondays and when gie.json is missing)
     python scripts/fetch_gie.py --local   # rebuild from data/raw/gie/*.json
 
@@ -22,8 +22,10 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 RAW = ROOT / "data" / "raw" / "gie"
-OUT = ROOT / "web" / "data" / "gie.json"
+OUT = config.static_file("gie.json")
 LOG = RAW / "gie_log.txt"
 log_lines: list[str] = []
 KEEP_DAYS = 400     # window published in gie.json
@@ -109,7 +111,7 @@ def merge(old: dict, new: dict) -> dict:
 
 
 def build(incremental: bool = False) -> None:
-    """web/data/gie.json: per area (EU + countries), daily series oldest -> newest:
+    """data/static/gie.json: per area (EU + countries), daily series oldest -> newest:
     storage: day, full %, gas in storage TWh, injection / withdrawal GWh/d, working gas volume TWh
     lng: day, send-out GWh/d, inventory GWh"""
     out = {"src": "GIE AGSI+ / ALSI", "storage": {}, "lng": {}}

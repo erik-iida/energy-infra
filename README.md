@@ -6,7 +6,7 @@ estimated). A map drills down from the world to a region, a country and a farm, 
 country and farm over the last 24 h plus a 24 h forecast.
 
 ```
-forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models)  →  web/data/feed.json  →  web page
+forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models)  →  build/data/feed.json  →  web page (dist/)
 ```
 
 ## Folder layout
@@ -16,11 +16,13 @@ forecast (Open-Meteo)  →  hub-height wind per farm  →  PyWake (4 wake models
 | `data/raw/eww/` | Open European offshore wind turbine database (EuroWindWakes, version 2026-01-27): one row per turbine, plus power and Ct curves per turbine type |
 | `data/raw/European_offshore_wind_farm_outline.geojson` | Farm and zone outlines (own compilation, WGS84) |
 | `data/raw/global_offshore_wind_turbines_2021.zip`, `global_turbines.csv` | Global offshore wind turbine dataset (Zhang et al. 2021, CC0) and its CSV conversion (`scripts/fetch_global_turbines.py --local`); used for farms outside Europe |
-| `scripts/build_site.py` | Turns the GeoJSONs into `web/data/site.json` (run again when the data changes) |
+| `scripts/build_site.py` | Turns the GeoJSONs into `data/static/site.json` (run again when the data changes) |
 | `scripts/fetch_osm_turbines.py` | Adds farms missing from the turbine database (e.g. Tahkoluoto, Finland) from OpenStreetMap into `data/raw/extra_turbines.csv` |
 | `scripts/windy_test.py` | One-off check of your Windy key and which models it allows |
 | `pipeline/` | The hourly job: `config.py` (settings), `sources.py` (forecasts), `budget.py` (call cap), `wake.py` (PyWake), `run.py` (main) |
-| `web/` | The static site: `index.html` + `data/site.json` + `data/feed.json` |
+| `web/` | The page source: `index.html`, `css/`, `js/` (nothing generated lives here) |
+| `data/static/` | Committed inputs the page reads (site.json, zones, grid, capture, gas, gie, bathymetry), refreshed by bot workflows |
+| `build/`, `dist/` | Not committed: what one run generates, and the assembled site that is deployed (`scripts/build_dist.py`) |
 | `state/` | Forecast cache, 24 h history, daily call counter (created by the pipeline) |
 | `setup/hourly.yml` | The GitHub Actions workflow. Move it to `.github/workflows/hourly.yml` before pushing (see below) |
 
@@ -31,7 +33,7 @@ Use any of your Python environments (3.10+):
 ```powershell
 pip install -r requirements.txt
 python -m pipeline.run                # Open-Meteo forecast (free, no key); takes ~30 s
-python -m http.server 8000 -d web     # then open http://localhost:8000
+python scripts/build_dist.py --serve 8000   # assembles dist/ (page + data/static + build/) and serves it on http://localhost:8000
 ```
 
 The page has to be served over http (as above), not opened as a file, because it loads the JSON files.
@@ -126,7 +128,7 @@ for 60 days.
   matched by location (inside a polygon, else the nearest within 2 km, else their farm's majority polygon, else
   a hull around the turbines). One farm = one wind farm of the turbine database.
 
-## Feed format (`web/data/feed.json`)
+## Feed format (`build/data/feed.json`, served as `data/feed.json`)
 
 ```json
 {
@@ -180,6 +182,6 @@ in it.
 - **Farm and zone outlines** (`data/raw/European_offshore_wind_farm_outline.geojson`): your own compilation,
   all rights reserved, with credit to EMODnet for the geometry it is based on.
 - **Data derived from the offshore turbine database** (`data/raw/European_offshore_wind_turbines.geojson`
-  and the turbine data in `web/data/site.json`): ODbL 1.0, as its licence requires. Anyone may reuse it
+  and the turbine data in `data/static/site.json`): ODbL 1.0, as its licence requires. Anyone may reuse it
   under the ODbL.
 - Other third-party data and software keep their own licences (table above).

@@ -11,8 +11,10 @@ python -m pytest tests -q              # Python tests, data contract, wake-model
 python -m pytest tests/e2e -q          # browser smoke test: every tab at 125 % and phone width, flags deep link
 ```
 The smoke test serves `web/` with `tests/fixtures/data` as `data/`, so it needs no network and no store. Screenshots
-land in `tests/e2e/out/`; `UPDATE_BASELINE=1` rewrites `tests/e2e/baseline/`. A page push deploys in ~1 minute
-(`deploy.yml`); then look at the live site.
+land in `tests/e2e/out/`; `UPDATE_BASELINE=1` rewrites `tests/e2e/baseline/`. To look at the real page locally:
+`python scripts/build_dist.py --serve 8000` (page + `data/static/` + whatever is in `build/`; without a pipeline run there is
+no `feed.json`, so download the `built-data` artifact into `build/data/` first or run `python -m pipeline.run`). A page
+push deploys in ~1 minute (`deploy.yml`); then look at the live site.
 
 ## Add a tab
 
@@ -50,6 +52,9 @@ attribution line. Then update this recipe with the contract.
 
 ## Add a data file the page reads
 
+0. Decide where it lives: slow and committed -> `data/static/` (`config.static_file("x.json")`, refreshed by a bot workflow
+   that `git add`s it); generated every run -> `build/data/` (`config.build_file("x.json")`, added to the `built-data`
+   artifact list in `hourly.yml`). Never write into `web/`.
 1. The writer stamps `"schema": 1` into the file (see `scripts/build_meta.py` for the pattern).
 2. Add a row to `docs/DATA_CONTRACT.md` and the file to `SCHEMAS` in `scripts/build_meta.py`.
 3. Add a small version to `tests/fixtures/data/` (`tests/fixtures/make_fixtures.py` if it can be derived).

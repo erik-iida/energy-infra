@@ -1,6 +1,6 @@
 """Gas flows from the ENTSOG Transparency Platform (public API, no token).
 
-    python scripts/fetch_gas.py           # download raw data, then build web/data/gas.json
+    python scripts/fetch_gas.py           # download raw data, then build data/static/gas.json
     python scripts/fetch_gas.py --local   # rebuild gas.json from data/raw/gas/*.json
 
 Raw: connection points (positions), daily physical flows for the last 8 gas days.
@@ -17,8 +17,10 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 RAW = ROOT / "data" / "raw" / "gas"
-OUT = ROOT / "web" / "data" / "gas.json"
+OUT = config.static_file("gas.json")
 LOG = RAW / "gas_log.txt"
 API = "https://transparency.entsog.eu/api/v1/"
 UA = {"User-Agent": "energy-infra-monitor/1.0 (+https://github.com/erik-iida/energy-infra)"}

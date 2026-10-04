@@ -1,4 +1,4 @@
-"""Newsletter tab data: web/data/newsletter/{index.json, <day>.md} (public site, no fuel prices / spark spreads).
+"""Newsletter tab data: build/data/newsletter/{index.json, <day>.md} (public site, no fuel prices / spark spreads).
 
     python scripts/build_newsletter_site.py [--days 3]
 
@@ -20,8 +20,9 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 sys.path.insert(0, str(ROOT))
-OUT = ROOT / "web" / "data" / "newsletter"
+OUT = config.BUILD_DATA / "newsletter"
 EDIT = ROOT / "newsletter" / "editorial"
 
 

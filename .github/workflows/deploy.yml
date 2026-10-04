@@ -11,7 +11,7 @@ name: deploy
 on:
   push:
     branches: [main]
-    paths: ["web/**", ".github/workflows/deploy.yml"]
+    paths: ["web/**", "data/static/**", ".github/workflows/deploy.yml"]
   workflow_run:            # bot commits don't trigger push events: redeploy when a data job has finished
     workflows: [gas, grid, osm-world, bathymetry, global-turbines, extra-turbines, capture]
     types: [completed]
@@ -59,30 +59,34 @@ jobs:
             echo "::error::no built-data artifact available (no successful hourly build in the last 3 days)"; exit 1
           fi
           echo "built-data from hourly run $RUN_ID"
-          rm -rf web/data/browse web/data/newsletter "$RUNNER_TEMP/bd"
+          rm -rf build "$RUNNER_TEMP/bd"; mkdir -p build/data
           gh run download "$RUN_ID" -n built-data -D "$RUNNER_TEMP/bd"   # gh refuses to overwrite files: unpack aside, then copy
-          cp -r "$RUNNER_TEMP/bd/." web/data/
-          ls -la web/data | head -30
-
-      - name: Check the site is complete
-        run: |
-          for f in web/index.html web/data/site.json web/data/feed.json; do
-            [ -s "$f" ] || { echo "::error::$f missing or empty; not deploying"; exit 1; }
-          done
-          [ -s web/data/browse/index.json ] || echo "::warning::no Data tab export in this build (Data/Flags tabs empty)"
-          python -c "import json; d=json.load(open('web/data/feed.json')); assert 'spark' not in (d.get('market') or {}), 'spark in public feed'; print('feed', d.get('generated'))"
+          cp -r "$RUNNER_TEMP/bd/." build/data/
+          ls -la build/data | head -30
 
       # CARTO raster basemaps: the key is client-side by nature but stays out of the repo (see hourly.yml history)
-      - name: Page settings (web/config.js, CARTO key)
+      - name: Page settings (config.js, CARTO key)
         env:
           CARTO_KEY: ${{ secrets.CARTO_KEY }}
         run: |
-          python3 scripts/build_config.py  # web/config.js: window.CFG (CARTO key, build time, schema versions)
+          python3 scripts/build_config.py  # build/config.js: window.CFG (CARTO key, build time, schema versions)
           if [ -z "$CARTO_KEY" ]; then echo "::warning::CARTO_KEY secret not set: CARTO basemaps show the API-key watermark"; fi
+
+      # dist/ = web/ (page) + data/static/ (committed inputs) + build/ (this run's data) — spec 3 step 3
+      - name: Assemble the site (dist/)
+        run: python3 scripts/build_dist.py
+
+      - name: Check the site is complete
+        run: |
+          for f in dist/index.html dist/data/site.json dist/data/feed.json; do
+            [ -s "$f" ] || { echo "::error::$f missing or empty; not deploying"; exit 1; }
+          done
+          [ -s dist/data/browse/index.json ] || echo "::warning::no Data tab export in this build (Data/Flags tabs empty)"
+          python3 -c "import json; d=json.load(open('dist/data/feed.json')); assert 'spark' not in (d.get('market') or {}), 'spark in public feed'; print('feed', d.get('generated'))"
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web
+          path: dist
       - id: deploy
         uses: actions/deploy-pages@v4

@@ -11,7 +11,7 @@ For each (bidding zone, month):
 
 Resumable: data/raw/capture/cells.json keeps finished cells; the current and previous month are refreshed once a day; zones
 without data are retried weekly. A run stops after TIME_BUDGET_S and the next run continues (newest months first).
-Writes web/data/capture.json for the page and data/raw/capture/capture_log.txt.
+Writes data/static/capture.json for the page and data/raw/capture/capture_log.txt.
 Data: ENTSO-E Transparency Platform, https://transparency.entsoe.eu
 """
 from __future__ import annotations
@@ -26,10 +26,10 @@ from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from pipeline import entsoe  # noqa: E402
+from pipeline import config, entsoe  # noqa: E402
 
 STATE = ROOT / "data" / "raw" / "capture" / "cells.json"
-OUT = ROOT / "web" / "data" / "capture.json"
+OUT = config.static_file("capture.json")
 LOG = ROOT / "data" / "raw" / "capture" / "capture_log.txt"
 MONTHS = 24
 TIME_BUDGET_S = 40 * 60

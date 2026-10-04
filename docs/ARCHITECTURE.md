@@ -1,7 +1,7 @@
 # How GridEconomics is put together
 
 A plain-language map of the project: where the numbers come from, how they become files, and how the page turns
-those files into tabs. Kept current with every structural change (spec 3). Last update: 4 Oct 2026 (page split into modules).
+those files into tabs. Kept current with every structural change (spec 3). Last update: 4 Oct 2026 (page split into modules; source and build separated).
 
 ## The short version
 
@@ -103,7 +103,10 @@ flowchart LR
 
 | Folder | What |
 |---|---|
-| `web/` | the page: `index.html` (shell + bootstrap), `css/base.css`, `js/core/` (shared), `js/features/<feature>/` (one folder per tab or map layer), `data/` |
+| `web/` | the page: `index.html` (shell + bootstrap), `css/base.css`, `js/core/` (shared), `js/features/<feature>/` (one folder per tab or map layer). Source only; nothing writes here |
+| `data/static/` | committed inputs the page reads: `site.json`, `zones.json`, `grid.json`, `capture.json`, `gas.json`, `gie.json`, `bathy.*` (refreshed by bot workflows) |
+| `build/` | not committed: what one run generates (`data/feed.json`, `data/browse/`, `data/newsletter/`, `data/meta.json`, `config.js`); uploaded as the `built-data` artifact |
+| `dist/` | not committed: the assembled site = `web/` + `data/static/` + `build/`, made by `scripts/build_dist.py`; this is what GitHub Pages (and the private copy) serve |
 | `pipeline/` | the hourly job: forecasts, wake model, market and system data |
 | `collector/` | the data store and the collectors that fill it |
 | `newsletter/` | daily metrics, signal rules (Flags), the newsletter draft |
@@ -111,6 +114,25 @@ flowchart LR
 | `tests/` | Python tests, test data (`tests/fixtures/data/`), browser smoke test (`tests/e2e/`) |
 | `docs/` | this page, the data contract, the decision log |
 | `.github/workflows/` | the jobs above |
+
+## From folders to the served site
+
+```
+web/            data/static/        build/                 (hourly job, or the built-data artifact)
+index.html      site.json           data/feed.json
+css/ js/        zones.json grid.json  data/browse/  data/newsletter/  data/meta.json
+                capture.json gas.json  config.js
+                gie.json bathy.*
+      \               |                 /
+       +--- scripts/build_dist.py ------+
+                       |
+                     dist/   index.html  css/  js/  config.js  data/{site,feed,zones,...}.json  data/browse/ ...
+                       |
+            GitHub Pages (public)   +   site_private/ (Cloudflare, with the spark spreads)
+```
+`pipeline/config.py` is the one place that knows these folders (`WEB`, `DATA_STATIC`, `BUILD_DATA`, `DIST`); every writer
+takes its output path from there. The page itself only ever asks for `data/<file>` relative to its own URL, so it does
+not know or care where a file came from.
 
 ## How the page is built (front end)
 
@@ -146,6 +168,4 @@ by `scripts/build_config.py` at deploy time and never committed. Without it the 
 
 ## Known weak spots (being addressed in spec 3)
 
-- `web/` is both source and output: about a dozen scripts write into `web/data/` (step 3 moves committed inputs to
-  `data/static/` and builds `dist/`).
 - The map's layers do not yet share one `draw / hitTest / legend` contract; planned with the next layer (power plants).

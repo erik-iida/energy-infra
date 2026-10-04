@@ -1,4 +1,4 @@
-"""Export the data store as small JSON files for the site's Flags and Data tabs (web/data/browse/).
+"""Export the data store as small JSON files for the site's Flags and Data tabs (build/data/browse/).
 
     index.json         {generated, window, zones, groups, vars: [{id, name, grp, tech, unit, def}], avail: {zone: [var id]},
                         capacity: bool}
@@ -25,6 +25,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 sys.path.insert(0, str(ROOT))
 from collector.store import Store  # noqa: E402
 from newsletter import fundamentals as FU  # noqa: E402
@@ -33,7 +34,7 @@ from newsletter import registry as R  # noqa: E402
 from newsletter import signals as SG  # noqa: E402
 from pipeline.entsoe import PSR  # noqa: E402
 
-OUT = ROOT / "web" / "data" / "browse"
+OUT = config.BUILD_DATA / "browse"
 DAYS_BACK, DAYS_FWD = 30, 2
 TECH_KEY = {"nuclear": "nuc", "fossil_brown_coal_lignite": "coal", "fossil_hard_coal": "coal", "fossil_coal_derived_gas": "coal",
             "fossil_gas": "gas", "fossil_oil": "oil", "wind_onshore": "won", "wind_offshore": "woff", "solar": "sol",

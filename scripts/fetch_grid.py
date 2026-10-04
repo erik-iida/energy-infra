@@ -1,11 +1,11 @@
 """High-voltage grid for the map: the PyPSA-Eur prebuilt network from OpenStreetMap (Xiong et al., Zenodo, ODbL).
 
-    python scripts/fetch_grid.py            # download the latest version and build web/data/grid.json
+    python scripts/fetch_grid.py            # download the latest version and build data/static/grid.json
     python scripts/fetch_grid.py --local    # rebuild from data/raw/grid/*.csv already downloaded
 
 Runs on GitHub Actions (grid workflow); the cloud build environment can't reach Zenodo.
 
-Output web/data/grid.json: {"src", "version", "lines": [[kv, flags, [lon, lat, lon, lat, ...]], ...]}
+Output data/static/grid.json: {"src", "version", "lines": [[kv, flags, [lon, lat, lon, lat, ...]], ...]}
   kv     nominal voltage in kV (AC lines), or 0 for DC links (HVDC)
   flags  bit 1 = under construction, bit 2 = underground / submarine cable, bits 3+ = circuits (capped at 7)
 Geometry simplified to ~300 m and rounded to 0.001 deg. Data (c) OpenStreetMap contributors, ODbL 1.0.
@@ -21,8 +21,10 @@ import requests
 from shapely import wkt
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 RAW = ROOT / "data" / "raw" / "grid"
-OUT = ROOT / "web" / "data" / "grid.json"
+OUT = config.static_file("grid.json")
 LOG = RAW / "grid_log.txt"
 RECORD = "14144752"  # any version of the record; the API resolves the latest
 UA = {"User-Agent": "offshore-wake-monitor/1.0 (+https://github.com/erik-iida/energy-infra)"}

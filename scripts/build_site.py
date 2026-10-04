@@ -1,4 +1,4 @@
-"""Build web/data/site.json from the raw data.
+"""Build data/static/site.json from the raw data.
 
     python scripts/build_site.py
 
@@ -12,7 +12,7 @@ Inputs (data/raw/):
                                           (scripts/fetch_global_turbines.py)
     ne_10m_land.geojson                   Natural Earth land (downloaded if missing)
 
-Output: web/data/site.json
+Output: data/static/site.json
     farms   operating farms: outline, and for farms with turbines a layout in local metres (x east, y north,
             origin at the layout centroid), rotor data and a power-curve key
     types   turbine types: name, rated MW, rotor D, rated speed, power (MW) and Ct curves; farms point to
@@ -35,6 +35,7 @@ import json
 import statistics as st
 import urllib.request
 from math import cos, pi, radians
+import sys
 from pathlib import Path
 
 from shapely.geometry import MultiPoint, Point, Polygon, box, shape
@@ -42,9 +43,11 @@ from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from pipeline import config  # noqa: E402  (paths: data/static, build/)
 RAW = ROOT / "data" / "raw"
 EWW = RAW / "eww"
-OUT = ROOT / "web" / "data" / "site.json"
+OUT = config.static_file("site.json")
 LAND_URL = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_land.geojson"
 
 # Danish characters lost somewhere upstream (both source files)

@@ -33,18 +33,21 @@ jobs:
     timeout-minutes: 45
     env:
       CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      STORE_CACHE: /tmp/store-cache   # store files downloaded once, shared by the Data-tab export and the newsletter drafts
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
+      - uses: astral-sh/setup-uv@v6   # uv installs the requirements in seconds (pip took ~30 s)
+        with:
+          enable-cache: false
 
-      - run: pip install -r requirements.txt
+      - run: uv pip install --system -r requirements.txt
 
       - if: ${{ vars.WM_SOURCE == 'ecmwf' }}
-        run: pip install -r requirements-ecmwf.txt
+        run: uv pip install --system -r requirements-ecmwf.txt
 
       # state/ holds the forecast cache, the 24 h history and the daily call counter.
       # It lives in the Actions cache instead of git, so the repo doesn't grow every hour.

@@ -3,7 +3,8 @@ name: collect
 # Data store (collector/): ENTSO-E prices, generation, wind/solar forecasts, load and cross-border flows for every
 # bidding zone, at native resolution, into Parquet assets of the "store" release (see DEVNOTES.md "Data store").
 #   daily    12:35 UTC, after the day-ahead auction: last 4 days (revisions, late TSOs) + today and tomorrow
-#   backfill every 2 h: whole months from BACKFILL_FROM, newest first, until done (then each run exits at once)
+#   auto     every 2 h: backfill of ended months not stored yet (newest first); when none are missing, "recent":
+#            last 2 days + tomorrow (keeps the Data tab current; the running month is never re-downloaded whole)
 #   probe    manual only: one zone + one border, prints parsed rows, writes nothing
 on:
   schedule:
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "daily, backfill or probe"
+        description: "daily, recent, backfill, auto or probe"
         default: daily
 
 permissions:
@@ -32,13 +33,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-collect.txt
-      - run: pip install -r requirements-collect.txt
+      - uses: astral-sh/setup-uv@v6   # uv installs the requirements in seconds (pip took ~30 s)
+        with:
+          enable-cache: false
+      - run: uv pip install --system -r requirements-collect.txt
       - name: Collect
         env:
           ENTSOE_TOKEN: ${{ secrets.ENTSOE_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           BACKFILL_FROM: ${{ vars.BACKFILL_FROM || '2024-01' }}
-          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '35 12 * * *' && 'daily' || 'backfill') }}
+          MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || (github.event.schedule == '35 12 * * *' && 'daily' || 'auto') }}
         run: python -m collector.collect "$MODE"

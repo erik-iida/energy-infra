@@ -22,7 +22,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install requests shapely
+      - uses: astral-sh/setup-uv@v6   # uv installs the requirements in seconds (pip took ~30 s)
+        with:
+          enable-cache: false
+      - run: uv pip install --system requests shapely
       - run: python scripts/fetch_grid.py || true
       - name: Commit
         run: |

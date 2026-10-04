@@ -22,9 +22,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: pip
-          cache-dependency-path: requirements-newsletter.txt
-      - run: pip install -r requirements-newsletter.txt
+      - uses: astral-sh/setup-uv@v6   # uv installs the requirements in seconds (pip took ~30 s)
+        with:
+          enable-cache: false
+      - run: uv pip install --system -r requirements-newsletter.txt
       - env:
           GH_TOKEN: ${{ github.token }}
           DAY: ${{ inputs.day }}

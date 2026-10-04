@@ -19,14 +19,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements*.txt
+      - uses: astral-sh/setup-uv@v6   # uv installs the requirements in seconds (pip took ~30 s)
+        with:
+          enable-cache: false
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
       - name: Install
         run: |
-          pip install -r requirements-newsletter.txt numpy pytest ruff playwright
+          uv pip install --system -r requirements-newsletter.txt numpy pytest ruff playwright
           python -m playwright install --with-deps chromium
       - name: Python errors (ruff, errors only)
         run: ruff check --select E9,F63,F7,F82 --output-format github .

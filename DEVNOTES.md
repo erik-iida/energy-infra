@@ -673,6 +673,11 @@ hourly-feed in detail (jobs API):
   removes it. Actions minutes: ~2,800 in 3.5 days (~24,000 per month), free while the repo is public; a private repo
   (spec 2) gets 2,000 free minutes per month on the free plan, so spec 2 needs this number.
 
+## Spec 3 kickoff (Oct 4 2026)
+- Erik approved all seven defaults of spec 3 (project doc `claude/spec-3-frontend-backend-split.md`); the order of work
+  changed after step 0: safety net (step 1), then the fast deploy (step 5), then the `index.html` split. Decision log:
+  docs/DECISIONS.md. Every step: proposal to Erik, his go-ahead, build and test, show, push, verify, report.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

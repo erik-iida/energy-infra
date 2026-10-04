@@ -17,8 +17,9 @@ def test_page_script_parses(tmp_path):
         js = tmp_path / "inline.js"
         js.write_text("\n;\n".join(inline), encoding="utf-8")
         files.append(js)
-    major = int(subprocess.run(["node", "-p", "process.versions.node.split('.')[0]"], capture_output=True, text=True).stdout or 0)
-    flags = [] if major >= 22 else ["--experimental-detect-module"]   # ES modules in .js files: automatic from Node 22
+    # `node --check file.js` silently passes a .js file that contains `import` (the module/CommonJS guess skips the
+    # check, seen with Node 22): feed the source on stdin with --input-type=module, which really parses it.
     for f in files:
-        r = subprocess.run(["node", *flags, "--check", str(f)], capture_output=True, text=True)
+        with open(f, "rb") as src:
+            r = subprocess.run(["node", "--input-type=module", "--check"], stdin=src, capture_output=True, text=True)
         assert r.returncode == 0, f"{f}: {r.stderr[-2000:]}"

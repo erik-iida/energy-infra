@@ -890,6 +890,20 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
   hours and the caption stay computed on the full series.
 - Baseline screenshots for the Market tab updated (label layout).
 
+## System tab: price and residual load on the mix chart, 72 h / 1 wk / 1 mo ranges (Oct 4 2026, items 3 and 1)
+- Generation mix chart ("Generation mix, load and price"): residual load as a dashed line, day-ahead price on a right-hand
+  axis (the country's zones: first bold, others thin; scale label top right), both toggleable in the legend. Tooltip adds
+  the price.
+- Range buttons on the selected country's heading: 24 h (the feed, as before, incl. the forecast part of the price card)
+  or 72 h / 1 wk / 1 mo from the store export (`core/range.js rangeData()`: `browse/ts/<zone>.json`, hourly means, last 30
+  days; a country = the sum of its zones, hours where a zone has no value stay null; flows per neighbour zone excluding the
+  country's own borders; prices per zone). The range is loaded on demand and cached for the one country | range pair
+  (`RANGE`); the 24 h view is shown with a note while it loads, or when the export has no file for the zone. The detail
+  block reads everything through `D.R` (n, labels, prices, now-marker) so the cards do not know which source they draw.
+  The country cards and the "Compare across countries" chart stay on the 24 h feed (30+ zone files otherwise).
+- `tests/test_page_syntax.py`: `node --check file.js` silently passed a .js file with `import` + a syntax error (Node 22
+  module guessing); the test now feeds each file to `node --input-type=module --check` on stdin, which parses for real.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".

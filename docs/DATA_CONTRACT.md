@@ -30,7 +30,7 @@ Rules
 | `grid.json` | 1 | `scripts/fetch_grid.py` | grid workflow, monthly; committed by bot | Map HV grid layer, interconnection layer (DC link geometry) | `lines[]` = `[kV (0 = DC), flags, [lon, lat, ...]]` | yes |
 | `bathy.json`, `bathy.png` | 1 | `scripts/fetch_bathymetry.py` | bathymetry workflow, on change; committed | Map depth layer | `bbox`, `w`, `h`, `encoding` (+ greyscale PNG) | yes |
 | `browse/index.json` | 1 | `scripts/build_browse.py` | hourly-feed, rebuilt every 3 h (cached between) | Data tab | `zones`, `groups`, `vars[]`, `avail.<zone>`, `capacity`, `generated`, `window` | yes |
-| `browse/ts/<zone>.json` | 1 | `scripts/build_browse.py` | as above | Data tab, Flags drill-down (zone + neighbours) | `t0`, `step`, `cols[]` (`id`, `name`, `grp`, `tech`, `unit`), `v[][]` | yes |
+| `browse/ts/<zone>.json` | 1 | `scripts/build_browse.py` | as above | Data tab, Flags drill-down (zone + neighbours), System tab detail charts for 72 h / 1 wk / 1 mo (`core/range.js`) | `t0`, `step`, `cols[]` (`id`, `name`, `grp`, `tech`, `unit`), `v[][]` | yes |
 | `browse/capacity.json` | 1 | `scripts/build_browse.py` | as above | Data tab, capacity view | `classes`, `rows[]` (`gw`, `pk`, `cf`, `zones`), `cf_window`, `peak_window` | yes |
 | `browse/flags.json` | 1 | `scripts/build_browse.py` (`newsletter/signals.py`) | as above | Flags tab (latest day) | `day`, `days`, `rules`, `scan[]`, `context_rules`, `context[]`, `focus`, `window_days`, `min_hist`, `hist_days`, `generated` | yes |
 | `browse/flags/<day>.json` | 1 | `scripts/build_browse.py` | as above, last 14 days | Flags tab (Day selector, deep links) | as `flags.json` | yes |

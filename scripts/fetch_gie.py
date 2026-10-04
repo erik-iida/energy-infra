@@ -1,7 +1,12 @@
 """Gas storage (AGSI+) and LNG terminals (ALSI) from GIE. Needs a free API key in env GIE_KEY.
 
-    python scripts/fetch_gie.py           # download (needs GIE_KEY), then build web/data/gie.json
+    python scripts/fetch_gie.py           # last RECENT_DAYS days, merged into web/data/gie.json (needs GIE_KEY)
+    python scripts/fetch_gie.py --full    # whole KEEP_DAYS window (automatic on Mondays and when gie.json is missing)
     python scripts/fetch_gie.py --local   # rebuild from data/raw/gie/*.json
+
+Incremental since 4 Oct 2026: the daily run used to download 400 days for every area to add one new day. Now it fetches the
+last RECENT_DAYS (GIE revises recent days) and merges them by gas day into the published gie.json; a weekly full download
+picks up older revisions and trims the window.
 
 Data: GIE AGSI+ / ALSI transparency platforms (Gas Infrastructure Europe), https://agsi.gie.eu, https://alsi.gie.eu
 """
@@ -21,6 +26,8 @@ RAW = ROOT / "data" / "raw" / "gie"
 OUT = ROOT / "web" / "data" / "gie.json"
 LOG = RAW / "gie_log.txt"
 log_lines: list[str] = []
+KEEP_DAYS = 400     # window published in gie.json
+RECENT_DAYS = 14    # incremental download
 
 
 def log(m: str) -> None:
@@ -56,11 +63,12 @@ def pages(base: str, key: str, **params) -> list[dict]:
     return out
 
 
-def download(key: str) -> None:
+def download(key: str, days: int = KEEP_DAYS) -> None:
     RAW.mkdir(parents=True, exist_ok=True)
-    frm, to = (date.today() - timedelta(days=400)).isoformat(), date.today().isoformat()
+    frm, to = (date.today() - timedelta(days=days)).isoformat(), date.today().isoformat()
+    log(f"download {frm} .. {to} ({days} days)")
     for name, base in (("agsi", "https://agsi.gie.eu/api"), ("alsi", "https://alsi.gie.eu/api")):
-        about = get(base + "/about", key, show="listing")
+        about = get(base + "/about", key, show="listing") if days >= KEEP_DAYS else None  # facility listing: weekly is enough
         if about is not None:
             (RAW / f"{name}_about.json").write_text(json.dumps(about), encoding="utf-8")
             log(f"{name} about: type {type(about).__name__}, keys {list(about)[:10] if isinstance(about, dict) else len(about)}")
@@ -85,7 +93,22 @@ def num(v):
         return None
 
 
-def build() -> None:
+def merge(old: dict, new: dict) -> dict:
+    """Series of `new` win by gas day; areas or days only in `old` are kept; days older than KEEP_DAYS are dropped."""
+    cut = (date.today() - timedelta(days=KEEP_DAYS)).isoformat()
+    out = {"src": new.get("src") or old.get("src"), "storage": {}, "lng": {}}
+    for part in ("storage", "lng"):
+        o, n = old.get(part, {}), new.get(part, {})
+        for a in sorted(set(o) | set(n)):
+            rows = {r[0]: r for r in o.get(a, {}).get("d", [])}
+            rows.update({r[0]: r for r in n.get(a, {}).get("d", [])})
+            d = [rows[k] for k in sorted(rows) if k >= cut]
+            if d:
+                out[part][a] = {**o.get(a, {}), **n.get(a, {}), "d": d}
+    return out
+
+
+def build(incremental: bool = False) -> None:
     """web/data/gie.json: per area (EU + countries), daily series oldest -> newest:
     storage: day, full %, gas in storage TWh, injection / withdrawal GWh/d, working gas volume TWh
     lng: day, send-out GWh/d, inventory GWh"""
@@ -116,6 +139,11 @@ def build() -> None:
     if not out["storage"] and not out["lng"]:
         log("no GIE data to build")
         return
+    if incremental and OUT.exists():
+        old = json.loads(OUT.read_text(encoding="utf-8"))
+        out = merge(old, out)
+        log(f"merged into the existing {OUT.name}: EU storage {len(old.get('storage', {}).get('EU', {}).get('d', []))} -> "
+            f"{len(out['storage'].get('EU', {}).get('d', []))} days")
     OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
     log(f"wrote {OUT.relative_to(ROOT)}: storage {len(out['storage'])} areas, LNG {len(out['lng'])} areas, "
         f"{OUT.stat().st_size / 1e3:.0f} kB")
@@ -123,13 +151,14 @@ def build() -> None:
 
 if __name__ == "__main__":
     try:
+        full = "--full" in sys.argv or not OUT.exists() or date.today().weekday() == 0
         if "--local" not in sys.argv:
             k = os.environ.get("GIE_KEY", "")
             if not k:
                 log("GIE_KEY not set; skipping download")
             else:
-                download(k)
-        build()
+                download(k, KEEP_DAYS if full else RECENT_DAYS)
+        build(incremental="--local" not in sys.argv and not full)
     finally:
         RAW.mkdir(parents=True, exist_ok=True)
         LOG.write_text("\n".join(log_lines) + "\n", encoding="utf-8")

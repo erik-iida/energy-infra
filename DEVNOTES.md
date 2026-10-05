@@ -1025,6 +1025,8 @@ be read (demand in an opportunity block; demand beyond the stack = generation or
   download names). Repo, workflows, Cloudflare projects and the code keep their old names (`energy-infra`,
   `grideconomics` Pages project) until the hosting move; the domain is still to be bought.
 - Tab "Compare, ±24 h" is now **Offshore wind** (the PyWake model comparison and farm series; file names unchanged).
+- The breadcrumb ("World › Europe › Germany") under the heading is hidden (`#crumb hidden`, Erik 5 Oct 2026); `crumb()`
+  still fills it so it can come back with one attribute. Back to World = the ⌂ button on the map.
 
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show

@@ -22,8 +22,18 @@ What Erik wants the daily brief to be, and what feedback has taught so far. A ne
 - Public text never contains fuel prices or spark spreads (yfinance data is private); the site build runs with `--no-fuel`.
 - CEE/SEE zones first; Western zones only as reference or as the other side of a decoupled border.
 
+## Diagnoses (v3 draft, 5 Oct 2026, spec 4; format still to be judged by Erik)
+- The headline sentence is followed by ONE sentence from the diagnosis of that signal (its top candidate driver).
+- **Why they fired**: up to five more story candidates (fired signals in CEE/SEE, one per zone, strongest first, never daily
+  capture rates), one line each: zone, signal and value, percentile, the top driver in plain numbers.
+- Drivers state co-occurrence, never causation ("the priciest hours took in the residual-load peak", not "caused by"); no
+  congestion claims until NTC is in the store. Every number comes from `newsletter/diagnose.py`'s structured dict (tested).
+- The full context block per candidate (event hours, what happened in them, what else was unusual, next door, data gaps)
+  is in `facts.json` -> `diagnoses[].text`; a chat session writing the editorial starts from it.
+- Open for Erik: which checks and thresholds stay (`diagnose.TH`), how many candidates, whether the "Why they fired" block
+  belongs before or after Price decoupling, and whether import/export signals read well as "net export share of load".
+
 ## Ideas not yet in the brief (waiting for Erik's call)
-- Residual load peak and net import for the zone in the headline (stored as `metrics_daily`), to say *why* a spread was wide.
 - Flags counts from the Flags tab; negative-hours tally; week-on-week change.
 
 ## Feedback log (newest first)

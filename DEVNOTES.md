@@ -919,11 +919,49 @@ rules: docs/ARCHITECTURE.md "How the page is built"; how-tos: docs/RECIPES.md.
   22:00: metrics mode=all + `rebuild_tabs`; live agg.json has `self` for all 46 zones, 1 y windows hold ~362 days.
 - `zones.js`: MO = metric, MWIN = period; legacy keys now/avg/next/tb2/tb4 still accepted by moSet; `S.moLast` holds the metric.
 
+## Spec 4 steps 1-2: diagnose the drivers in code, then narrate (Oct 5 2026)
+Spec: project doc `claude/spec-4-diagnosis-before-narration.md`. The Flags-panel drill-down reasoning is now a function.
+- **`newsletter/diagnose.py`** (pure functions on DataFrames, no store / file / web knowledge, so it moves into the collect /
+  derive / diagnose / render layout unchanged): `day_frames(hp, ga, hl, hf, day)` -> one frame per zone for the CET day
+  (23/24/25 hours; price, load, solar, wind on/offshore, gas, total, net_import, `x|<partner>` per border, residual load);
+  `event_hours` mirrors `fxEvents` (TB2/TB4 priciest and cheapest hours, negative hours, residual max/min hour, steepest
+  3-hour rise; same tie-breaking as the JS, i.e. ties among the top hours resolve to the later hour); `block_stats` for the
+  event hours and the day (price, wind / solar % of consumption, gas share, load, residual load, net import);
+  `unusual_rows` = the panel's rule and FXUNU order (`UNUSUAL_ORDER`, keep in step with drilldown.js); `neighbours` from the
+  flow columns (price, difference, hours split by > 1 €/MWh, "sent / took N MW", price n/a with the reason, GB = Market
+  Index); `drivers` = the rule table; `diagnose(sig, day, frames, scan_rows, fired)` -> dict; `render_text(dict)` -> block.
+  `newsletter/zones.py` holds ZONE_NAME (moved out of build.py, shared); `build.ZONE_NAME` / `zn` still importable.
+- **Driver rule table** (`diagnose.drivers`, thresholds in `TH`): FIRST VERSION, Cowork's proposal from the spec, not yet
+  reviewed by Erik on real days (spec 4 step 0 was skipped at his request to build first). Families: wide spread (priciest
+  hours hold the residual-load peak; cheapest hours in the solar / wind peak; wind-poor day; gas share up in the peak;
+  imports in the peak / exports in the trough), negative hours (wind + solar share, exports or still importing, low load,
+  neighbours below zero, residual minimum), residual peak / minimum (the hour, load, wind share, price then, flows then),
+  ramp (load / solar / wind change over the window, price change), import share (top border with its price gap and split
+  hours, wind, gas), baseload (gas, wind, solar, load percentiles; neighbours within 10 €/MWh = regional level; net flow),
+  capture rate (capture price vs day mean, share of output in the 4 cheapest hours); plus "neighbours also fired" for all.
+  Every phrase states co-occurrence; no congestion claims (NTC not in the store); nothing fuel-derived (`spark_*` excluded).
+- **Audit rule**: every number in a rendered text is a value of the dict (`diagnose.numbers_in`; `tests/test_diagnose.py`
+  parses the text back; dates, clock times and the "(1)" numbering are skipped). Also tested: a 25-hour DST day (25 Oct
+  2026, labels 02 / 02′), a missing price hour, late generation, UA-IPS (UAH) and a zone outside the store, GB label,
+  TB4 / TB2 event hours reproduce the metric, a tight-evening and a solar-glut day. Real days checked by hand (2-4 Oct):
+  the spread in the text equals the flagged TB4 to the euro; RO's late generation is stated, not filled.
+- **In the newsletter** (`build.diagnoses`): story candidates = fired signals in the focus zones, no `cr_*` (STYLE.md: no
+  daily capture rates) or `spark_*`, one signal per zone (its strongest), top `DIAG_N` = 6 by score. `facts.json` gets
+  `diagnoses` (dict + `text` each). `draft_brief`: the headline sentence gets the headline signal's top driver (the open
+  STYLE.md item); new block **Why they fired** = the other candidates, one line each (signal, percentile, top driver; else
+  the two most unusual context rows; else the data gap). Cost: ~1.5 s per day on top of the ~60 s build.
+- Not done (spec 4 steps 3-5): the Flags "Copy context as text" button (export the text into `browse/flags/<day>.json`,
+  after or before the page split as Erik decides), the playwright parity test (event hours / unusual rows / neighbours of
+  the panel vs the dict), `signals_used` in editorial front matter, the UI check bot.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation; the map's hover hour instead of "latest hour".
-- Flags drill-down Phase 2: "copy context as text" first (spec 4 step 3; goes into `js/features/flags/`), congestion marker once
-  NTC is in the store, starred story candidates (browser-only).
+- Flags drill-down Phase 2: "copy context as text" (spec 4 step 3: the text now exists in `newsletter/diagnose.py`; export it
+  per fired signal into `browse/flags/<day>.json` and add the button in `js/features/flags/`), the playwright parity test
+  (spec 4 step 4), congestion marker once NTC is in the store, starred story candidates (browser-only).
+- Spec 4 driver rule table: review with Erik on real days (which checks, thresholds `diagnose.TH`, wording, how many
+  candidates per day); then write the decisions into docs/DECISIONS.md and STYLE.md.
 - Spec 3 remaining (step 6): freshness labels on the
   page from meta.json, a screenshot-diff assertion in the smoke test, failure notifications. Spec 2: the cutover itself
   (docs/DEPLOY.md), then `jobs.publish cloudflare` when the public site moves next to the private one.

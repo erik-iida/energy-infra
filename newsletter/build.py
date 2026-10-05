@@ -19,6 +19,7 @@ import pandas as pd
 
 from common.store import Store
 
+from . import diagnose as DG
 from . import fundamentals as FU
 from . import metrics as M
 from . import signals as S
@@ -27,22 +28,8 @@ from . import signals as S
 FOCUS = ["PL", "CZ", "SK", "HU", "RO", "BG", "SI", "HR", "RS", "GR", "BA", "ME", "MK", "EE", "LV", "LT"]
 CONTEXT = ["DE-LU"]
 COLS = ["baseload", "tb2", "tb4", "neg_hours", "wind_share_load", "solar_share_load", "spark_top4"]
-# full names in the text (feedback #1: always write country names out); multi-zone countries say which part
-ZONE_NAME = {"AL": "Albania", "AT": "Austria", "BA": "Bosnia and Herzegovina", "BE": "Belgium", "BG": "Bulgaria",
-             "CH": "Switzerland", "CZ": "Czechia", "DE-LU": "Germany-Luxembourg", "DK1": "West Denmark", "DK2": "East Denmark",
-             "EE": "Estonia", "ES": "Spain", "FI": "Finland", "FR": "France", "GB": "Great Britain", "GR": "Greece",
-             "HR": "Croatia", "HU": "Hungary", "IE(SEM)": "Ireland (all-island)", "LT": "Lithuania", "LV": "Latvia",
-             "ME": "Montenegro", "MK": "North Macedonia", "NL": "the Netherlands", "PL": "Poland", "PT": "Portugal",
-             "RO": "Romania", "RS": "Serbia", "SI": "Slovenia", "SK": "Slovakia", "UA-IPS": "Ukraine",
-             "NO1": "Norway (Oslo, NO1)", "NO2": "Norway (south-west, NO2)", "NO3": "Norway (central, NO3)",
-             "NO4": "Norway (north, NO4)", "NO5": "Norway (west, NO5)", "SE1": "Sweden (SE1)", "SE2": "Sweden (SE2)",
-             "SE3": "Sweden (Stockholm, SE3)", "SE4": "Sweden (Malmö, SE4)", "IT-North": "Northern Italy",
-             "IT-Centre-North": "Central-Northern Italy", "IT-Centre-South": "Central-Southern Italy", "IT-South": "Southern Italy",
-             "IT-Calabria": "Calabria", "IT-Sicily": "Sicily", "IT-Sardinia": "Sardinia"}
-
-
-def zn(z: str) -> str:
-    return ZONE_NAME.get(z, z)
+# full names in the text live in newsletter/zones.py (shared with diagnose.py); ZONE_NAME / zn stay importable from here
+from .zones import ZONE_NAME, zn  # noqa: E402,F401
 
 
 def months_between(a: pd.Timestamp, b: pd.Timestamp) -> list[str]:
@@ -189,6 +176,39 @@ def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, z
     return {"day": nxt.strftime("%Y-%m-%d"), "zones": rows}
 
 
+# story candidates for the diagnoses in facts.json: fired signals in the focus zones, no daily capture rates (STYLE.md) and
+# nothing fuel-derived, one signal per zone (its strongest), the top N by score
+DIAG_N = 6
+DIAG_SKIP = ("cr_", "spark_")
+
+
+def story_candidates(sigs: list[dict], zones: list[str], n: int = DIAG_N) -> list[dict]:
+    out, seen = [], set()
+    for s in sigs:  # already strongest first
+        if s["zone"] not in zones or s["metric"].startswith(DIAG_SKIP) or s["zone"] in seen:
+            continue
+        seen.add(s["zone"])
+        out.append(s)
+        if len(out) >= n:
+            break
+    return out
+
+
+def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.Timestamp, zones: list[str]) -> list[dict]:
+    """The structured diagnosis and its text block for each story candidate (newsletter/diagnose.py)."""
+    cand = story_candidates(sigs, zones)
+    if not cand:
+        return []
+    scan = S.scan(metrics, day, S.RULES + S.CONTEXT)
+    frames = DG.day_frames(M.hourly_prices(da), ga, M.hourly_load(ld), M.hourly_flows(fl), day)
+    out = []
+    for s in cand:
+        d = DG.diagnose(s, day, frames, scan, sigs)
+        d["text"] = DG.render_text(d)
+        out.append(d)
+    return out
+
+
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
                 carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None,
                 ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None) -> dict:
@@ -228,11 +248,12 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
         if not fund:
             notes.append("No generation in the store for the 30-day window: fundamentals skipped.")
     dec = decoupling(da, fl, day, focus)
+    diag = diagnoses(sigs, metrics, da, ga, ld, fl, day, focus)
     return {
         "day": day.strftime("%Y-%m-%d"), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "focus": FOCUS, "context": ctx, "window_days": S.WINDOW_DAYS, "price_zones_in_store": len(prices_seen),
         "fundamentals": fund, "fundamentals_stats": fstats, "decoupling": dec, "zone_names": {z: zn(z) for z in focus},
-        "table": table, "signals": sigs, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
+        "table": table, "signals": sigs, "diagnoses": diag, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
         "definitions": {"tb2": "mean of the 2 highest minus the 2 lowest hourly day-ahead prices of the CET day",
                         "tb4": "same with 4 hours", "share_load": "wind (onshore + offshore) or solar output / actual load, energy",
                         "cr_30d": "30-day capture rate: output-weighted price / mean price over the window",
@@ -280,6 +301,19 @@ def _sig_text(s: dict) -> str:
     return f"{zn(s['zone'])}: {s['label']} at {_i(s['value'])}{unit}, {rank}."
 
 
+def _diag_line(d: dict) -> str:
+    """One sentence per story candidate in the brief: the top driver, else the most unusual context rows, else the data gap."""
+    if d["drivers"]:
+        return d["drivers"][0]["text"]
+    if d["unusual"]:
+        rows = sorted(d["unusual"], key=lambda r: -abs(r["pct100"] - 50))[:2]
+        return "Also unusual that day: " + "; ".join(
+            f"{r['label']} {_i(r['value'])}{'%' if r['unit'] == '%' else ' ' + r['unit'].replace('EUR/MWh', '€/MWh')} (P{r['pct100']})" for r in rows) + "."
+    if d["data"] and d["data"]["notes"]:
+        return "Data: " + "; ".join(d["data"]["notes"]) + "."
+    return "Nothing else in the day's numbers stood out."
+
+
 def draft_brief(f: dict) -> str:
     """Short on purpose (feedback #1): one signal in the headline, the widest price split between connected zones, the
     auction for tomorrow, wind and solar as share of load. Country names in full; no daily capture rates."""
@@ -289,8 +323,20 @@ def draft_brief(f: dict) -> str:
     lines = [f"# GridEconomics daily - {day:%a %-d %b %Y}", ""]
     fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"] and not s["metric"].startswith(TEXT_SKIP)]
     lead = [s for s in fs if s["metric"] not in TB] or fs
+    diag = {(d["zone"], d["metric"]): d for d in f.get("diagnoses") or []}
     if lead:
-        lines += ["**Headline.** " + _sig_text(lead[0]), ""]
+        head = "**Headline.** " + _sig_text(lead[0])
+        dh = diag.get((lead[0]["zone"], lead[0]["metric"]))
+        if dh and dh["drivers"]:
+            head += " " + dh["drivers"][0]["text"]
+        lines += [head, ""]
+        rest = [d for d in (f.get("diagnoses") or []) if (d["zone"], d["metric"]) != (lead[0]["zone"], lead[0]["metric"])]
+        if rest:
+            lines += ["**Why they fired.** Other metrics outside their own 90-day range, with what the data shows for the same hours "
+                      "(co-occurrence, not causation):"]
+            for d in rest:
+                lines.append(f"- {d['name']}: {DG.signal_phrase(d)} (P{d['pct100']}). {_diag_line(d)}")
+            lines.append("")
     else:
         lines += [f"**Headline.** No CEE/SEE metric left its own {f['window_days']}-day normal range on {day:%-d %b}.", ""]
     dec = f.get("decoupling") or []

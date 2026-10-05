@@ -102,3 +102,12 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | "Local generation" | self-sufficiency = generation of all types / load over the period (Erik); new daily metric `gen_total`, registry v5 |
 | Registry file | `browse/agg.json` added as publishable (store-derived aggregates, no raw rows) |
 
+## Spec 4 steps 1-2: diagnosis before narration (5 Oct 2026)
+| Decision | Choice |
+|---|---|
+| Where the drill-down logic lives | `newsletter/diagnose.py`, pure functions on DataFrames (no store, file or `web/` knowledge), so it becomes the "diagnose" stage of collect / derive / diagnose / narrate / render without changes |
+| Zone names | moved from `build.py` to `newsletter/zones.py` (shared by build and diagnose; `build.ZONE_NAME` kept as an alias) |
+| What goes into the brief | headline + its top driver sentence; "Why they fired" block with up to five more candidates (one per zone, no daily capture rates, nothing fuel-derived); full text per candidate only in `facts.json` |
+| Driver rule table | first version proposed by Cowork (Erik asked to build before the hand-worked days of step 0); Erik reviews on real days, thresholds in `diagnose.TH` |
+| Trust rule | every number in a rendered diagnosis must be a value of the structured dict (tested); co-occurrence wording only |
+| Panel parity | `event_hours` / `UNUSUAL_ORDER` mirror `fxEvents` / `FXUNU` in drilldown.js; a playwright parity test is step 4 (not yet) |

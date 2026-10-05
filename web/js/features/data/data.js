@@ -53,7 +53,7 @@ function tsRender(){const I=DB.idx,zf=DB.zs.filter(z=>DB.cache[z]);
 function dbCsv(){const c=DB.cur;if(!c)return;const q=x=>'"'+String(x).replace(/"/g,'""')+'"';
  let t=["utc,local_cet"].concat(c.cols.map(k=>q((c.multi?k.z+" · ":"")+k.v.name+" ["+k.c.unit+"]"))).join(",")+"\n";
  c.rows.forEach(r=>{const ts=c.t0+r*c.step;t+=[dbFmt(ts,"UTC"),dbFmt(ts,"CET")].concat(c.cols.map(k=>k.a[r]==null?"":k.a[r])).join(",")+"\n"});
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_timeseries.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="radialeconomics_timeseries.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 /* installed capacity (IRENA, annual, reference only), 90-day peak output (capacity proxy) and 30-day CF vs that peak: web/data/browse/capacity.json */
 function capRows(c){const f=DB.cf==="zone"?c.rows.filter(r=>r.zones.length):c.rows.slice(),rk=r=>{const i=Math.min(...r.zones.map(z=>DBFIRST.indexOf(z)<0?99:DBFIRST.indexOf(z)));return r.zones.length?i:100};
  return f.sort((x,y)=>rk(x)-rk(y)||x.name.localeCompare(y.name))}
@@ -74,7 +74,7 @@ function capView(){const el=$("dat");
 function capCsv(){const c=DB.cap;if(!c)return;const q=x=>'"'+String(x).replace(/"/g,'""')+'"',cl=c.classes;
  let t=["iso3","country","zones","irena_year"].concat(cl.map(k=>k.name+" [IRENA GW]")).concat(cl.map(k=>k.name+" [peak 90 d GW]")).concat(cl.map(k=>k.name+" [30-day CF vs peak %]")).map(q).join(",")+"\n";
  const gv=(o,k)=>o&&o[k]!=null?o[k]:"";capRows(c).forEach(r=>{t+=[r.id,r.name,r.zones.join(" "),r.year].map(q).concat(cl.map(k=>gv(r.gw,k.id)),cl.map(k=>gv(r.pk,k.id)),cl.map(k=>gv(r.cf,k.id))).join(",")+"\n"});
- const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="grideconomics_capacity.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
+ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([t],{type:"text/csv"}));a.download="radialeconomics_capacity.csv";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000)}
 $("dat").addEventListener("click",e=>{let b;
  if(b=e.target.closest("#dbmode button")){DB.mode=b.dataset.m;dataTab()}
  else if(b=e.target.closest("#dbzs .chip")){const z=b.dataset.z,i=DB.zs.indexOf(z);if(i>=0){if(DB.zs.length>1)DB.zs.splice(i,1)}else DB.zs.push(z);tsView()}

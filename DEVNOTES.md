@@ -1020,6 +1020,12 @@ be read (demand in an opportunity block; demand beyond the stack = generation or
 - If the diag keeps showing `rate_limited` > 0: the GitHub runner IPs are shared, so the fix is the Render cutover (own
   IP, continuous collector) rather than more retries.
 
+## Name: Radial Economics (Oct 5 2026, Erik)
+- The page is called **Radial Economics** (title, heading, newsletter title "Radial Economics daily", CSV / markdown
+  download names). Repo, workflows, Cloudflare projects and the code keep their old names (`energy-infra`,
+  `grideconomics` Pages project) until the hosting move; the domain is still to be bought.
+- Tab "Compare, ±24 h" is now **Offshore wind** (the PyWake model comparison and farm series; file names unchanged).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation (and to give the merit order's import blocks their real width); the map's hover hour instead of "latest hour".

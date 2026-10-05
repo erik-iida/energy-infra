@@ -54,7 +54,7 @@ $("nws").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   if(url.length>7000){try{navigator.clipboard.writeText(body)}catch(e){}url=base+enc("Too long for a link: the feedback text was copied to your clipboard. Paste it here (Ctrl+V).")}
   window.open(url,"_blank","noopener")}
  else if(a==="copy"){navigator.clipboard.writeText(nwIssue()).then(()=>{if(st)st.textContent="Copied."}).catch(()=>{if(st)st.textContent="Copy failed: select the text yourself."})}
- else if(a==="dl"){const u=URL.createObjectURL(new Blob([nwText()],{type:"text/markdown"})),l=document.createElement("a");l.href=u;l.download="grideconomics-"+d+".md";l.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}});
+ else if(a==="dl"){const u=URL.createObjectURL(new Blob([nwText()],{type:"text/markdown"})),l=document.createElement("a");l.href=u;l.download="radialeconomics-"+d+".md";l.click();setTimeout(()=>URL.revokeObjectURL(u),2000)}});
 $("nws").addEventListener("input",e=>{const t=e.target;
  if(t.id==="nwta"){if(t.value===NW.md[NW.day])nwLS(nwKey("edit",NW.day),null);else nwLS(nwKey("edit",NW.day),t.value)}
  else if(t.id==="nwnote"){const fb=nwFb();fb.note=t.value;nwSave(fb)}

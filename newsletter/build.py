@@ -354,7 +354,7 @@ def draft_brief(f: dict) -> str:
     day = datetime.strptime(f["day"], "%Y-%m-%d")
     t = f["table"]
     g = lambda v: "-" if v is None else f"{_i(v)}"
-    lines = [f"# GridEconomics daily - {day:%a %-d %b %Y}", ""]
+    lines = [f"# Radial Economics daily - {day:%a %-d %b %Y}", ""]
     fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"] and not s["metric"].startswith(TEXT_SKIP)]
     lead = [s for s in fs if s["metric"] not in TB] or fs
     if PREFER_NEW:  # a signal that also fired yesterday is persistence, not today's news
@@ -452,13 +452,13 @@ def chart_html(f: dict, md: str) -> str:
     body = "".join(f"<p>{ln}</p>" if not ln.startswith(("|", "#")) else "" for ln in md.splitlines() if ln.strip())
     body = body.replace("**", "").replace("_", "")
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GridEconomics daily {f['day']}</title><style>
+<title>Radial Economics daily {f['day']}</title><style>
 :root{{--bg:#fff;--fg:#1a1d21;--mut:#5b6470;--bar:#1f5f99;--p90:#c2410c}}
 @media (prefers-color-scheme:dark){{:root{{--bg:#14171b;--fg:#e8eaed;--mut:#9aa4b0;--bar:#6aaef0;--p90:#fb923c}}}}
 body{{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;max-width:700px;margin:0 auto;padding:16px}}
 .lbl,.val{{font-size:12px;fill:var(--fg)}}.bar{{fill:var(--bar)}}.p90{{stroke:var(--p90);stroke-width:2}}
 svg{{width:100%;height:auto}}.mut{{color:var(--mut);font-size:13px}}</style></head><body>
-<h1 style="font-size:20px">GridEconomics daily - {f['day']}</h1>{body}
+<h1 style="font-size:20px">Radial Economics daily - {f['day']}</h1>{body}
 <h2 style="font-size:16px">TB4 storage spread, EUR/MWh <span class="mut">(orange tick = zone's 90th percentile, last {f['window_days']} days)</span></h2>
 <svg viewBox="0 0 {W} {H}" role="img" aria-label="TB4 by zone">{''.join(bars)}</svg>
 <p class="mut">Source: ENTSO-E Transparency Platform. Backwards-looking market data, not advice.</p></body></html>"""

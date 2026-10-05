@@ -1005,6 +1005,21 @@ be read (demand in an opportunity block; demand beyond the stack = generation or
   (`#cmp`), the wake / what-if controls (`#mapctl`) and the farm list of that country (`#list`), toggled in `sidebar()`.
 - Fixed on the way: a comment in sidebar.js had swallowed the `#list` display line (dead code since the module split).
 
+## System tab "data 6 h old": our budget, not the TSOs (Oct 5 2026)
+- At 14:55 CEST every ENTSO-E country showed "data 6 h old (TSO reports late)". feed.market.diag said why: `entsoe`
+  243 s, 17 calls, `skipped: time budget of 240 s used`. The hourly feed's ENTSO-E client spent its 240 s on 17 slow
+  calls (~14 s each: ENTSO-E answering slowly or 429-ing the shared runner IP; a 429 retried three times slept 60 s and
+  returned None without an error line), `system()` was skipped, and the cached data was re-used with the shift added to
+  `lag_h`, which the page labels as the TSO's lateness. Energy-Charts looks fresher because it ingests continuously
+  with no such per-run budget.
+- Fixed: `stale_h` (this feed could not refetch) is now separate from `lag_h` (the data ends early at the source) and the
+  card says "this feed could not refetch ENTSO-E" instead; the offshore model check and `cap24` treat both as not usable.
+  `Client` counts `rate_limited` and `slow` calls (feed.market.diag.entsoe), reports a triple 429 as an error, backs off
+  5/10/15 s instead of 10/20/30, and the budget is 480 s (ENTSOE_MAX_WALL_S; the job limit is 45 min). `system()` fetches
+  the countries with the oldest cache first, so a budget cut hits the freshest ones.
+- If the diag keeps showing `rate_limited` > 0: the GitHub runner IPs are shared, so the fix is the Render cutover (own
+  IP, continuous collector) rather than more retries.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation (and to give the merit order's import blocks their real width); the map's hover hour instead of "latest hour".

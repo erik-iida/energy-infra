@@ -120,8 +120,8 @@ def test_time_budget_keeps_last_data(fake, monkeypatch):
     out = E.system(cl, HOURS)
     assert set(out) == {"dk", "pl"} and out["dk"]["series"]["wind_offshore"][0] == 1000.0
     assert cl.errors and cl.errors[0].startswith("skipped")
-    assert "lag_h" not in out["dk"]  # same hour: not late
+    assert "lag_h" not in out["dk"] and "stale_h" not in out["dk"]  # same hour: not late
     out2 = E.system(cl, [h + 7200 for h in HOURS])  # two hours later, still no budget
-    assert out2["dk"]["lag_h"] == 2
+    assert out2["dk"]["stale_h"] == 2 and "lag_h" not in out2["dk"]  # our skip, not the TSO's lag (5 Oct 2026)
     out3 = E.system(cl, [h + 7 * 3600 for h in HOURS])  # 7 h later: too old to keep
     assert out3 == {}

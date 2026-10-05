@@ -73,7 +73,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
             ufx = entsoe.fx_table().get("UAH", {})
             if ufx.get("rate"):
                 market["fx"] = {"UAH": {"rate": ufx["rate"], "date": ufx.get("date"), "source": ufx.get("source")}}
-            market["diag"]["entsoe"] = {"calls": ec.calls, "errors": ec.errors[-15:], "prices": sorted(ep),
+            market["diag"]["entsoe"] = {"calls": ec.calls, "rate_limited": ec.rate_limited, "slow_calls": ec.slow, "errors": ec.errors[-15:], "prices": sorted(ep),
                                         "system": sorted(market["system"])}
             print(f"entsoe: {ec.calls} calls, {len(ec.errors)} errors, prices {len(ep)} zones, system {sorted(market['system'])}")
         except Exception as ex:  # never block the feed
@@ -109,7 +109,7 @@ def build(farms: list[dict], hours_iso: list[str]) -> dict:
     for name, cc in COUNTRY_CODE.items():
         d = market["system"].get("gb" if cc == "uk" else cc) or {}
         v = (d.get("series") or {}).get("wind_offshore")
-        if v and any(x is not None for x in v) and not d.get("lag_h"):
+        if v and any(x is not None for x in v) and not d.get("lag_h") and not d.get("stale_h"):
             market["actual_offshore"][cc] = v
     print(f"market: prices {len(market['prices'])} zones, system {len(market['system'])} countries, "
           f"actual offshore {sorted(market['actual_offshore'])}")

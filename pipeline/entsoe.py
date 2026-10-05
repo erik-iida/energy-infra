@@ -231,6 +231,7 @@ def system(cl: Client, hours: list[int], workers: int = 6) -> dict[str, dict]:
             out[cc] = prev["d"]
         else:
             todo.append((cc, spec, prev))
+    todo.sort(key=lambda t: (t[2] or {}).get("t", 0))   # the countries with the oldest data first: if the budget runs out, the freshest ones wait
     with ThreadPoolExecutor(max_workers=workers) as ex:
         futs = {cc: ex.submit(_country, cl, cc, spec, past0, a, b, prev) for cc, spec, prev in todo}
         for cc, fu in futs.items():
@@ -241,10 +242,10 @@ def system(cl: Client, hours: list[int], workers: int = 6) -> dict[str, dict]:
                 continue
             if d is not None:
                 out[cc], sc[cc] = d, entry
-            elif sc.get(cc):  # not fetched this time (time budget, outage): keep the last data, marked as late, for 6 h
-                old = sc[cc]
+            elif sc.get(cc):  # not fetched this time (time budget, outage): keep the last data for 6 h, marked as OUR staleness
+                old = sc[cc]      # (stale_h: this feed could not refetch), not as the TSO's lag (lag_h: the data ends early at the source)
                 shift = max(0, int((past0[0] - old.get("h0", past0[0])) // 3600))
                 if shift <= 6:
-                    out[cc] = {**old["d"], **({"lag_h": old["d"].get("lag_h", 0) + shift} if shift else {})}
+                    out[cc] = {**old["d"], **({"stale_h": old["d"].get("stale_h", 0) + shift} if shift else {})}
     _save_cache(cache)
     return out

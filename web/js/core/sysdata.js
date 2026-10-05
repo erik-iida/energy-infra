@@ -23,6 +23,6 @@ function sysData(c){const d=SYS[c];if(!d||!d.series)return null;const se=d.serie
  // residual load = load - wind - solar (as newsletter/registry.py), only where load and the technologies have reported
  const vreOk=["won","woff","sol"].some(k=>lastRep[k]>=0),res=load&&vreOk?[...Array(NP)].map((_,h)=>h<=last&&load[h]!=null?load[h]-mix.won[h]-mix.woff[h]-mix.sol[h]:null):null;
  const fl=d.flows||{},net=fl.sum||null,nb=Object.keys(fl).filter(k=>k!=="sum");
- return{c,mix,gen,load,ren,last,lastRep,res,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[],lag:d.lag_h||0}}
+ return{c,mix,gen,load,ren,last,lastRep,res,net,nb,fl,fn:d.flow_names||{},zones:d.zones||[],lag:d.lag_h||0,stale:d.stale_h||0}}
 
 export { MIXC, SYS, SYSN, sysData };

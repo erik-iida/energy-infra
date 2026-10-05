@@ -74,12 +74,15 @@ LIMIT = RateLimiter(float(os.environ.get("ENTSOE_PER_MIN", "240")))
 class Client:
     # Time budget for one hourly run: after MAX_WALL_S the remaining calls are skipped (countries keep their last data),
     # so a slow or rate-limited API can't hold the feed. Normal runs need 5-40 s.
-    MAX_WALL_S = float(os.environ.get("ENTSOE_MAX_WALL_S", "240"))
+    # 5 Oct 2026: 240 s was hit by 17 slow calls (ENTSO-E answering in ~14 s or rate-limiting the shared runner IP), and
+    # the whole System tab fell back to 5-hour-old data labelled "TSO reports late". The job limit is 45 min: 8 min here.
+    MAX_WALL_S = float(os.environ.get("ENTSOE_MAX_WALL_S", "480"))
 
     def __init__(self):
         import requests
         self.s = requests.Session()
         self.calls, self.errors = 0, []
+        self.rate_limited, self.slow = 0, 0   # 429 / 503 answers; calls that took > 10 s (both go into feed.market.diag)
         self.t0 = time.time()
 
     def over_budget(self) -> bool:
@@ -95,8 +98,11 @@ class Client:
         for attempt in range(3):
             LIMIT.wait()
             self.calls += 1
+            t1 = time.time()
             try:
                 r = self.s.get(URL, params={**params, "securityToken": token()}, timeout=60)
+                if time.time() - t1 > 10:
+                    self.slow += 1
             except Exception as ex:
                 self.errors.append(f"{params.get('documentType')}: {ex!r}"[:200])
                 time.sleep(3 * (attempt + 1))
@@ -108,7 +114,10 @@ class Client:
                     self.errors.append(f"parse {params.get('documentType')}: {ex}")
                     return None
             if r.status_code in (429, 503):
-                time.sleep(10 * (attempt + 1))
+                self.rate_limited += 1
+                if attempt == 2:  # three refusals: say so instead of returning None silently
+                    self.errors.append(f"{params.get('documentType')} {params.get('in_Domain') or params.get('outBiddingZone_Domain')}: HTTP {r.status_code} x3")
+                time.sleep(5 * (attempt + 1))
                 continue
             text = r.text.replace(token(), "***")
             if "No matching data" not in text:

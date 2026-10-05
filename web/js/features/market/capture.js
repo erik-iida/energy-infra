@@ -25,7 +25,7 @@ function capAgg(Z,ms,id){let e=0,r=0,bh=0,bs=0,ng=0;ms.forEach(m=>{const c=Z[m];
  const base=bh?bs/bh:null,cap=e>0?r/e:null;return{cap,gwh:e,base,rate:cap!=null&&base>0?cap/base:null,neg:e>0?ng/e:null}}
 function capCountry(){if(!S.c||S.c==="Europe"||isReg(S.c)||GROUPS[S.c])return null;const z=selZones();return z?[...z]:null}
 // last-24-h capture per technology from the System data, for countries with one price zone
-function cap24(z){const c=Object.keys(SYS).find(k=>SYS[k].zones&&SYS[k].zones.length===1&&SYS[k].zones[0]===z);const d=c&&SYS[c];if(!d||!d.series||d.lag_h||!MK.prices[z])return{};
+function cap24(z){const c=Object.keys(SYS).find(k=>SYS[k].zones&&SYS[k].zones.length===1&&SYS[k].zones[0]===z);const d=c&&SYS[c];if(!d||!d.series||d.lag_h||d.stale_h||!MK.prices[z])return{};
  const out={};Object.entries(d.series).forEach(([id,v])=>{let e=0,r=0;v.forEach((g,h)=>{const p=MK.prices[z][h];if(g!=null&&g>0&&p!=null&&h<=N0){e+=g;r+=g*p}});if(e>0)out[id]=r/e});return out}
 const r0=v=>v==null||!isFinite(v)?"–":Math.round(v);
 const fxNote=fx=>(fx&&fx.UAH&&fx.UAH.rate?" Ukraine (UA-IPS) is published in UAH and converted at the latest National Bank of Ukraine rate, "+fx.UAH.rate.toFixed(2)+" UAH/EUR ("+fx.UAH.date+").":"")+(fx&&fx.GBP&&fx.GBP.rate?" GB is published in GBP and converted at the latest European Central Bank reference rate, "+fx.GBP.rate.toFixed(4)+" GBP/EUR"+(fx.GBP.date?" ("+fx.GBP.date+")":"")+".":"");

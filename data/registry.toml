@@ -13,7 +13,7 @@ publishable = true
 [files."feed.json"]
 source = "Open-Meteo / ECMWF IFS (CC BY 4.0, non-commercial tier), PyWake results, ENTSO-E Transparency (prices, generation, load, flows), Elexon BMRS / EirGrid (GB / IE)"
 publishable = true
-stripped = ["market.spark"]   # spark spreads reveal the TTF gas price (Yahoo terms): removed by split_private.py before publishing
+stripped = ["market.spark", "market.srmc"]   # spark spreads and the per-technology SRMC table reveal the TTF gas price (Yahoo terms): removed by split_private.py before publishing
 
 [files."zones.json"]
 source = "entsoe-py bidding-zone geometries (MIT), Natural Earth"
@@ -153,6 +153,10 @@ publishable = false
 
 [private.eua_manual]
 source = "newsletter/eua_manual.csv, hand-entered carbon price (git-ignored)"
+publishable = false
+
+[private.coal_oil_manual]
+source = "newsletter/coal_manual.csv (API2 EUR/t) and oil_manual.csv (Brent EUR/bbl), hand-entered, git-ignored; feed the merit-curve SRMC table only"
 publishable = false
 
 [private.entsoe_grid_map]

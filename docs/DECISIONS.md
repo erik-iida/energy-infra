@@ -111,3 +111,12 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | Driver rule table | first version proposed by Cowork (Erik asked to build before the hand-worked days of step 0); Erik reviews on real days, thresholds in `diagnose.TH` |
 | Trust rule | every number in a rendered diagnosis must be a value of the structured dict (tested); co-occurrence wording only |
 | Panel parity | `event_hours` / `UNUSUAL_ORDER` mirror `fxEvents` / `FXUNU` in drilldown.js; a playwright parity test is step 4 (not yet) |
+
+## Merit order on the Flags drill-down (5 Oct 2026, Erik)
+| Decision | Choice |
+|---|---|
+| Block width | actual output per production type in the chosen hour (Erik); the 90-day peak output (available capacity) is a later view |
+| Cost levels | per-technology SRMC table in `newsletter/fuel.py` (`TECH`, `srmc_table`), one reference cost for all zones; parameters are a first version for Erik's review |
+| Where the costs live | `feed.market.srmc`, written by `pipeline/spark.py` under the existing SPARK gate and stripped from the public feed with `market.spark` (fuel-derived = private) |
+| Cross-border | imports as blocks at the neighbour's price, exports added to demand (layer 1 of the three discussed); NTC-wide blocks and the regional curve wait for the NTC dataset |
+| Hydro reservoir / pumped, price-less imports | opportunity cost: hatched blocks at the clearing price, never an invented SRMC |

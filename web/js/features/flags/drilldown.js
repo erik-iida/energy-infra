@@ -3,13 +3,14 @@
 import { S } from "../../core/data.js";
 import { $ } from "../../core/util.js";
 import { dbJson } from "../../core/load.js";
+import { MK } from "../../core/feed.js";
 import { dtip } from "../../core/chart.js";
 import { ZONEFLAG, flagHTML } from "../../core/flags.js";
 import { tab } from "../../core/router.js";
 import { FL, flagsTab } from "./table.js";
 /* ---------- Flags drill-down: click a fired signal to see the CET day behind it (spec 1, step 1) ---------- */
 /* Hourly series: web/data/browse/ts/<zone>.json (the Data tab export). Older days: browse/flags/<day>.json (FLAG_DAYS kept). */
-const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0,hide:new Set()};  // hide: legend keys switched off (tech:<k>, load, res, price, nb:<zone>)
+const FX={open:null,day:null,gone:null,cur:null,dj:{},ts:{},busy:{},X:null,rz:0,hide:new Set(),mh:null};  // mh: merit-order hour (index in the day)  // hide: legend keys switched off (tech:<k>, load, res, price, nb:<zone>)
 const fxOff=k=>FX.hide.has(k);
 const FXTECH=[["nuc","Nuclear"],["coal","Coal & lignite"],["bio","Biomass & waste"],["hyd","Hydro"],["oth","Other"],["gas","Gas"],["oil","Oil"],["won","Onshore wind"],["woff","Offshore wind"],["sol","Solar"]];
 const FXPLAIN={
@@ -101,6 +102,53 @@ function fxHover(e,sv){const X=FX.charts[+sv.dataset.c];if(!X)return;const r=sv.
 function fxTipMain(X,i){const t=[fxDayLbl(X.d,{weekday:"short"})+" "+X.lab[i]+":00 CET"+(X.ev.hi&&X.ev.hi.includes(i)?" · "+X.ev.hiL:X.ev.lo&&X.ev.lo.includes(i)?" · "+X.ev.loL:"")];
  if(X.P)t.push("Day-ahead price "+fxN(X.P[i],1)+" "+X.Pu);if(X.L)t.push("Load "+fxN(X.L[i],0)+" MW"+(X.Ls!=="actual"?" ("+X.Ls+")":""));
  if(X.R)t.push("Residual load "+fxN(X.R[i],0)+" MW");X.st.slice().reverse().forEach(q=>{if(q.v[i])t.push(q.name+" "+fxN(q.v[i],0)+" MW"+(X.src==="forecast"?" (forecast)":""))});return t}
+/* ---- merit order for one hour (spec: Erik, 5 Oct 2026): block width = actual output of each production type in that hour,
+   height = its short-run marginal cost (feed.market.srmc, per day; fuel-price derived, so only in the private copy of the
+   site). Imports are blocks at the neighbour's price (+ hatched at the clearing price when it has none), exports are added
+   to demand (load + exports). Reservoir / pumped hydro bid opportunity cost: hatched at the clearing price. ---- */
+const FXSRMC={B14:"nuclear",B02:"lignite",B05:"coal",B03:"coal",B04:"gas",B06:"oil",B01:"biomass",B17:"biomass",B11:"vre",B16:"vre",B18:"vre",B19:"vre",B12:"hydro",B10:"hydro"};
+const FXMORD=["vre","other","biomass","nuclear","lignite","coal","gas","oil","import","hydro"];   // tie order along the x axis
+function fxMeritHour(idx,ev,Q){if(FX.mh!=null&&FX.mh<idx.length)return FX.mh;if(ev.hi&&ev.hi.length)return ev.hi[0];if(ev.lo&&ev.lo.length)return ev.lo[0];
+ if(Q.P){let b=-1;Q.P.forEach((v,i)=>{if(v!=null&&(b<0||v>Q.P[b]))b=i});if(b>=0)return b}return Math.min(12,idx.length-1)}
+function fxMerit(o,T,idx,Q,lab,ev,W){const SR=MK&&MK.srmc,tab=SR&&SR.days&&SR.days[o.d];
+ let h="<h4 class='fxh4'>Merit order <span class='mut'>one hour: block width = output of each production type (MW), height = short-run marginal cost; dashed = demand (load + exports), orange = clearing price</span></h4>";
+ if(!tab)return h+"<div class='feednote'>Cost levels (SRMC) are derived from fuel prices and are shown only on the private copy of the site.</div>";
+ if(Q.Pu!=="€/MWh")return h+"<div class='feednote'>The merit order needs the price in €/MWh; "+o.z+"'s series is in "+Q.Pu+".</div>";
+ const k=fxMeritHour(idx,ev,Q),i=idx[k],P=Q.P?Q.P[k]:null,L=Q.L&&Q.Ls==="actual"?Q.L[k]:null;
+ const sel="<select id='fxmh' aria-label='Hour'>"+lab.map((l,j)=>"<option value='"+j+"'"+(j===k?" selected":"")+">"+l+":00"+(ev.hi&&ev.hi.includes(j)?" · "+ev.hiL:ev.lo&&ev.lo.includes(j)?" · "+ev.loL:"")+"</option>").join("")+"</select>";
+ const B=[];
+ Object.values(T.c).forEach(c=>{const m=/^g\|(B\d\d)\|gen$/.exec(c.m.id);if(!m)return;const v=c.v[i];if(!(v>0))return;const cls=FXSRMC[m[1]]||"other",t=tab[cls]||{srmc:0,complete:true};
+  B.push({name:c.m.name.replace(/ actual$/,""),cls,mw:v,srmc:t.srmc,opp:t.srmc==null,part:!t.complete,col:"var(--m-"+(c.m.tech||"oth")+")"})});
+ const zs=fxNbZones(T,idx),ready=zs.every(n=>FX.ts[n]),nb=ready?fxNb(o,T,idx):[];let exp=0,nimp=0;
+ nb.forEach(q=>{const v=q.net[k];if(v==null)return;if(v<0){exp+=-v;return}if(v>0){nimp++;const pr=q.P?q.P[k]:null;B.push({name:"Import from "+q.z,cls:"import",mw:v,srmc:pr,opp:pr==null,part:false,col:q.col,nb:q.z,why:q.why})}});
+ if(!B.length)return h+"<div class='feednote'>No generation published for "+o.z+" at "+lab[k]+":00 CET yet.</div>";
+ const ord=c=>FXMORD.indexOf(c);B.forEach(b=>{b.y=b.opp?(P!=null?P:0):b.srmc});
+ B.sort((a,b)=>a.y-b.y||(a.opp?1:0)-(b.opp?1:0)||ord(a.cls)-ord(b.cls));
+ let cum=0;B.forEach(b=>{b.x0=cum;cum+=b.mw;b.x1=cum});const tot=cum,dem=L!=null?L+exp:null;
+ const ys=B.map(b=>b.y).concat(P!=null?[P]:[]),y0=Math.min(0,...ys),y1=Math.max(10,...ys)*1.12,x1=Math.max(tot,dem||0)*1.03;
+ const sm=W<520,ml=sm?40:56,mr=sm?12:20,mt=22,mb=26,H=Math.round(Math.min(300,Math.max(210,W*.34))),iw=W-ml-mr,ih=H-mt-mb,fs=sm?10:11;
+ const x=v=>ml+v/x1*iw,y=v=>mt+ih-(v-y0)/(y1-y0)*ih,mw=v=>Math.abs(v)>=1e4?fxN(v/1000,0)+"k":fxN(v,0);
+ let s="<svg class='fxmo' width='"+W+"' height='"+H+"' viewBox='0 0 "+W+" "+H+"' role='img' aria-label='Merit order of "+o.z+" at "+lab[k]+":00 CET'><defs><pattern id='fxhat' width='6' height='6' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'><rect width='6' height='6' fill='var(--panel)'/><line x1='0' y1='0' x2='0' y2='6' stroke='var(--mut)' stroke-width='2'/></pattern></defs>";
+ fxTicks(y0,y1).forEach(v=>{s+="<line x1='"+ml+"' x2='"+(W-mr)+"' y1='"+y(v).toFixed(1)+"' y2='"+y(v).toFixed(1)+"' stroke='var(--line)' stroke-width='"+(v===0?1:.5)+"'/><text x='"+(ml-5)+"' y='"+(y(v)+3.5).toFixed(1)+"' text-anchor='end' font-size='"+fs+"' fill='var(--mut)'>"+fxN(v,0)+"</text>"});
+ fxTicks(0,x1).forEach(v=>{if(v<=x1)s+="<text x='"+x(v).toFixed(1)+"' y='"+(H-8)+"' text-anchor='middle' font-size='"+fs+"' fill='var(--mut)'>"+mw(v)+"</text>"});
+ s+="<text x='"+(ml-5)+"' y='"+(mt-10)+"' text-anchor='end' font-size='"+fs+"' fill='var(--mut)'>€/MWh</text><text x='"+(W-mr)+"' y='"+(H-8)+"' text-anchor='end' font-size='"+fs+"' fill='var(--mut)'>MW</text>";
+ let marg=null;B.forEach(b=>{const bx=x(b.x0),bw=Math.max(.8,x(b.x1)-bx),raw=Math.abs(y(0)-y(b.y)),bh=Math.max(5,raw),by=b.y>=0?y(0)-bh:y(0);  // a zero-cost block still shows as a thin band
+  const tip=b.name+" · "+fxN(b.mw,0)+" MW · "+(b.opp?(b.nb?"price n/a ("+(b.why||"not in the store")+"), drawn at the clearing price":"opportunity cost, drawn at the clearing price"):(b.nb?"neighbour price ":"SRMC ")+fxN(b.srmc,0)+" €/MWh"+(b.part?" (fuel price missing: carbon component only)":""));
+  s+="<rect x='"+bx.toFixed(1)+"' y='"+by.toFixed(1)+"' width='"+bw.toFixed(1)+"' height='"+bh.toFixed(1)+"' fill='"+((b.opp||b.part)?"url(#fxhat)":b.col)+"' stroke='"+b.col+"' stroke-width='"+((b.opp||b.part)?1.5:.6)+"' data-mt='"+tip.replace(/'/g,"&#39;")+"'/>";
+  if(dem!=null&&b.x0<dem&&dem<=b.x1)marg=b});
+ if(dem!=null&&dem<=x1)s+="<line x1='"+x(dem).toFixed(1)+"' x2='"+x(dem).toFixed(1)+"' y1='"+mt+"' y2='"+(mt+ih)+"' stroke='var(--ink)' stroke-width='1.6' stroke-dasharray='5 3'/><text x='"+(x(dem)+4).toFixed(1)+"' y='"+(mt+2)+"' font-size='"+fs+"' fill='var(--ink)'>demand "+mw(dem)+"</text>";
+ if(P!=null)s+="<line x1='"+ml+"' x2='"+(W-mr)+"' y1='"+y(P).toFixed(1)+"' y2='"+y(P).toFixed(1)+"' stroke='var(--acc)' stroke-width='2'/><text x='"+(W-mr-4)+"' y='"+(y(P)-4).toFixed(1)+"' text-anchor='end' font-size='"+fs+"' fill='var(--acc)' paint-order='stroke' stroke='var(--panel)' stroke-width='3'>price "+fxN(P,0)+"</text>";
+ s+="</svg>";
+ h+="<div class='fxmhs'>Hour "+sel+(!ready&&zs.length?" <span class='mut'>loading the neighbours…</span>":"")+"</div><div class='fxch'>"+s+"</div>";
+ const seen=new Set(),lg=B.filter(b=>!seen.has(b.name)&&seen.add(b.name)).map(b=>"<span class='fxk'><i style='"+((b.opp||b.part)?"background:repeating-linear-gradient(45deg,"+b.col+" 0 2px,transparent 2px 4px)":"background:"+b.col)+"'></i>"+b.name+"</span>").join("");
+ h+="<div class='fxlg'>"+lg+"</div>";
+ let cap="At <b>"+lab[k]+":00 CET</b>"+(P!=null?" the day-ahead price was <b>"+fxN(P,0)+" €/MWh</b>":"")+"; "+(dem!=null?"demand (load "+mw(L)+(exp>0?" + exports "+mw(exp):"")+") <b>"+mw(dem)+" MW</b>":"actual load not published for this hour")+", supply stack "+mw(tot)+" MW"+(nimp?" incl. "+nimp+" import block"+(nimp>1?"s":""):"")+".";
+ if(marg){if(marg.opp)cap+=" The demand line falls in a block without a marginal cost ("+marg.name+"), so no scarcity premium can be read off.";
+  else{const prem=P!=null?P-marg.srmc:null;cap+=" Marginal block: <b>"+marg.name+"</b>"+(marg.nb?" at the neighbour's price ":" at an SRMC of ")+"<b>"+fxN(marg.srmc,0)+" €/MWh</b>"+(prem!=null?", so the price sat <b>"+fxN(Math.abs(prem),0)+" €/MWh "+(prem>=0?"above":"below")+"</b> it.":".")}}
+ else if(dem!=null&&dem>tot)cap+=" Demand exceeds the stack by "+mw(dem-tot)+" MW: generation or flows are missing for this hour.";
+ const part=B.filter(b=>b.part).map(b=>b.name);if(part.length)cap+=" Hatched "+part.join(", ")+": no fuel price in the store, carbon component only.";
+ cap+=" Costs: one reference SRMC per technology for every zone (fuel / efficiency + carbon)"+(SR.carbon?"":", <b>fuel only, no carbon</b>")+"; local fuel premia and must-run constraints are not included.";
+ return h+"<div class='fxcap'>"+cap+"</div>"}
 /* ---- step 2: what was going on next door (flows per border, neighbour prices, neighbour strip, shared crosshair) ---- */
 const FXNC=["#4e79a7","#f28e2b","#59a14f","#b07aa1","#76b7b2","#e15759","#9c755f","#edc948","#bab0ac","#ff9da7","#86bcb6"]; // neighbour identity colours (same in flows, prices, cards)
 const FXZN={AL:"Albania",AT:"Austria",BA:"Bosnia and Herzegovina",BE:"Belgium",BG:"Bulgaria",CH:"Switzerland",CZ:"Czechia","DE-LU":"Germany-Luxembourg",DK1:"West Denmark",DK2:"East Denmark",EE:"Estonia",ES:"Spain",FI:"Finland",FR:"France",GB:"Great Britain",GR:"Greece",HR:"Croatia",HU:"Hungary","IE(SEM)":"Ireland (all-island)",LT:"Lithuania",LV:"Latvia",ME:"Montenegro",MK:"North Macedonia",NL:"Netherlands",PL:"Poland",PT:"Portugal",RO:"Romania",RS:"Serbia",SI:"Slovenia",SK:"Slovakia","UA-IPS":"Ukraine",NO1:"Norway NO1",NO2:"Norway NO2",NO3:"Norway NO3",NO4:"Norway NO4",NO5:"Norway NO5",SE1:"Sweden SE1",SE2:"Sweden SE2",SE3:"Sweden SE3",SE4:"Sweden SE4","IT-North":"Northern Italy","IT-Centre-North":"Central-Northern Italy","IT-Centre-South":"Central-Southern Italy","IT-South":"Southern Italy","IT-Calabria":"Calabria","IT-Sicily":"Sicily","IT-Sardinia":"Sardinia"};
@@ -214,6 +262,7 @@ function fxBody(j,o,T,W){FX.charts=[];let h=fxHead(j,o);if(T.err)return h+"<div 
  else if(o.m==="baseload"&&dm!=null)cap2="Day mean <b>"+fxN(dm,1)+"</b> "+Q.Pu+(r&&r.median!=null?" against a 90-day median of <b>"+fxN(r.median,1)+"</b> €/MWh":"")+".";
  else if(o.m==="import_share")cap2="See the cross-border flows below: which borders carried the import or export, and whether prices next door split.";
  if(cap2)h+="<div class='fxcap'>"+cap2+(Q.src==="forecast"&&showR?" Residual load here uses the wind and solar <i>forecast</i>.":"")+"</div>";
+ h+=fxMerit(o,T,idx,Q,lab,ev,W);
  h+=fxNext(o,T,idx,Q,lab,ev,W);
  h+="<h4 class='fxh4'>What else was unusual in "+o.z+" that day <span class='mut'>percentile vs the zone's own last "+j.window_days+" days; ≥ P90 or ≤ P10 highlighted</span></h4>"+fxUnusual(j,o);
  h+="<div class='mut fxsrc'>Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (day-ahead prices, actual generation per type, actual load, day-ahead wind and solar forecast), hourly means of the native resolution, CET day."
@@ -228,7 +277,7 @@ function fxFill(){const p=$("fxp");if(!p||!FX.open||!FX.cur)return;const o=FX.op
  if(!T.err){const idx=[];for(let i=0;i<T.n;i++)if(T.day[i]===o.d)idx.push(i);
   fxNbZones(T,idx).filter(n=>!FX.ts[n]&&!FX.busy[n]).forEach(n=>{FX.busy[n]=1;dbJson("data/browse/ts/"+encodeURIComponent(n)+".json").then(t=>{FX.ts[n]=fxPrep(t)}).catch(()=>{FX.ts[n]={err:1}}).then(()=>{FX.busy[n]=0;if(S.tab==="flg"&&FX.open&&!Object.values(FX.busy).some(Boolean))fxFill()})})}
  p.innerHTML=fxBody(j,o,T,W)}
-function fxToggle(z,m,d){const o=FX.open,fr=o&&(o.row||o);FX.open=fr&&fr.z===z&&fr.m===m&&o.d===d?null:{z,m,d};fxHash();flagsTab();
+function fxToggle(z,m,d){const o=FX.open,fr=o&&(o.row||o);FX.open=fr&&fr.z===z&&fr.m===m&&o.d===d?null:{z,m,d};FX.mh=null;fxHash();flagsTab();
  const row=document.querySelector("#flg tr.fsr[data-z='"+z+"'][data-m='"+m+"']");if(row){row.focus({preventScroll:true});if(FX.open)row.scrollIntoView({block:"nearest"})}}
 $("flg").addEventListener("click",e=>{const lk=e.target.closest(".fxk[data-h]"),la=e.target.closest(".fxall");
  if(lk||la){if(la)FX.hide.clear();else{const k=lk.dataset.h;FX.hide.has(k)?FX.hide.delete(k):FX.hide.add(k)}fxFill();return}
@@ -237,9 +286,9 @@ $("flg").addEventListener("click",e=>{const lk=e.target.closest(".fxk[data-h]"),
  if(e.target.closest(".fxx")){const o=FX.open&&(FX.open.row||FX.open);FX.open=null;fxHash();flagsTab();if(o){const r=document.querySelector("#flg tr.fsr[data-z='"+o.z+"'][data-m='"+o.m+"']");if(r)r.focus()}return}
  const tr=e.target.closest("tr.fsr");if(tr&&FX.cur)fxToggle(tr.dataset.z,tr.dataset.m,FX.cur.day)});
 $("flg").addEventListener("keydown",e=>{const tr=e.target.closest("tr.fsr");if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();fxToggle(tr.dataset.z,tr.dataset.m,FX.cur.day)}});
-$("flg").addEventListener("mousemove",e=>{const sv=e.target.closest("svg.fxsv");if(sv)fxHover(e,sv)});
-$("flg").addEventListener("mouseout",e=>{const sv=e.target.closest("svg.fxsv");if(sv&&!sv.contains(e.relatedTarget)){$("dtip").style.display="none";document.querySelectorAll("#fxp .fxcr").forEach(c=>c.setAttribute("visibility","hidden"))}});
-$("flg").addEventListener("change",e=>{if(e.target.id==="fld"){FX.day=e.target.value===(FL.j&&FL.j.day)?null:e.target.value;FX.open=null;FX.gone=null;fxHash();flagsTab()}});
+$("flg").addEventListener("mousemove",e=>{const mt=e.target.closest("[data-mt]");if(mt){dtip(e,mt.dataset.mt);return}const sv=e.target.closest("svg.fxsv");if(sv)fxHover(e,sv)});
+$("flg").addEventListener("mouseout",e=>{if(e.target.closest("[data-mt]"))$("dtip").style.display="none";const sv=e.target.closest("svg.fxsv");if(sv&&!sv.contains(e.relatedTarget)){$("dtip").style.display="none";document.querySelectorAll("#fxp .fxcr").forEach(c=>c.setAttribute("visibility","hidden"))}});
+$("flg").addEventListener("change",e=>{if(e.target.id==="fxmh"){FX.mh=+e.target.value;fxFill();return}if(e.target.id==="fld"){FX.day=e.target.value===(FL.j&&FL.j.day)?null:e.target.value;FX.open=null;FX.gone=null;fxHash();flagsTab()}});
 addEventListener("keydown",e=>{if(e.key==="Escape"&&S.tab==="flg"&&FX.open){const o=FX.open.row||FX.open;FX.open=null;fxHash();flagsTab();const r=document.querySelector("#flg tr.fsr[data-z='"+o.z+"'][data-m='"+o.m+"']");if(r)r.focus()}});
 addEventListener("resize",()=>{if(S.tab==="flg"&&FX.open){clearTimeout(FX.rz);FX.rz=setTimeout(fxFill,150)}});
 

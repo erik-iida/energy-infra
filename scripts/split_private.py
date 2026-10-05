@@ -29,7 +29,9 @@ if mode != "public":
             continue
         d = json.loads(feed.read_text(encoding="utf-8"))
         mk = d.get("market")
-        if mk and "spark" in mk:
-            del mk["spark"]
+        gone = [k for k in ("spark", "srmc") if mk and k in mk]   # both derive from the private fuel prices
+        if gone:
+            for k in gone:
+                del mk[k]
             feed.write_text(json.dumps(d, separators=(",", ":")), encoding="utf-8")
-            print(f"spark removed from the public feed ({feed.relative_to(ROOT)})")
+            print(f"{', '.join(gone)} removed from the public feed ({feed.relative_to(ROOT)})")

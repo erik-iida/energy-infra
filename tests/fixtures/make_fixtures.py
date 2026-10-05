@@ -124,7 +124,8 @@ def feed(farms: list[dict]) -> None:
               "farm_zone": {str(f["id"]): ZONE_OF.get(f["c"]) for f in farms}, "prices": prices,
               "restricted_zones": ["IE(SEM)"], "core_zones": sorted(z for z in PRICE_ZONES if z not in ("ES", "FI", "IT-North")),
               "actual_offshore": {}, "system": system, "price_source": {"GB": "elexon_mid"},
-              "fx": {"GBP": {"rate": 0.85033, "date": "2026-10-02", "source": "ECB reference rate"}}}
+              "fx": {"GBP": {"rate": 0.85033, "date": "2026-10-02", "source": "ECB reference rate"}},
+              "srmc": srmc_fixture()}
     dump("feed.json", {"schema": 1, "version": 1, "source": "openmeteo", "windy_model": None, "nwp_model": "ecmwf_ifs",
                        "generated": (NOW + timedelta(minutes=50)).isoformat(timespec="seconds"), "ref_heights_m": {"100": len(farms)},
                        "models": MODELS, "hours": [iso(d) for d in past], "fc_hours": [iso(d) for d in fut],
@@ -194,6 +195,19 @@ def newsletter() -> None:
     for d in days:
         shutil.copy(src / f"{d['day']}.md", OUT / "newsletter" / f"{d['day']}.md")
     dump("newsletter/index.json", {**idx, "schema": 1, "days": days, "latest": days[0]["day"]}, indent=1)
+
+
+def srmc_fixture() -> dict:
+    """Synthetic per-technology SRMC table (feed.market.srmc) for the merit order on the Flags drill-down: a made-up gas
+    price of 35 EUR/MWh and an EUA of 70 EUR/t, no coal or oil file, for the fixture days. Not real fuel data."""
+    import pandas as pd
+    from newsletter import fuel
+    ttf = pd.Series([35.0], index=[pd.Timestamp("2026-01-01")])
+    eua = pd.Series([70.0], index=[pd.Timestamp("2026-01-01")])
+    days = pd.date_range(pd.Timestamp(NOW.date()) - pd.Timedelta(days=31), pd.Timestamp(NOW.date()) + pd.Timedelta(days=1))
+    return {"days": {d.strftime("%Y-%m-%d"): fuel.srmc_table(d, ttf, eua) for d in days}, "carbon": True,
+            "tech": {k: {"label": t["label"], "eta": t["eta"], "ef": t["ef"]} for k, t in fuel.TECH.items()},
+            "note": "synthetic test values (tests/fixtures/make_fixtures.py)"}
 
 
 def main() -> None:

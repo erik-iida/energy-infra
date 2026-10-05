@@ -216,6 +216,9 @@ def main(argv=None) -> None:
                     sp = spark.build(mk.get("prices", {}), len(feed["hours"]))
                     if sp:
                         mk["spark"] = sp
+                    sr = spark.srmc_days()   # merit curve on the Flags drill-down (private: stripped with market.spark)
+                    if sr:
+                        mk["srmc"] = sr
                 except Exception as e:
                     print(f"spark spreads: skipped ({type(e).__name__})")
             feed["farms"] = farms_block  # keep the large block last so the metadata is easy to read

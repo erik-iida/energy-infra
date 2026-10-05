@@ -114,3 +114,14 @@ f3 = build.build_facts(da, ga, DAY, None, False, "Spark spreads unavailable toda
 assert any("unavailable" in n for n in f3["notes"])
 shutil.rmtree(tmp)
 print("newsletter tests passed")
+
+# ---- per-technology SRMC table for the merit curve (synthetic fuel series, no network)
+tab = fuel.srmc_table(DAY, ttf, eua)
+assert tab["gas"]["srmc"] == round(53.7137 / fuel.ETA + fuel.EF_GAS / fuel.ETA * 70, 1) and tab["gas"]["complete"]
+assert tab["lignite"]["carbon_part"] == round(0.40 / 0.40 * 70, 1) and tab["lignite"]["complete"]
+assert tab["coal"]["fuel_part"] is None and not tab["coal"]["complete"] and tab["coal"]["srmc"] == tab["coal"]["carbon_part"], "no API2 file: carbon only"
+assert tab["hydro"]["srmc"] is None and tab["vre"]["srmc"] == 0.0 and tab["nuclear"]["srmc"] == 10.0
+coal = pd.Series([100.0], index=[pd.Timestamp("2026-06-01")])
+assert fuel.srmc_table(DAY, ttf, eua, coal=coal)["coal"]["complete"]
+assert "53.7" not in json.dumps(tab) and "ttf" not in json.dumps(tab).lower(), "fuel prices must not leak into the table"
+print("srmc table ok")

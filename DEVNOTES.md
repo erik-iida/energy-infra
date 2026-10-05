@@ -965,9 +965,42 @@ Spec: project doc `claude/spec-4-diagnosis-before-narration.md`. The Flags-panel
   after or before the page split as Erik decides), the playwright parity test (event hours / unusual rows / neighbours of
   the panel vs the dict), `signals_used` in editorial front matter, the UI check bot.
 
+## Merit order on the Flags drill-down (Oct 5 2026, Erik's idea)
+One hour of one zone as a merit curve: block width = actual output of each production type in that hour (ts file
+`g|<psr>|gen`), height = the technology's short-run marginal cost, demand = load + exports (dashed), clearing price
+(orange). Imports are blocks at the neighbour's price (one per border with net import that hour, border colours `FXNC`);
+a neighbour without an EUR price (UA-IPS, zones outside the store) is hatched at the clearing price. Reservoir and pumped
+hydro bid opportunity cost: hatched at the clearing price. Blocks sort by cost (ties: `FXMORD`), the caption names the
+marginal block (where the demand line falls) and the gap between price and its SRMC ("premium"), or says why none can
+be read (demand in an opportunity block; demand beyond the stack = generation or flows missing). Hour selector
+(`#fxmh`, `FX.mh`) defaults to the first shaded event hour, else the priciest hour.
+- **Costs are fuel-derived, so they are private.** `newsletter/fuel.py` `TECH` + `srmc_table(day, ttf, eua, coal, oil)`:
+  per technology eta / emission factor / fuel series; nuclear 10 EUR/MWh fixed, lignite 4 EUR/MWh_th mine-mouth, hard
+  coal from `coal_manual.csv` (API2 EUR/t, 6.98 MWh_th/t) and oil from `oil_manual.csv` (Brent EUR/bbl, 1.7 MWh_th/bbl),
+  both hand-entered and git-ignored like `eua_manual.csv`; without them those classes carry the carbon part only and are
+  drawn hatched ("fuel price missing"). VRE, run-of-river, biomass/waste and "other" are 0 (must-run). Gas = CCGT (55 %);
+  the OCGT level is in the table (`gas_peak`) but not a block (ENTSO-E B04 does not split gas plants).
+  FIRST VERSION of the parameters: Erik reviews them on real days.
+- `pipeline/spark.py` `srmc_days()` writes `feed.market.srmc` = {days: {day: table} for the last 31 days + tomorrow,
+  carbon, tech, note}, cached 6 h in `state/srmc_cache.json`; only when the SPARK repo variable is set (same gate as the
+  spark spreads). `scripts/split_private.py` strips `market.srmc` with `market.spark` from the public feed;
+  `data/registry.toml` lists both under `stripped` and the manual price files under `[private]`.
+- The page draws the section only when `MK.srmc.days[<day>]` exists; otherwise one line says the cost levels are on the
+  private copy. GB (£/MWh series) gets a note instead. Tooltip per block (`data-mt`, the shared `dtip`).
+- Tests: `tests/test_newsletter.py` (srmc_table: carbon-only coal, opportunity hydro, no fuel price leaks), fixture feed
+  has a synthetic `market.srmc` (35 EUR/MWh gas, 70 EUR/t EUA; `tests/fixtures/make_fixtures.py srmc_fixture`),
+  `tests/e2e/test_smoke.py` asserts the stack, the marginal-block caption and the hour selector at 125 %.
+- To see it live: repo variable SPARK = `private` plus the Cloudflare secrets (DEVNOTES "PRIVATE SITE") deploys the
+  private copy with costs; SPARK = `public` would put the costs (and so the TTF price de facto) on the public page.
+- Not done: imports as wide as the NTC with the used share shaded (needs the NTC dataset); a regional curve for the zones
+  whose prices converged that hour; the merit numbers (marginal technology, premium) in the newsletter diagnoses
+  (`newsletter/diagnose.py` could reuse `srmc_table` in the fuel-enabled newsletter workflow only).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
-  utilisation; the map's hover hour instead of "latest hour".
+  utilisation (and to give the merit order's import blocks their real width); the map's hover hour instead of "latest hour".
+- Merit order: review the SRMC parameters (`fuel.TECH`) with Erik; manual coal / oil price files; NTC-wide import
+  blocks; regional curve for coupled zones; marginal technology and premium in the newsletter diagnoses.
 - Flags drill-down Phase 2: "copy context as text" (spec 4 step 3: the text now exists in `newsletter/diagnose.py`; export it
   per fired signal into `browse/flags/<day>.json` and add the button in `js/features/flags/`), the playwright parity test
   (spec 4 step 4), congestion marker once NTC is in the store, starred story candidates (browser-only).

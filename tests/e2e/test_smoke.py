@@ -127,6 +127,15 @@ def test_flags_deep_link_opens(browser, base_url):
         r = page.evaluate("""() => { const p = document.querySelector('#flg .fxp');
           return p ? {txt: p.innerText.length, gfx: p.querySelectorAll('svg').length} : null }""")
         assert r and r["gfx"] > 0, f"drill-down panel not open for {DEEP}: {r}"
+        # merit order (fixture feed has a synthetic market.srmc): a stack, the demand line and a marginal block in the caption
+        m = page.evaluate("""() => { const s = document.querySelector('#flg svg.fxmo'); if (!s) return null;
+          const cap = s.closest('.fxch').nextElementSibling.nextElementSibling.innerText;
+          return {blocks: s.querySelectorAll('rect[data-mt]').length, cap} }""")
+        assert m and m["blocks"] >= 3 and "Marginal block" in m["cap"], f"merit order not drawn: {m}"
+        page.select_option("#fxmh", "11")
+        page.wait_for_timeout(600)
+        cap = page.evaluate("[...document.querySelectorAll('#flg .fxcap')].map(e => e.innerText).join(' ')")
+        assert "At 11:00 CET" in cap, "hour selector did not redraw the merit order"
         shot(page, "desk125_flags_deeplink")
         assert not errors, f"script errors: {errors[:5]}"
     finally:

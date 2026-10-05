@@ -38,6 +38,35 @@ def _srmc() -> tuple[float, bool] | None:
     return val, carbon
 
 
+SRMC_DAYS = 31   # the Flags drill-down keeps 14 days; the Data tab 30
+
+
+def srmc_days() -> dict | None:
+    """feed.market.srmc: per delivery day (last SRMC_DAYS + tomorrow) the per-technology SRMC table (newsletter/fuel.py
+    srmc_table) for the merit curve on the Flags drill-down. Cached with the spark cost (6 h). Fuel prices never leave."""
+    p = config.STATE_DIR / "srmc_cache.json"
+    try:
+        c = json.loads(p.read_text())
+        if time.time() - c["t"] < 6 * 3600:
+            return c["srmc"]
+    except Exception:
+        pass
+    import pandas as pd
+    from newsletter import fuel
+    today = pd.Timestamp.now(tz="Europe/Brussels").tz_localize(None).normalize()
+    days = pd.date_range(today - pd.Timedelta(days=SRMC_DAYS), today + pd.Timedelta(days=1))
+    ttf, eua = fuel.load_ttf(), fuel.load_eua()
+    coal, oil = fuel.load_manual(fuel.COAL_FILE, "api2_eur_t"), fuel.load_manual(fuel.OIL_FILE, "brent_eur_bbl")
+    tab = {d.strftime("%Y-%m-%d"): fuel.srmc_table(d, ttf, eua, coal, oil) for d in days}
+    out = {"days": tab, "carbon": eua is not None and len(eua) > 0,
+           "tech": {k: {"label": t["label"], "eta": t["eta"], "ef": t["ef"]} for k, t in fuel.TECH.items()},
+           "note": "SRMC = fuel price / efficiency + emission factor / efficiency x EUA; one reference cost for every zone. "
+                   "Gas: TTF front month (Yahoo Finance, private); carbon: EUA (manual); hard coal and oil only when a manual price file exists."}
+    config.STATE_DIR.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps({"t": time.time(), "srmc": out}))
+    return out
+
+
 def _spread(v: list, srmc: float) -> dict | None:
     ok = sorted(x for x in v if x is not None)
     if len(ok) < 20:

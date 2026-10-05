@@ -84,7 +84,8 @@ assert f["day"] == "2026-10-02" and {r["zone"] for r in f["table"]} >= {"RO", "D
 assert f["tomorrow"]["day"] == "2026-10-03" and any(r["zone"] == "RO" for r in f["tomorrow"]["zones"])
 assert any("Hungary" in n for n in f["notes"]), f["notes"]
 assert f["diagnoses"] and f["diagnoses"][0]["zone"] == "RO" and f["diagnoses"][0]["metric"] in ("tb2", "tb4"), [(d["zone"], d["metric"]) for d in f["diagnoses"]]
-assert all(d["text"] and "drivers" in d and "neighbours" in d for d in f["diagnoses"])
+assert all(d["text"] and "drivers" in d and "neighbours" in d and d["streak"] >= 1 for d in f["diagnoses"])
+assert all("streak" in s_ for s_ in f["signals"])
 assert not any(d["metric"].startswith(("cr_", "spark_")) for d in f["diagnoses"]), "no daily capture rates or fuel-derived signals in the diagnoses"
 md = (out / "brief.md").read_text()
 assert "Headline" in md and "Romania" in md and "of its last" in md and "capture rate" not in md.split("| Zone (30 days)")[0].lower()

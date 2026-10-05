@@ -32,6 +32,12 @@ UNUSUAL_ORDER = ["baseload", "price_max", "price_min", "neg_hours", "tb4", "gen_
 PRIVATE = ("spark_",)          # never in a diagnosis (fuel-price derived)
 VRE = ["solar", "wind_onshore", "wind_offshore"]
 PSR = {"B16": "solar", "B18": "wind_offshore", "B19": "wind_onshore", M.GAS: "gas", M.TOTAL: "total"}
+# generation mix classes for "what was happening next door" (site technology groups); columns m|<class> in the day frame
+MIX = {"B14": "nuclear", "B02": "coal", "B05": "coal", "B03": "gas", "B04": "gas", "B06": "oil", "B10": "pumped", "B11": "hydro",
+       "B12": "hydro", "B01": "biomass", "B17": "biomass", "B16": "solar", "B19": "wind_onshore", "B18": "wind_offshore",
+       "B07": "other", "B08": "other", "B09": "other", "B13": "other", "B15": "other", "B20": "other", "B25": "other"}
+MIX_LABEL = {"nuclear": "nuclear", "coal": "coal and lignite", "gas": "gas", "oil": "oil", "pumped": "pumped storage", "hydro": "hydro",
+             "biomass": "biomass and waste", "solar": "solar", "wind_onshore": "onshore wind", "wind_offshore": "offshore wind", "other": "other"}
 SPLIT_EUR = 1.0                # hours with a larger price difference count as "split" (build.decoupling uses the same)
 # thresholds of the driver rule table (first version, Cowork's proposal; Erik's market knowledge decides, see DEVNOTES)
 TH = {"share_hi": 30.0,        # % of consumption that makes wind or solar "the" story of an hour block
@@ -59,9 +65,12 @@ def hour_labels(idx: pd.DatetimeIndex) -> list[str]:
     return out
 
 
-def day_frames(hp: pd.DataFrame, ga: pd.DataFrame, hl: pd.DataFrame, hf: pd.DataFrame, day: pd.Timestamp) -> dict:
+def day_frames(hp: pd.DataFrame, ga: pd.DataFrame, hl: pd.DataFrame, hf: pd.DataFrame, day: pd.Timestamp,
+               ga_full: pd.DataFrame | None = None) -> dict:
     """{zone: DataFrame} for the CET `day` (see module doc). hp = metrics.hourly_prices (EUR, GB converted), ga = raw or
-    slimmed gen_actual rows, hl = metrics.hourly_load, hf = metrics.hourly_flows. Zones = union of the four sources."""
+    slimmed gen_actual rows, hl = metrics.hourly_load, hf = metrics.hourly_flows. Zones = union of the four sources.
+    `ga_full` = the day's unslimmed gen_actual rows (every production type): adds the generation mix columns m|<class>, so a
+    neighbour's story ("nuclear and hydro supplied ...") can be told. Without it the mix is simply absent."""
     hours = _hours_of_day(day)
     a, b = hours[0], hours[-1] + pd.Timedelta(hours=1)
     cols = {}
@@ -74,6 +83,12 @@ def day_frames(hp: pd.DataFrame, ga: pd.DataFrame, hl: pd.DataFrame, hf: pd.Data
         g = g.assign(h=g["ts"].dt.floor("h"), mw=g["mw"].clip(lower=0), tech=g["psr"].map(PSR))
         for (z, t), x in g.groupby(["zone", "tech"]):
             cols.setdefault(z, {})[t] = x.groupby("h")["mw"].mean()
+    if ga_full is not None and not ga_full.empty:
+        g = ga_full[(ga_full["dir"] == "gen") & ga_full["psr"].isin(MIX) & (ga_full["ts"] >= a) & (ga_full["ts"] < b)]
+        g = g.assign(h=g["ts"].dt.floor("h"), mw=g["mw"].clip(lower=0), cls=g["psr"].map(MIX))
+        hm = g.groupby(["zone", "psr", "h"])["mw"].mean().reset_index().assign(cls=lambda x: x["psr"].map(MIX))
+        for (z, c), x in hm.groupby(["zone", "cls"]):
+            cols.setdefault(z, {})["m|" + c] = x.groupby("h")["mw"].sum()
     if hl is not None and not hl.empty:
         l = hl[(hl["h"] >= a) & (hl["h"] < b)]
         for z, g in l.groupby("zone"):
@@ -161,6 +176,20 @@ def block_stats(Z: pd.DataFrame, idx: list[int] | None = None) -> dict:
             "load_hours": int(d["load"].notna().sum()), "flow_hours": int(d["net_import"].notna().sum())}
 
 
+def mix_stats(Z: pd.DataFrame, idx: list[int] | None = None, top: int = 3) -> list[dict]:
+    """Generation mix of a block of hours (energy shares of all m|<class> columns), largest first: [{cls, label, share, mw}]."""
+    cols = [c for c in Z.columns if c.startswith("m|")]
+    if not cols:
+        return []
+    d = Z if idx is None else Z.iloc[idx]
+    e = d[cols].sum(min_count=1)
+    tot = e.sum()
+    if not tot or pd.isna(tot) or tot <= 0:
+        return []
+    out = [{"cls": c[2:], "label": MIX_LABEL.get(c[2:], c[2:]), "share": _r(e[c] / tot * 100), "mw": _r(d[c].mean(), 0)} for c in cols if pd.notna(e[c]) and e[c] > 0]
+    return sorted(out, key=lambda r: -r["share"])[:top]
+
+
 # ---------------------------------------------------------------- unusual rows and neighbours
 def unusual_rows(scan_rows: list[dict], zone: str, skip_metric: str | None = None) -> list[dict]:
     """CONTEXT / RULES rows of the zone at or beyond P90 / P10 and beyond the P90 / P10 value itself (the panel's rule:
@@ -180,10 +209,17 @@ def unusual_rows(scan_rows: list[dict], zone: str, skip_metric: str | None = Non
     return out
 
 
-def neighbours(zone: str, frames: dict, idx: list[int] | None = None) -> list[dict]:
+# the neighbour's own unusual rows worth a clause: what its plants and demand did (not its prices or spreads)
+NB_UNUSUAL = ("gen_wind_onshore", "gen_wind_offshore", "gen_solar", "wind_share_load", "solar_share_load", "vre_share", "gas_share",
+              "load_mean", "res_peak", "res_min", "neg_hours")
+
+
+def neighbours(zone: str, frames: dict, idx: list[int] | None = None, scan_rows: list[dict] | None = None) -> list[dict]:
     """The zone's borders with flow data on the day, ordered by mean |net flow|: net flow (+ = into the zone), the
     neighbour's mean price and the difference (zone minus neighbour), hours with the two prices more than SPLIT_EUR apart,
-    and (for `idx`, the event hours) the neighbour's mean price and the net flow in those hours."""
+    and (for `idx`, the event hours) the neighbour's mean price and the net flow in those hours. What was happening next
+    door: the neighbour's generation mix (`mix`, event hours or day), its wind / solar share of consumption then
+    (`stats`), and its own unusual rows (`unusual`, from `scan_rows`, generation and demand metrics only)."""
     Z = frames.get(zone)
     if Z is None:
         return []
@@ -198,6 +234,9 @@ def neighbours(zone: str, frames: dict, idx: list[int] | None = None) -> list[di
              "hours": None, "price_label": PRICE_LABEL.get(n), "price_na": None, "same_all_day": False, "fired": []}
         if idx is not None:
             r["net_import_event"] = _r(_mean(flow.iloc[idx]), 0)
+        r["mix"] = mix_stats(N, idx) if N is not None else []
+        r["stats"] = block_stats(N, idx) if N is not None else None
+        r["unusual"] = [u for u in unusual_rows(scan_rows or [], n) if u["metric"] in NB_UNUSUAL]
         if n in NON_EUR:
             r["price_na"] = f"published in {NON_EUR[n]}, not converted"
         elif N is None or N["price"].notna().sum() == 0:
@@ -239,14 +278,14 @@ def diagnose(sig: dict, day: pd.Timestamp, frames: dict, scan_rows: list[dict], 
     d = {"zone": zone, "name": zn(zone), "day": day.strftime("%Y-%m-%d"), "metric": metric, "label": sig["label"],
          "unit": "€/MWh" if sig["unit"] == "EUR/MWh" else sig["unit"], "side": sig["side"], "value": sig["value"],
          "pct100": round(sig["pct"] * 100), "n_hist": sig["n_hist"], "median": sig.get("median"), "p10": sig.get("p10"), "p90": sig.get("p90"),
-         "price_label": PRICE_LABEL.get(zone),
+         "price_label": PRICE_LABEL.get(zone), "streak": int(sig.get("streak") or 1),
          "events": {k: v for k, v in ev.items()}, "hours_hi": [labels[i] for i in hi], "hours_lo": [labels[i] for i in lo],
          "hours_hi_text": _hours_text(labels, hi), "hours_lo_text": _hours_text(labels, lo),
          "day_stats": block_stats(Z) if Z is not None else None,
          "hi_stats": block_stats(Z, hi) if Z is not None and hi else None,
          "lo_stats": block_stats(Z, lo) if Z is not None and lo else None,
          "unusual": unusual_rows(scan_rows, zone, metric),
-         "neighbours": neighbours(zone, frames, (hi or lo) or None),
+         "neighbours": neighbours(zone, frames, (hi or lo) or None, scan_rows),
          "data": None, "drivers": []}
     for k in ("mean_hi", "mean_lo", "spread", "res", "rise"):
         if k in d["events"]:
@@ -287,6 +326,52 @@ def _names(zones: list[str], limit: int = 4) -> str:
     names = [zn(z) for z in zones]
     txt = ", ".join(names[:limit]) + (f" and {len(names) - limit} others" if len(names) > limit else "")
     return txt[0].upper() + txt[1:]
+
+
+# plain labels for a neighbour's unusual rows inside a sentence
+NB_LABEL = {"gen_wind_onshore": "onshore wind output", "gen_wind_offshore": "offshore wind output", "gen_solar": "solar output",
+            "wind_share_load": "wind share of consumption", "solar_share_load": "solar share of consumption", "vre_share": "wind and solar share of consumption",
+            "gas_share": "gas share of generation", "load_mean": "demand", "res_peak": "peak residual load", "res_min": "lowest residual load",
+            "neg_hours": "count of negative-price hours"}
+
+
+def _there(r: dict) -> tuple[str, dict]:
+    """What was happening in neighbour `r` in the event hours: its generation mix (top three classes) and its most unusual
+    generation / demand metric of the day (shares below 10 % are too small to be the story). '' when the store has nothing."""
+    nums = {}
+    mix = r.get("mix") or []
+    if not mix:
+        return f"no generation data for {r['name']} in the store that day", nums
+    txt = f"in {r['name']} that was " + ", ".join(f"{m['label']} {_i(m['share'])} %" for m in mix[:3]) + " of generation"
+    nums.update({f"mix_{m['cls']}": m["share"] for m in mix[:3]})
+    un = [u for u in (r.get("unusual") or []) if not (u["unit"] == "%" and abs(u["value"]) < 10)]
+    un = sorted(un, key=lambda u: -abs(u["pct100"] - 50))
+    if un:
+        u = un[0]
+        txt += f"; its {NB_LABEL.get(u['metric'], u['label'])} ({_i(u['value'])}{' %' if u['unit'] == '%' else ' ' + u['unit'].replace('EUR/MWh', '€/MWh')}) was {_pct_text(u).replace('the last days', 'its last days')}"
+        nums.update(nb_unusual_value=u["value"], nb_unusual_pct100=u["pct100"])
+    return txt, nums
+
+
+def _counterparty(d: dict, into: bool, event: bool = True):
+    """The neighbour that carried most of the flow (into the zone if `into`, else out of it) in the event hours (or over the
+    day), with the clause on what was happening there: (neighbour row, 'mostly from X (N MW); in X that was ...', numbers)."""
+    NB = d["neighbours"]
+    key = "net_import_event" if event and any(r.get("net_import_event") is not None for r in NB) else "net_import"
+    cands = [r for r in NB if r.get(key) is not None and (r[key] > 0 if into else r[key] < 0)]
+    if not cands:
+        return None, "", {}
+    t = max(cands, key=lambda r: abs(r[key]))
+    there, nums = _there(t)
+    nums["counterparty_mw"] = abs(t[key])
+    return t, f"mostly {'from' if into else 'to'} {t['name']} ({_i(abs(t[key]))} MW); {there}", nums
+
+
+def _streak_text(n: int) -> str:
+    if not n or n <= 1:
+        return ""
+    suf = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
+    return f", the {n}{suf} day running"
 
 
 def _flow_phrase(v) -> str:
@@ -352,21 +437,26 @@ def drivers(d: dict, Z: pd.DataFrame | None) -> list[dict]:
         # 5. imports in the peak / exports in the trough
         dn = D["net_import"] or 0
         if H["net_import"] is not None and H["net_import"] > 0 and H["net_import"] > dn and _flow_shift(H["net_import"], dn, D["load"]):
-            add("imports_in_peak", f"In the priciest hours {name} took {_i(H['net_import'])} MW from its neighbours (over the day it {_flow_phrase(dn)}).",
-                net_import_hi=H["net_import"], net_import_day=abs(dn))
+            _, cp, cn = _counterparty(d, into=True)
+            add("imports_in_peak", f"In the priciest hours {name} took {_i(H['net_import'])} MW from its neighbours (over the day it {_flow_phrase(dn)})"
+                + (f", {cp}" if cp else "") + ".", net_import_hi=H["net_import"], net_import_day=abs(dn), **cn)
         if L["net_import"] is not None and L["net_import"] < 0 and L["net_import"] < dn and _flow_shift(L["net_import"], dn, D["load"]):
-            add("exports_in_trough", f"In the cheapest hours {name} sent {_i(-L['net_import'])} MW to its neighbours (over the day it {_flow_phrase(dn)}).",
-                net_export_lo=_r(-L["net_import"], 0), net_import_day=abs(dn))
+            _, cp, cn = _counterparty(d, into=False)
+            add("exports_in_trough", f"In the cheapest hours {name} sent {_i(-L['net_import'])} MW to its neighbours (over the day it {_flow_phrase(dn)})"
+                + (f", {cp}" if cp else "") + ".", net_export_lo=_r(-L["net_import"], 0), net_import_day=abs(dn), **cn)
     elif fam == "neg" and L:
         nn = len(ev.get("lo", []))
         ws, nums = wind_solar(L, "in those hours")
         if ws:
             add("vre_in_neg", f"In the {nn} negative hours ({lo_t}) {ws}.".replace(" in those hours.", "."), n=nn, **nums)
         if L["net_import"] is not None and L["net_import"] < 0:
-            add("exports_in_neg", f"{name} sent {_i(-L['net_import'])} MW to its neighbours on average in those hours.", net_export=_r(-L["net_import"], 0))
+            _, cp, cn = _counterparty(d, into=False)
+            add("exports_in_neg", f"{name} sent {_i(-L['net_import'])} MW to its neighbours on average in those hours" + (f", {cp}" if cp else "") + ".",
+                net_export=_r(-L["net_import"], 0), **cn)
         elif L["net_import"] is not None and L["net_import"] > 0:
-            add("imports_in_neg", f"{name} still took {_i(L['net_import'])} MW from its neighbours in those hours: the surplus was regional, not only local.",
-                net_import=L["net_import"])
+            _, cp, cn = _counterparty(d, into=True)
+            add("imports_in_neg", f"{name} still took {_i(L['net_import'])} MW from its neighbours in those hours, so the surplus was regional, not only local"
+                + (f"; {cp}" if cp else "") + ".", net_import=L["net_import"], **cn)
         if L["load"] and D["load"] and L["load"] < TH["load_x"] * D["load"]:
             add("low_load", f"Load in those hours was {_i(L['load'])} MW against a day mean of {_i(D['load'])} MW.", load_neg=L["load"], load_day=D["load"])
         shared = [r for r in NB if r.get("neg_hours_shared")]
@@ -391,9 +481,11 @@ def drivers(d: dict, Z: pd.DataFrame | None) -> list[dict]:
         if P["price"] is not None and D["price"] is not None:
             add("price_then", f"The day-ahead price in that hour was {_i(P['price'])} €/MWh against a day mean of {_i(D['price'])}.", price_hour=P["price"], price_day=D["price"])
         if P["net_import"] is not None and P["net_import"] > 0:
-            add("imports_then", f"{name} took {_i(P['net_import'])} MW from its neighbours in that hour.", net_import=P["net_import"])
+            _, cp, cn = _counterparty(d, into=True)
+            add("imports_then", f"{name} took {_i(P['net_import'])} MW from its neighbours in that hour" + (f", {cp}" if cp else "") + ".", net_import=P["net_import"], **cn)
         elif P["net_import"] is not None and P["net_import"] < 0:
-            add("exports_then", f"{name} sent {_i(-P['net_import'])} MW to its neighbours in that hour.", net_export=_r(-P["net_import"], 0))
+            _, cp, cn = _counterparty(d, into=False)
+            add("exports_then", f"{name} sent {_i(-P['net_import'])} MW to its neighbours in that hour" + (f", {cp}" if cp else "") + ".", net_export=_r(-P["net_import"], 0), **cn)
     elif fam == "ramp" and H and Z is not None:
         i0, i1 = ev["hi"][0], ev["hi"][-1]
         row0, row1 = Z.iloc[i0], Z.iloc[i1]
@@ -427,7 +519,9 @@ def drivers(d: dict, Z: pd.DataFrame | None) -> list[dict]:
                 if t["hours_split"] is not None:
                     txt += f", the two prices split in {t['hours_split']} of {t['hours']} hours"
                     nums.update(hours_split=t["hours_split"], hours=t["hours"])
-            add("top_border", txt + ".", **nums)
+            there, tn = _there(t)
+            nums.update(tn)
+            add("top_border", txt + f"; {there}.", **nums)
         if "wind_share_load" in U:
             u = U["wind_share_load"]
             add("wind_day", f"Wind covered {_i(u['value'])} % of consumption over the day, {_pct_text(u)}.", wind_share_day=u["value"], pct100=u["pct100"])
@@ -445,7 +539,8 @@ def drivers(d: dict, Z: pd.DataFrame | None) -> list[dict]:
             add("moved_with", _names([r["zone"] for r in near]) + f" priced within {_i(TH['price_gap'])} €/MWh of {name} on average: the level was regional.", gap=TH["price_gap"])
         if D["net_import"] is not None and D["load"] and abs(D["net_import"]) >= TH["flow_pts"] / 100 * D["load"]:
             v = D["net_import"]
-            add("net_flow", f"{name} {'took' if v > 0 else 'sent'} {_i(abs(v))} MW {'from' if v > 0 else 'to'} its neighbours on average.", net=abs(v))
+            _, cp, cn = _counterparty(d, into=v > 0, event=False)
+            add("net_flow", f"{name} {'took' if v > 0 else 'sent'} {_i(abs(v))} MW {'from' if v > 0 else 'to'} its neighbours on average" + (f", {cp}" if cp else "") + ".", net=abs(v), **cn)
     elif fam == "capture" and Z is not None:
         tech = m[3:]
         g = Z[tech] if tech in Z else None
@@ -477,7 +572,7 @@ def signal_phrase(d: dict) -> str:
     label, v, u = d["label"], d["value"], d["unit"]
     if d["metric"] == "import_share" and v < 0:
         label, v = "net export share of load", -v
-    return f"{label} {_i(v)}{'%' if u == '%' else ' ' + u}"
+    return f"{label} {_i(v)}{' %' if u == '%' else ' ' + u}"
 
 
 def render_text(d: dict) -> str:
@@ -487,7 +582,7 @@ def render_text(d: dict) -> str:
     u = d["unit"]
     rank = (f"the {'highest' if d['side'] == 'high' else 'lowest'} of its last {d['n_hist']} days" if d["pct100"] in (0, 100)
             else f"{'higher' if d['side'] == 'high' else 'lower'} than on {d['pct100'] if d['side'] == 'high' else 100 - d['pct100']} % of its last {d['n_hist']} days")
-    lines = [f"{d['name']}, {day:%a %-d %b %Y}: {signal_phrase(d)}, {rank}"
+    lines = [f"{d['name']}, {day:%a %-d %b %Y}: {signal_phrase(d)}, {rank}{_streak_text(d.get('streak'))}"
              + (f" (typical {_i(d['median'])}, P10 {_i(d['p10'])}, P90 {_i(d['p90'])})" if d.get("median") is not None else "") + "."]
     ev, H, L, D = d["events"], d["hi_stats"], d["lo_stats"], d["day_stats"]
     if d.get("price_label"):
@@ -533,14 +628,15 @@ def render_text(d: dict) -> str:
         for r in d["neighbours"][:5]:
             flow = r["net_import"]
             f = f"{d['name']} took {_i(flow)} MW" if flow is not None and flow > 0 else f"{d['name']} sent {_i(-flow)} MW" if flow is not None else "no flow data"
+            mix = (" (" + ", ".join(f"{m['label']} {_i(m['share'])} %" for m in r["mix"][:2]) + ")") if r.get("mix") else ""
             if r["price_na"]:
-                nb.append(f"{r['name']}: price n/a ({r['price_na']}); {f}")
+                nb.append(f"{r['name']}: price n/a ({r['price_na']}); {f}{mix}")
             else:
                 pl = f" ({r['price_label']})" if r.get("price_label") else ""
                 diff = "" if r["diff"] is None else (" the same" if abs(r["diff"]) < 0.5 else f" {_i(abs(r['diff']))} {'lower' if r['diff'] > 0 else 'higher'}")
                 split = "" if r["hours_split"] is None else (", priced identically all day" if r["same_all_day"] else f", prices split in {r['hours_split']} of {r['hours']} hours")
-                nb.append(f"{r['name']} {_i(r['price'])} €/MWh{pl},{diff}{split}; {f}")
-        lines.append("Next door: " + " · ".join(nb) + ".")
+                nb.append(f"{r['name']} {_i(r['price'])} €/MWh{pl},{diff}{split}; {f}{mix}")
+        lines.append("Next door (mix in the event hours): " + " · ".join(nb) + ".")
     if d["data"] and d["data"]["notes"]:
         lines.append("Data: " + "; ".join(d["data"]["notes"]) + ".")
     if d["drivers"]:

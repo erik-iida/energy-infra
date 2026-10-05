@@ -950,6 +950,17 @@ Spec: project doc `claude/spec-4-diagnosis-before-narration.md`. The Flags-panel
   `diagnoses` (dict + `text` each). `draft_brief`: the headline sentence gets the headline signal's top driver (the open
   STYLE.md item); new block **Why they fired** = the other candidates, one line each (signal, percentile, top driver; else
   the two most unusual context rows; else the data gap). Cost: ~1.5 s per day on top of the ~60 s build.
+- **Erik's first review (5 Oct 2026, on the 3 / 4 Oct briefs)**: (a) the two days read identically (same Greece headline, same
+  templates); (b) whenever a driver says "imports from Y", say what was happening in Y (wind, solar, or a neighbour exporting
+  nuclear). Applied: `build.add_streaks` counts consecutive fired days per (zone, metric, side) over the last 7 days ->
+  `streak` on every signal and diagnosis; `draft_brief` prefers the strongest signal that did NOT fire yesterday as the
+  headline (`PREFER_NEW`), repeats are marked "3rd day running" / "(P100, 3rd day)". `build.load_day_gen` reads the day's
+  unslimmed gen_actual (one day, all production types) -> `day_frames(ga_full=...)` adds `m|<class>` columns (MIX classes =
+  the site's technology groups); every neighbour row gets `mix` (event hours), `stats`, `unusual` (its own generation and
+  demand rows), and every flow driver names the main counterparty and `_there()`: "mostly from Bulgaria (392 MW); in
+  Bulgaria that was nuclear 38 %, solar 22 %, coal and lignite 20 % of generation; its demand (3110 MW) was lower than on
+  99 % of its last days". Shares under 10 % are not quoted as the neighbour's story. Result: 3 and 4 Oct now open with
+  Serbia / Slovakia import stories, Greece's negative hours read "4th day running".
 - Not done (spec 4 steps 3-5): the Flags "Copy context as text" button (export the text into `browse/flags/<day>.json`,
   after or before the page split as Erik decides), the playwright parity test (event hours / unusual rows / neighbours of
   the panel vs the dict), `signals_used` in editorial front matter, the UI check bot.

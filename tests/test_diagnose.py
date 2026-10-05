@@ -68,8 +68,15 @@ ga = M.slim_gen(ga)
 hl = pd.concat([mk_load("RO", DAY, lambda i: 7000 + (1500 if 18 <= i <= 21 else 0)), mk_load("HU", DAY, lambda i: 5000)])
 hf = pd.concat([mk_flow("HU", "RO", DAY, lambda i: 800 if 18 <= i <= 21 else 100), mk_flow("RO", "BG", DAY, lambda i: 300),
                 mk_flow("UA-IPS", "RO", DAY, lambda i: 400), mk_flow("MD", "RO", DAY, lambda i: 50)])
-frames = DG.day_frames(hp, ga, hl, hf, DAY)
+# the full mix of the day (every production type) for "what was happening next door": HU runs nuclear + solar, RO solar + gas + nuclear
+ga_full = pd.concat([mk_gen("HU", DAY, "B14", lambda i: 2000), mk_gen("HU", DAY, "B16", lambda i: 1000 if 9 <= i <= 16 else 0),
+                     mk_gen("HU", DAY, "B12", lambda i: 50), mk_gen("RO", DAY, "B16", lambda i: 3000 if 9 <= i <= 16 else 0),
+                     mk_gen("RO", DAY, "B04", lambda i: 1500 if 18 <= i <= 21 else 500), mk_gen("RO", DAY, "B14", lambda i: 1400)])
+frames = DG.day_frames(hp, ga, hl, hf, DAY, ga_full=ga_full)
 Z = frames["RO"]
+assert "m|nuclear" in Z and abs(Z["m|nuclear"].iloc[3] - 1400) < 1e-6 and abs(frames["HU"]["m|hydro"].iloc[3] - 50) < 1e-6
+mx = DG.mix_stats(frames["HU"], [18, 19, 20, 21])
+assert mx[0]["cls"] == "nuclear" and abs(mx[0]["share"] - 2000 / 2050 * 100) < 0.1, mx
 assert len(Z) == 24 and DG.hour_labels(Z.index)[0] == "00" and DG.hour_labels(Z.index)[23] == "23"
 assert abs(Z["total"].iloc[19] - (3000 * 0 + 200 + 1500 + 1400)) < 1e-6, Z["total"].iloc[19]
 assert abs(Z["net_import"].iloc[19] - (800 - 300 + 400 + 50)) < 1e-6
@@ -113,6 +120,12 @@ assert nb["UA-IPS"]["price_na"] and "UAH" in nb["UA-IPS"]["price_na"] and nb["MD
 assert nb["HU"]["price"] is not None and nb["HU"]["diff"] is not None and nb["HU"]["hours_split"] == 24
 assert nb["BG"]["hours_split"] == 24 and nb["HU"]["net_import_event"] == 800
 assert [r["zone"] for r in d["neighbours"]][0] == "UA-IPS", "ordered by mean |net flow|"
+assert nb["HU"]["mix"][0]["cls"] == "nuclear" and nb["HU"]["stats"]["wind_share"] is None  # HU has no wind rows
+imp = next(x for x in d["drivers"] if x["key"] == "imports_in_peak")
+assert "mostly from Hungary (800 MW); in Hungary that was nuclear 98 %" in imp["text"], imp["text"]
+assert imp["numbers"]["counterparty_mw"] == 800 and "mix_nuclear" in imp["numbers"]
+s4s = dict(s4, streak=3)
+assert "the 3rd day running" in DG.render_text(DG.diagnose(s4s, DAY, frames, scan, fired))
 keys = [x["key"] for x in d["drivers"]]
 assert keys[:1] == ["peak_residual"] and "gas_in_peak" in keys and "imports_in_peak" in keys and "cheap_solar" in keys, keys
 assert "caused" not in t and "congest" not in t and "spark" not in t.lower() and "TTF" not in t

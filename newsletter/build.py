@@ -93,6 +93,20 @@ def load_range(a: pd.Timestamp, b: pd.Timestamp):
     return cat(out["da"]), cat(out["ga"]), cat(out["ld"]), cat(out["fl"])
 
 
+def load_day_gen(day: pd.Timestamp) -> pd.DataFrame:
+    """Unslimmed gen_actual rows (every production type) for the CET `day` only: the generation mix of each zone for the
+    diagnoses ("what was happening next door"). One day, so small."""
+    a = day.tz_localize(M.CET).tz_convert("UTC")
+    b = (day + pd.Timedelta(days=1)).tz_localize(M.CET).tz_convert("UTC")
+    st = Store()
+    ga = []
+    for m in months_between(a, b - pd.Timedelta(seconds=1)):
+        g = st.read("gen_actual", m)
+        if g is not None:
+            ga.append(g[(g["ts"] >= a) & (g["ts"] < b) & (g["dir"] == "gen")])
+    return pd.concat(ga, ignore_index=True) if ga else pd.DataFrame()
+
+
 def load_fund(day: pd.Timestamp, days: int = FU.PEAK_DAYS) -> tuple[pd.DataFrame, pd.DataFrame]:
     """All generation types and actual load for the `days` CET days ending on `day` (90 days: the capacity proxy is the
     highest hourly output in that window)."""
@@ -194,13 +208,32 @@ def story_candidates(sigs: list[dict], zones: list[str], n: int = DIAG_N) -> lis
     return out
 
 
-def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.Timestamp, zones: list[str]) -> list[dict]:
+STREAK_DAYS = 7
+
+
+def add_streaks(sigs: list[dict], metrics: pd.DataFrame, day: pd.Timestamp, back: int = STREAK_DAYS) -> list[dict]:
+    """`streak` on every fired signal: the number of consecutive days (today included, up to `back` + 1) on which the same
+    zone, metric and side fired. A signal that fires day after day is persistence, not news; the brief says so instead of
+    repeating the sentence (Erik, 5 Oct 2026)."""
+    prev = [{(r["zone"], r["metric"], r["side"]) for r in S.evaluate(metrics, day - pd.Timedelta(days=k))} for k in range(1, back + 1)]
+    for s in sigs:
+        key, n = (s["zone"], s["metric"], s["side"]), 1
+        for p in prev:
+            if key not in p:
+                break
+            n += 1
+        s["streak"] = n
+    return sigs
+
+
+def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.Timestamp, zones: list[str],
+              ga_day: pd.DataFrame | None = None) -> list[dict]:
     """The structured diagnosis and its text block for each story candidate (newsletter/diagnose.py)."""
     cand = story_candidates(sigs, zones)
     if not cand:
         return []
     scan = S.scan(metrics, day, S.RULES + S.CONTEXT)
-    frames = DG.day_frames(M.hourly_prices(da), ga, M.hourly_load(ld), M.hourly_flows(fl), day)
+    frames = DG.day_frames(M.hourly_prices(da), ga, M.hourly_load(ld), M.hourly_flows(fl), day, ga_full=ga_day)
     out = []
     for s in cand:
         d = DG.diagnose(s, day, frames, scan, sigs)
@@ -211,10 +244,10 @@ def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.T
 
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
                 carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None,
-                ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None) -> dict:
+                ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None, ga_day: pd.DataFrame | None = None) -> dict:
     metrics = M.all_metrics(da, ga, srmc, ld, fl)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
-    sigs = S.evaluate(metrics, day)
+    sigs = add_streaks(S.evaluate(metrics, day), metrics, day)
     zones_day = set(metrics.loc[(metrics["day"] == day) & (metrics["metric"] == "baseload"), "zone"])
     prices_seen = set(da["zone"]) if not da.empty else set()
     notes = []
@@ -248,7 +281,7 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
         if not fund:
             notes.append("No generation in the store for the 30-day window: fundamentals skipped.")
     dec = decoupling(da, fl, day, focus)
-    diag = diagnoses(sigs, metrics, da, ga, ld, fl, day, focus)
+    diag = diagnoses(sigs, metrics, da, ga, ld, fl, day, focus, ga_day)
     return {
         "day": day.strftime("%Y-%m-%d"), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "focus": FOCUS, "context": ctx, "window_days": S.WINDOW_DAYS, "price_zones_in_store": len(prices_seen),
@@ -285,6 +318,7 @@ def _ord(p: float) -> str:
 # only when nothing else fired
 TEXT_SKIP = ("cr_",)
 TB = ("tb2", "tb4")
+PREFER_NEW = True  # headline = the strongest signal that did NOT fire yesterday, if there is one (Erik, 5 Oct 2026)
 
 
 def _i(v) -> int:
@@ -298,7 +332,7 @@ def _sig_text(s: dict) -> str:
     p = round(s["pct"] * 100)
     rank = (f"the {'highest' if s['side'] == 'high' else 'lowest'} of its last {s['n_hist']} days" if p in (0, 100)
             else f"{'higher' if s['side'] == 'high' else 'lower'} than on {p if s['side'] == 'high' else 100 - p} % of its last {s['n_hist']} days")
-    return f"{zn(s['zone'])}: {s['label']} at {_i(s['value'])}{unit}, {rank}."
+    return f"{zn(s['zone'])}: {DG.signal_phrase(dict(s, unit=unit.strip()))}, {rank}{DG._streak_text(s.get('streak'))}."
 
 
 def _diag_line(d: dict) -> str:
@@ -323,6 +357,8 @@ def draft_brief(f: dict) -> str:
     lines = [f"# GridEconomics daily - {day:%a %-d %b %Y}", ""]
     fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"] and not s["metric"].startswith(TEXT_SKIP)]
     lead = [s for s in fs if s["metric"] not in TB] or fs
+    if PREFER_NEW:  # a signal that also fired yesterday is persistence, not today's news
+        lead = [s for s in lead if s.get("streak", 1) == 1] or lead
     diag = {(d["zone"], d["metric"]): d for d in f.get("diagnoses") or []}
     if lead:
         head = "**Headline.** " + _sig_text(lead[0])
@@ -335,7 +371,8 @@ def draft_brief(f: dict) -> str:
             lines += ["**Why they fired.** Other metrics outside their own 90-day range, with what the data shows for the same hours "
                       "(co-occurrence, not causation):"]
             for d in rest:
-                lines.append(f"- {d['name']}: {DG.signal_phrase(d)} (P{d['pct100']}). {_diag_line(d)}")
+                st = DG._streak_text(d.get("streak")).replace(", the", "").replace(" running", "")
+                lines.append(f"- {d['name']}: {DG.signal_phrase(d)} (P{d['pct100']}{',' + st if st else ''}). {_diag_line(d)}")
             lines.append("")
     else:
         lines += [f"**Headline.** No CEE/SEE metric left its own {f['window_days']}-day normal range on {day:%-d %b}.", ""]
@@ -449,7 +486,7 @@ def main(argv=None) -> None:
         fuel_note = None if a.no_fuel else f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."
         if fuel_note:
             print(fuel_note)
-    f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day), ld=ld, fl=fl)
+    f = build_facts(da, ga, day, srmc, carbon, fuel_note, fund_data=load_fund(day), ld=ld, fl=fl, ga_day=load_day_gen(day))
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     md = draft_brief(f)

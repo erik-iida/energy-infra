@@ -30,6 +30,10 @@ What Erik wants the daily brief to be, and what feedback has taught so far. A ne
   congestion claims until NTC is in the store. Every number comes from `newsletter/diagnose.py`'s structured dict (tested).
 - The full context block per candidate (event hours, what happened in them, what else was unusual, next door, data gaps)
   is in `facts.json` -> `diagnoses[].text`; a chat session writing the editorial starts from it.
+- Persistence is not news: the headline is the strongest signal that did not fire yesterday; a signal that keeps firing is
+  marked "3rd day running" (Erik, 5 Oct 2026).
+- A flow is never quoted alone: "imports from Y" always says what was happening in Y (its generation mix in those hours and
+  what was unusual there: high wind, solar, a neighbour exporting nuclear...) (Erik, 5 Oct 2026).
 - Open for Erik: which checks and thresholds stay (`diagnose.TH`), how many candidates, whether the "Why they fired" block
   belongs before or after Price decoupling, and whether import/export signals read well as "net export share of load".
 

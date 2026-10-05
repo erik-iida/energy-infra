@@ -10,15 +10,18 @@ import { bbox, flyTo } from "./view.js";
 import { paint } from "./paint.js";
 function crumb(){const p=[["World","e"]];if(S.c&&!isReg(S.c))p.push([RGOF[S.c],"r"]);if(S.c)p.push([S.c,"c"]);if(S.farm!==null)p.push([F[S.farm].n,"f"]);
  $("crumb").innerHTML=p.map((q,i)=>i<p.length-1?"<a data-go='"+q[1]+"'>"+q[0]+"</a>":"<span>"+q[0]+"</span>").join("<span>›</span>")}
-function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("C").value=S.c||"";$("note").style.display="none";
- $("wif").style.display=LIVE()?"none":"block";$("mapctl").style.display=S.tab==="map"&&S.farm!=null?"block":"none";  // wake / forecast controls only for a selected farm$("list").style.display=S.tab==="map"?"flex":"none";
+function sidebar(){$("uv").textContent=$("U").value+" m/s";$("dv").textContent=$("D").value+"°";$("kv").textContent=(+$("K").value).toFixed(4);crumb();$("note").style.display="none";
+ $("wif").style.display=LIVE()?"none":"block";$("mapctl").style.display=S.tab==="map"&&S.farm!=null?"block":"none";  // wake / forecast controls only for a selected farm
+ // the offshore-wind figures (output / capacity, farm and country lists) only for a selected farm; at region level the pane
+ // is title, crumb and legend (Erik, 5 Oct 2026: the wind metrics and the country selector were the legacy of the wake monitor)
+ const farm=S.farm!=null;["farmhd","list","cmp"].forEach(id=>{$(id).style.display=farm?"":"none"});
  const fs=F.filter(f=>inC(f,S.c)),zs=Z.filter(z=>inC(z,S.c)),cap=fs.reduce((a,f)=>a+f.inst,0);
  if(S.tab!=="map"){series();const A=agg(fs);$("mw").textContent=fmt(A.P[N0]);$("mwsub").textContent=place(S.c)+" at "+hl(N0)+", "+MODELS[S.fm]+", of "+fmt(cap)+" operating";$("cmp").innerHTML="";
   $("sub").textContent=fs.length+" operating farms · "+zs.length+" future zones";return}
  const src=LIVE()?"forecast wind":"what-if wind";
  if(S.farm===null){
   $("mw").textContent=fmt(now(S.c));$("mwsub").textContent=place(S.c)+" now with "+src+", of "+fmt(cap)+" operating";
-  $("sub").textContent=fs.length+" operating farms ("+fs.filter(f=>f.lay).length+" with turbine layouts) · "+zs.length+" future zones ("+fmt(zs.reduce((a,z)=>a+z.mw,0))+" where capacity is stated)";$("cmp").innerHTML="";
+  $("sub").textContent="";$("cmp").innerHTML="";  // farm and zone counts were part of the legacy wind header (removed 5 Oct 2026)
   if(S.c===null||isReg(S.c))$("list").innerHTML=(S.c===null?REGIONS:COUNTRIES.filter(c=>RGOF[c]===S.c)).map(c=>{const i=sum(c);return"<button data-c='"+c+"'><span>"+c+"</span><span class='mut'>"+(i?fmt(now(c))+" / "+fmt(i):"zones only")+"</span></button>"}).join("");
   else $("list").innerHTML=fs.length?F.map((f,i)=>!inC(f,S.c)?"":"<button data-i='"+i+"' class='"+(f.lay?"":"est")+"'><span>"+f.n+"</span><span class='mut'>"+fmt(cur(f).pw)+" / "+fmt(f.inst)+"</span></button>").join(""):"<div class='mut'>No operating farms here yet. Hover the zones on the map.</div>"}
  else{const f=F[S.farm],r=cur(f),[U,D]=curWind(f);$("mw").textContent=fmt(r.pw);

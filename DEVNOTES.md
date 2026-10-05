@@ -996,6 +996,15 @@ be read (demand in an opportunity block; demand beyond the stack = generation or
   whose prices converged that hour; the merit numbers (marginal technology, premium) in the newsletter diagnoses
   (`newsletter/diagnose.py` could reuse `srmc_table` in the fuel-enabled newsletter workflow only).
 
+## Map pane: legacy wind header removed (Oct 5 2026, Erik)
+- The right-hand pane of the Map tab no longer has its own region / country selector (`#C`) or the offshore-wind header
+  (the big MW figure, "of N MW operating", the farm / future-zone counts) and the region / country / farm list at region
+  level: at that level the pane is title, crumb and Layers & legend. The map navigates by clicking zones and farms and by
+  the crumb; the tab-bar selector `#C2` (built directly in events.js now) serves the other tabs as before.
+- For a selected farm the farm block stays: output and wake loss (`#farmhd`), the turbine details, the PyWake model table
+  (`#cmp`), the wake / what-if controls (`#mapctl`) and the farm list of that country (`#list`), toggled in `sidebar()`.
+- Fixed on the way: a comment in sidebar.js had swallowed the `#list` display line (dead code since the module split).
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation (and to give the merit order's import blocks their real width); the map's hover hour instead of "latest hour".

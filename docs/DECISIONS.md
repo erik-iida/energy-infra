@@ -120,3 +120,10 @@ Erik: go ahead; repo goes private once the back end runs on Render; bucket vendo
 | Where the costs live | `feed.market.srmc`, written by `pipeline/spark.py` under the existing SPARK gate and stripped from the public feed with `market.spark` (fuel-derived = private) |
 | Cross-border | imports as blocks at the neighbour's price, exports added to demand (layer 1 of the three discussed); NTC-wide blocks and the regional curve wait for the NTC dataset |
 | Hydro reservoir / pumped, price-less imports | opportunity cost: hatched blocks at the clearing price, never an invented SRMC |
+
+## Flag percentiles over the whole history (5 Oct 2026, Erik)
+| Decision | Choice |
+|---|---|
+| Ranking window | every earlier day of the zone in the store (`signals.WINDOW_DAYS = None`), was 90 days |
+| Where the history comes from | the stored `metrics_daily` dataset (`build.load_history`), not a recompute from raw rows; only the last 21 days (newsletter) / 17 days (flags) are recomputed |
+| Not changed | MIN_HIST 30, the rule thresholds, the unusual-row rule on the page |

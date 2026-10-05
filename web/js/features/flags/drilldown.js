@@ -29,14 +29,16 @@ const FXPLAIN={
  res_mean:"Average demand minus wind and solar: what the rest of the system had to cover.",
  import_share:"Net imports as a share of demand. High means the zone leaned on its neighbours; negative means it exported.",
  net_import:"Average net physical import over the zone's borders in the data store (negative = net export).",
- gen_wind_onshore:"Average onshore wind output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
- gen_wind_offshore:"Average offshore wind output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
- gen_solar:"Average solar output over the day. Installed capacity barely changes over 90 days, so this percentile is also the capacity-factor percentile.",
+ gen_wind_onshore:"Average onshore wind output over the day. Against the whole history installed capacity grows, so part of a high percentile is build-out, not weather.",
+ gen_wind_offshore:"Average offshore wind output over the day. Against the whole history installed capacity grows, so part of a high percentile is build-out, not weather.",
+ gen_solar:"Average solar output over the day. Against the whole history installed capacity grows, so part of a high percentile is build-out, not weather.",
  vre_share:"Wind and solar generation as a share of demand.",
  gas_share:"Gas-fired generation as a share of all generation.",
  wind_share_load:"Onshore plus offshore wind output as a share of electricity demand (energy over the day).",
  solar_share_load:"Solar output as a share of electricity demand (energy over the day).",
  load_mean:"Average electricity demand over the day."};
+/* how the percentiles are ranked: a trailing window (flag files before 5 Oct 2026) or every earlier day of the zone in the store */
+const fxHist=j=>j.window_days?"the zone's own last "+j.window_days+" days":"every earlier day of the zone in the store (since Jan 2024, "+(j.hist_days||"")+" days of prices)";
 const FXUNU=["baseload","price_max","price_min","neg_hours","tb4","gen_wind_onshore","gen_wind_offshore","gen_solar","wind_share_load","solar_share_load","vre_share","gas_share","load_mean","res_mean","res_peak","res_min","import_share","net_import"];
 const FXCET=new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Brussels",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",hourCycle:"h23"});
 function fxHash(){const o=FX.open;try{history.replaceState(null,"",location.pathname+location.search+(o?"#flags/"+encodeURIComponent(o.z)+"/"+o.m+"/"+o.d:"#flags"))}catch(e){}}
@@ -241,7 +243,7 @@ function fxBody(j,o,T,W){FX.charts=[];let h=fxHead(j,o);if(T.err)return h+"<div 
  if(bad.length)h+="<div class='fxbad'>"+bad.join("<br>")+"</div>";
  const ev=Q.P||Q.R?fxEvents(o.m,Q.P||[],Q.R||[]):{},refs=[],dm=cov(Q.P)?Q.P.filter(v=>v!=null).reduce((a,v)=>a+v,0)/cov(Q.P):null,mc=(id,k)=>T.c[id]?T.c[id].v[idx[k||0]]:null;
  const r=j.scan.find(q=>q.zone===o.z&&q.metric===o.m);
- if(o.m==="baseload"&&dm!=null){refs.push({v:dm,l:"day mean "+fxN(dm,1),c:"var(--acc)",dash:"6 3"});if(r&&r.median!=null&&Q.Pu==="€/MWh")refs.push({v:r.median,l:"90-day median "+fxN(r.median,1),c:"var(--mut)",dash:"2 3"})}
+ if(o.m==="baseload"&&dm!=null){refs.push({v:dm,l:"day mean "+fxN(dm,1),c:"var(--acc)",dash:"6 3"});if(r&&r.median!=null&&Q.Pu==="€/MWh")refs.push({v:r.median,l:"historical median "+fxN(r.median,1),c:"var(--mut)",dash:"2 3"})}
  const cap={cr_solar:"capture_solar",cr_wind_onshore:"capture_wind_onshore",cr_wind_offshore:"capture_wind_offshore"}[o.m];
  if(cap&&dm!=null){const cp=mc("m|"+cap);refs.push({v:dm,l:"baseload "+fxN(dm,1),c:"var(--mut)",dash:"2 3"});if(cp!=null)refs.push({v:cp,l:"capture price "+fxN(cp,1),c:"var(--acc)",dash:"6 3"})}
  const lab=idx.map((i,k)=>T.hr[i]+(k&&T.hr[idx[k-1]]===T.hr[i]?"′":""));
@@ -259,12 +261,12 @@ function fxBody(j,o,T,W){FX.charts=[];let h=fxHead(j,o);if(T.err)return h+"<div 
  else if(o.m==="res_ramp3"&&ev.rise!=null)cap2="Residual load rose by <b>"+fxN(ev.rise,0)+" MW</b> between "+lab[ev.hi[0]]+":00 and "+lab[ev.hi[3]]+":00 CET.";
  else if((o.m==="res_peak"||o.m==="res_min")&&(ev.hi||ev.lo)){const i=(ev.hi||ev.lo)[0];cap2="Residual load "+(o.m==="res_peak"?"peaked":"bottomed out")+" at <b>"+fxN(Q.R[i],0)+" MW</b> at "+lab[i]+":00 CET.";}
  else if(cap&&dm!=null&&mc("m|"+cap)!=null)cap2=(o.m==="cr_solar"?"Solar":o.m==="cr_wind_onshore"?"Onshore wind":"Offshore wind")+" earned <b>"+fxN(mc("m|"+cap),1)+"</b> "+Q.Pu+" on average (generation-weighted) against a day mean of <b>"+fxN(dm,1)+"</b> "+Q.Pu+": it produced mostly in the "+(mc("m|"+cap)<dm?"cheaper":"pricier")+" hours.";
- else if(o.m==="baseload"&&dm!=null)cap2="Day mean <b>"+fxN(dm,1)+"</b> "+Q.Pu+(r&&r.median!=null?" against a 90-day median of <b>"+fxN(r.median,1)+"</b> €/MWh":"")+".";
+ else if(o.m==="baseload"&&dm!=null)cap2="Day mean <b>"+fxN(dm,1)+"</b> "+Q.Pu+(r&&r.median!=null?" against a historical median of <b>"+fxN(r.median,1)+"</b> €/MWh":"")+".";
  else if(o.m==="import_share")cap2="See the cross-border flows below: which borders carried the import or export, and whether prices next door split.";
  if(cap2)h+="<div class='fxcap'>"+cap2+(Q.src==="forecast"&&showR?" Residual load here uses the wind and solar <i>forecast</i>.":"")+"</div>";
  h+=fxMerit(o,T,idx,Q,lab,ev,W);
  h+=fxNext(o,T,idx,Q,lab,ev,W);
- h+="<h4 class='fxh4'>What else was unusual in "+o.z+" that day <span class='mut'>percentile vs the zone's own last "+j.window_days+" days; ≥ P90 or ≤ P10 highlighted</span></h4>"+fxUnusual(j,o);
+ h+="<h4 class='fxh4'>What else was unusual in "+o.z+" that day <span class='mut'>percentile vs "+fxHist(j)+"; ≥ P90 or ≤ P10 highlighted</span></h4>"+fxUnusual(j,o);
  h+="<div class='mut fxsrc'>Data: <a href='https://transparency.entsoe.eu' style='color:inherit'>ENTSO-E Transparency Platform</a> (day-ahead prices, actual generation per type, actual load, day-ahead wind and solar forecast), hourly means of the native resolution, CET day."
   +(o.z==="GB"?" Great Britain: Contains BMRS data © Elexon Limited copyright and database right "+new Date().getFullYear()+" (<a href='https://www.elexon.co.uk/data/balancing-mechanism-reporting-agent/copyright-licence-bmrs-data/' style='color:inherit'>BMRS open data licence</a>); price = Market Index Data (APX / EPEX SPOT trades via Elexon BMRS), stored in GBP, shown in €/MWh at the ECB daily reference rate.":"")
   +" Generation is clipped at zero; pumped-storage consumption is not shown.</div>";
@@ -294,4 +296,4 @@ addEventListener("resize",()=>{if(S.tab==="flg"&&FX.open){clearTimeout(FX.rz);FX
 
 addEventListener("hashchange",fxFromHash);setTimeout(fxFromHash,0);  // deep link #flags/<zone>/<metric>/<day>, once main() has set up the page
 
-export { FX, fxDayLbl, fxFill, fxHash };
+export { FX, fxDayLbl, fxFill, fxHash, fxHist };

@@ -1028,6 +1028,24 @@ be read (demand in an opportunity block; demand beyond the stack = generation or
 - The breadcrumb ("World › Europe › Germany") under the heading is hidden (`#crumb hidden`, Erik 5 Oct 2026); `crumb()`
   still fills it so it can come back with one attribute. Back to World = the ⌂ button on the map.
 
+## Flag percentiles against the whole store history (Oct 5 2026, Erik)
+- `signals.WINDOW_DAYS = None`: every percentile, median, P10 / P90 is now ranked against every earlier day of the zone in
+  the store (metrics_daily from Jan 2024, ~1,000 days), not the last 90. `scan(window=None)`; MIN_HIST 30 unchanged.
+- The history is not recomputed from raw rows: `build.load_history` reads the stored `metrics_daily` (written by
+  `jobs.derive metrics`, version 5 everywhere), `build.with_history` glues it to the metrics freshly computed from raw
+  rows for the last `RECENT_DAYS` = 21 days (newsletter) / `FLAG_DAYS` + 3 (flags export). `Store.months(dataset)` lists
+  a dataset's months. The newsletter build got faster (25 s instead of 60 s: 3 weeks of raw rows instead of 13).
+  Consequence: the metrics job must keep running daily; a day missing from metrics_daily is simply absent from the history.
+- Spark metrics are never stored, so `spark_top4` only has the raw window as history (< MIN_HIST): it no longer fires.
+- Wording: "higher than on 98 % of its last 1006 days"; the page says "every earlier day of the zone in the store (since Jan
+  2024, N days of prices)" (`fxHist(j)`, old flag files with `window_days` keep the old wording); "historical median".
+- Caveats Erik should keep in mind: (1) seasonality — an October TB4 is ranked against summer solar-spread days and winter
+  days alike, so "unusual" now means unusual for the zone, not for the season; (2) build-out — gen_solar, gen_wind_* and
+  the share-of-load metrics trend up with installed capacity, so part of a high percentile is capacity growth (said in
+  the FXPLAIN texts); (3) what fires changes: on 4 Oct Greece's 9 negative hours are no longer unusual (P<90 over
+  2024-26), the TB4 spreads in ME / RS / GR / CZ / SI are. A seasonal window (same calendar weeks of earlier years) would
+  address (1) if wanted.
+
 ## Known gaps / next ideas
 - Interconnection: hover tooltip with the link name and the 24 h series (already in xflow.json); NTC / capacity to show
   utilisation (and to give the merit order's import blocks their real width); the map's hover hour instead of "latest hour".

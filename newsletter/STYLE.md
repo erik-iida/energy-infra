@@ -22,6 +22,10 @@ What Erik wants the daily brief to be, and what feedback has taught so far. A ne
 - Public text never contains fuel prices or spark spreads (yfinance data is private); the site build runs with `--no-fuel`.
 - CEE/SEE zones first; Western zones only as reference or as the other side of a decoupled border.
 
+## Percentiles (5 Oct 2026)
+- Signals and "unusual" rows are ranked against every earlier day of the zone in the store (since Jan 2024), not a 90-day
+  window; the text says "higher than on 98 % of its last 1006 days". Unusual for the zone, not for the season.
+
 ## Diagnoses (v3 draft, 5 Oct 2026, spec 4; format still to be judged by Erik)
 - The headline sentence is followed by ONE sentence from the diagnosis of that signal (its top candidate driver).
 - **Why they fired**: up to five more story candidates (fired signals in CEE/SEE, one per zone, strongest first, never daily

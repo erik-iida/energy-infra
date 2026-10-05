@@ -230,6 +230,11 @@ class Store:
         _ASSETS.pop(self.repo, None)
 
     # ------------------------------------------------------------ public API
+    def months(self, dataset: str) -> list[str]:
+        """The months (YYYY-MM, ascending) for which `dataset` has a file in the store."""
+        pre, suf = f"{dataset}_", ".parquet"
+        return sorted(n[len(pre):-len(suf)] for n in self.assets() if n.startswith(pre) and n.endswith(suf) and len(n) == len(pre) + 7 + len(suf))
+
     def read(self, dataset: str, month: str) -> pd.DataFrame | None:
         b = self._download(asset_name(dataset, month))
         return pd.read_parquet(io.BytesIO(b)) if b else None

@@ -4,7 +4,7 @@ import { S } from "../../core/data.js";
 import { $ } from "../../core/util.js";
 import { dbJson } from "../../core/load.js";
 import { registerTab } from "../../core/router.js";
-import { FX, fxDayLbl, fxFill, fxHash } from "./drilldown.js";
+import { FX, fxDayLbl, fxFill, fxHash, fxHist } from "./drilldown.js";
 /* ---------- Flags tab: signals and metric overview (web/data/browse/flags.json, built from the `store` release by scripts/build_browse.py with newsletter/signals.py) ---------- */
 const FL={j:null,err:0,busy:0,all:false};
 function flFmt(v,u){if(v==null)return"–";return v.toLocaleString("en",{maximumFractionDigits:Math.abs(v)>=100?0:1})}
@@ -29,7 +29,7 @@ function flagsTab(){const el=$("flg");
  h+="<h3 class='flh'>Signals fired ("+fired.length+")</h3>";
  if(FX.open&&!fired.some(r=>r.zone===(FX.open.row||FX.open).z&&r.metric===(FX.open.row||FX.open).m))h+="<div class='dw fxsolo'><div class='fxp' id='fxp' role='region' aria-label='Context for "+FX.open.z+"'></div></div>";
  h+=fired.length?"<div class='dw' style='max-height:none'><table class='dt ft'><thead><tr><th>Zone</th><th style='text-align:left'>Signal</th><th>Value</th><th>Percentile</th><th>Typical (median · P10–P90)</th><th>Days in window</th></tr></thead><tbody>"+fired.map(r=>{const fr=FX.open&&(FX.open.row||FX.open),o=!!(fr&&fr.z===r.zone&&fr.m===r.metric);return"<tr class='fsr"+(o?" on":"")+"' tabindex='0' role='button' aria-expanded='"+o+"' data-z='"+r.zone+"' data-m='"+r.metric+"'><td><span class='chev' aria-hidden='true'>"+(o?"▾":"▸")+"</span>"+r.zone+"</td><td style='text-align:left'>"+rl[r.metric].label+" — "+(r.side==="high"?"unusually <b class='fh'>high</b>":"unusually <b class='fl'>low</b>")+"</td><td>"+flFmt(r.value)+" <span class='mut'>"+rl[r.metric].unit+"</span></td><td>P"+Math.round(r.pct*100)+"</td><td>"+flFmt(r.median)+" · "+flFmt(r.p10)+"–"+flFmt(r.p90)+"</td><td>"+r.n_hist+"</td></tr>"+(o?"<tr class='fxr'><td colspan='6' class='fxc'><div class='fxp' id='fxp' role='region' aria-label='Context for "+r.zone+" "+rl[r.metric].label+"'></div></td></tr>":"")}).join("")+"</tbody></table></div>":"<div class='feednote'>No metric left its own normal range for these zones on this day.</div>";
- h+="<h3 class='flh'>Overview, all metrics <span class='mut'>shade = percentile vs the zone's own last "+j.window_days+" days (orange high, blue low); bold = flag fired; grey = under "+j.min_hist+" days of history</span></h3>"
+ h+="<h3 class='flh'>Overview, all metrics <span class='mut'>shade = percentile vs "+fxHist(j)+" (orange high, blue low); bold = flag fired; grey = under "+j.min_hist+" days of history</span></h3>"
   +"<div class='dw'><table class='dt ft'><thead><tr><th>Zone</th>"+j.rules.map(r=>"<th>"+r.label+" <span class='mut'>"+r.unit+"</span></th>").join("")+"</tr></thead><tbody>"
   +zones.map(z=>"<tr><td>"+z+"</td>"+j.rules.map(r=>{const c=by[z+"|"+r.metric];if(!c)return"<td class='nu'>–</td>";
     let st="",cl="";if(c.status==="short")cl=" sh";else if(c.pct!=null){const a=Math.min(.75,Math.abs(c.pct-.5)*1.5);st="background:"+(c.pct>=.5?"rgba(194,65,12,"+a.toFixed(2)+")":"rgba(31,95,153,"+a.toFixed(2)+")")}

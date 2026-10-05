@@ -36,7 +36,39 @@ def months_between(a: pd.Timestamp, b: pd.Timestamp) -> list[str]:
     return [str(p) for p in pd.period_range(a.tz_convert("UTC"), b.tz_convert("UTC"), freq="M")]
 
 
-def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.DataFrame, pd.DataFrame]:
+# raw rows (prices, generation, load, flows) are read for the last RECENT_DAYS only; everything older comes from the stored
+# daily metrics (metrics_daily, written by jobs.derive metrics) through load_history / with_history
+RECENT_DAYS = 21
+
+
+def load_history(day: pd.Timestamp, before: pd.Timestamp) -> pd.DataFrame:
+    """Stored daily metrics (zone, day, metric, value) for every CET day < `before` up to the first month in the store."""
+    st = Store()
+    out = []
+    for m in st.months("metrics_daily"):
+        if m > before.strftime("%Y-%m"):
+            continue
+        d = st.read("metrics_daily", m)
+        if d is not None and len(d):
+            out.append(d.loc[d["day"] < before, ["zone", "day", "metric", "value"]])
+    return pd.concat(out, ignore_index=True) if out else pd.DataFrame(columns=["zone", "day", "metric", "value"])
+
+
+def with_history(metrics: pd.DataFrame, day: pd.Timestamp, back: int = RECENT_DAYS, hist: pd.DataFrame | None = None) -> pd.DataFrame:
+    """The freshly computed metrics of the last `back` days before `day` plus the stored history before them: the frame
+    the signal scan ranks against (all earlier days, signals.WINDOW_DAYS = None)."""
+    cut = day - pd.Timedelta(days=back)
+    if hist is None:
+        hist = load_history(day, cut)
+    else:
+        hist = hist[hist["day"] < cut]
+    if hist is None or hist.empty:
+        return metrics
+    hist = hist.astype({"value": "float64"})
+    return pd.concat([hist, metrics[metrics["day"] >= cut]], ignore_index=True)
+
+
+def load_window(day: pd.Timestamp, back: int = RECENT_DAYS) -> tuple[pd.DataFrame, pd.DataFrame]:
     """da_price and gen_actual for [day-back, day+2) CET days, slimmed while reading (gen_actual is big): solar, wind, gas
     and the hourly total over all types (metrics.slim_gen)."""
     a = (day - pd.Timedelta(days=back)).tz_localize(M.CET).tz_convert("UTC")
@@ -54,7 +86,7 @@ def load_window(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3) -> tuple[pd.Da
     return cat(da), cat(ga)
 
 
-def load_window_all(day: pd.Timestamp, back: int = S.WINDOW_DAYS + 3):
+def load_window_all(day: pd.Timestamp, back: int = RECENT_DAYS):
     """da_price, solar/wind gen_actual (as load_window) plus actual load and cross-border flows for the same window."""
     da, ga = load_window(day, back)
     a = (day - pd.Timedelta(days=back)).tz_localize(M.CET).tz_convert("UTC")
@@ -244,8 +276,10 @@ def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.T
 
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
                 carbon: bool = False, fuel_note: str | None = None, fund_data: tuple | None = None,
-                ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None, ga_day: pd.DataFrame | None = None) -> dict:
-    metrics = M.all_metrics(da, ga, srmc, ld, fl)
+                ld: pd.DataFrame | None = None, fl: pd.DataFrame | None = None, ga_day: pd.DataFrame | None = None,
+                hist: pd.DataFrame | None = None) -> dict:
+    """`hist`: stored daily metrics before the raw window (build.load_history); None = read them from the store."""
+    metrics = with_history(M.all_metrics(da, ga, srmc, ld, fl), day, hist=hist)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
     sigs = add_streaks(S.evaluate(metrics, day), metrics, day)
     zones_day = set(metrics.loc[(metrics["day"] == day) & (metrics["metric"] == "baseload"), "zone"])
@@ -267,9 +301,10 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
     hist_days = metrics.loc[metrics["metric"] == "baseload", "day"].nunique()
     if hist_days < S.MIN_HIST + 1:
         notes.append(f"Only {hist_days} days of price history in the store: percentile signals need {S.MIN_HIST}+ days.")
-    # zone p90 of TB4 for the chart
-    start = day - pd.Timedelta(days=S.WINDOW_DAYS)
-    h4 = metrics[(metrics["metric"] == "tb4") & (metrics["day"] >= start) & (metrics["day"] < day)]
+    # zone p90 of TB4 for the chart (same history as the signals)
+    h4 = metrics[(metrics["metric"] == "tb4") & (metrics["day"] < day)]
+    if S.WINDOW_DAYS:
+        h4 = h4[h4["day"] >= day - pd.Timedelta(days=S.WINDOW_DAYS)]
     p90 = h4.groupby("zone")["value"].quantile(0.9).to_dict()
     table = table_for(metrics, day, focus)
     for r in table:
@@ -368,14 +403,14 @@ def draft_brief(f: dict) -> str:
         lines += [head, ""]
         rest = [d for d in (f.get("diagnoses") or []) if (d["zone"], d["metric"]) != (lead[0]["zone"], lead[0]["metric"])]
         if rest:
-            lines += ["**Why they fired.** Other metrics outside their own 90-day range, with what the data shows for the same hours "
+            lines += ["**Why they fired.** Other metrics outside their own historical range, with what the data shows for the same hours "
                       "(co-occurrence, not causation):"]
             for d in rest:
                 st = DG._streak_text(d.get("streak")).replace(", the", "").replace(" running", "")
                 lines.append(f"- {d['name']}: {DG.signal_phrase(d)} (P{d['pct100']}{',' + st if st else ''}). {_diag_line(d)}")
             lines.append("")
     else:
-        lines += [f"**Headline.** No CEE/SEE metric left its own {f['window_days']}-day normal range on {day:%-d %b}.", ""]
+        lines += [f"**Headline.** No CEE/SEE metric left its own normal range on {day:%-d %b}.", ""]
     dec = f.get("decoupling") or []
     if dec:
         d = dec[0]
@@ -459,7 +494,7 @@ body{{background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-serif;ma
 .lbl,.val{{font-size:12px;fill:var(--fg)}}.bar{{fill:var(--bar)}}.p90{{stroke:var(--p90);stroke-width:2}}
 svg{{width:100%;height:auto}}.mut{{color:var(--mut);font-size:13px}}</style></head><body>
 <h1 style="font-size:20px">Radial Economics daily - {f['day']}</h1>{body}
-<h2 style="font-size:16px">TB4 storage spread, EUR/MWh <span class="mut">(orange tick = zone's 90th percentile, last {f['window_days']} days)</span></h2>
+<h2 style="font-size:16px">TB4 storage spread, EUR/MWh <span class="mut">(orange tick = zone's 90th percentile{(" over the last " + str(f['window_days']) + " days") if f['window_days'] else " over all earlier days in the store"})</span></h2>
 <svg viewBox="0 0 {W} {H}" role="img" aria-label="TB4 by zone">{''.join(bars)}</svg>
 <p class="mut">Source: ENTSO-E Transparency Platform. Backwards-looking market data, not advice.</p></body></html>"""
 
@@ -480,7 +515,7 @@ def main(argv=None) -> None:
         if a.no_fuel:
             raise RuntimeError("fuel prices switched off")
         from . import fuel
-        days = pd.date_range(day - pd.Timedelta(days=S.WINDOW_DAYS + 3), day + pd.Timedelta(days=1))
+        days = pd.date_range(day - pd.Timedelta(days=RECENT_DAYS + 3), day + pd.Timedelta(days=1))  # spark metrics exist for the raw window only (never stored)
         srmc, carbon = fuel.srmc_by_day(days, fuel.load_ttf(), fuel.load_eua())
     except Exception as e:  # fuel prices are optional: the brief is still useful without spark spreads
         fuel_note = None if a.no_fuel else f"Spark spreads unavailable today (fuel price fetch failed: {type(e).__name__})."

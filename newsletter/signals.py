@@ -1,8 +1,9 @@
 """Universal signal framework: every rule looks at one metric per zone, compares the target day with that zone's own
 trailing history and fires when the day sits in the tail of it. Add a rule = add a line to RULES.
 
-A rule fires when percentile >= hi (value unusually high) or <= lo (unusually low), the trailing window has at least
-`min_hist` days, and the absolute gate `min_abs` holds (so "90th percentile of a tiny number" does not fire).
+A rule fires when percentile >= hi (value unusually high) or <= lo (unusually low), the trailing history (`window` days,
+or every earlier day when `window` is None) has at least `min_hist` days, and the absolute gate `min_abs` holds (so "90th
+percentile of a tiny number" does not fire).
 percentile = share of the trailing days whose value is <= the target day's value (0..1).
 """
 from __future__ import annotations
@@ -11,8 +12,8 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-WINDOW_DAYS = 90
-MIN_HIST = 30
+WINDOW_DAYS = None   # None = every earlier day of the zone in the store (Erik, 5 Oct 2026; was 90 days); the history comes
+MIN_HIST = 30        # from the stored metrics_daily (build.load_history), only the recent days are recomputed from raw rows
 
 
 @dataclass(frozen=True)
@@ -65,17 +66,17 @@ def percentile(hist: pd.Series, value: float) -> float:
     return float((hist <= value).mean())
 
 
-def scan(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WINDOW_DAYS,
+def scan(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int | None = WINDOW_DAYS,
          min_hist: int = MIN_HIST) -> list[dict]:
-    """Every (zone, rule) with a value on `day`: value, percentile against the zone's own trailing `window` days, the
-    trailing median / p10 / p90, and `side` ("high" / "low") when the rule fires, else None. `status`: "ok" (enough
-    history and passes the absolute gate), "short" (fewer than `min_hist` trailing days) or "gated" (below min_abs)."""
+    """Every (zone, rule) with a value on `day`: value, percentile against the zone's own trailing `window` days (all
+    earlier days when None), the trailing median / p10 / p90, and `side` ("high" / "low") when the rule fires, else
+    None. `status`: "ok" (enough history and passes the absolute gate), "short" (fewer than `min_hist` trailing days) or
+    "gated" (below min_abs)."""
     out = []
-    start = day - pd.Timedelta(days=window)
     for r in rules:
         m = metrics[metrics["metric"] == r.metric]
         today = m[m["day"] == day].set_index("zone")["value"]
-        hist = m[(m["day"] >= start) & (m["day"] < day)]
+        hist = m[m["day"] < day] if window is None else m[(m["day"] >= day - pd.Timedelta(days=window)) & (m["day"] < day)]
         scale = 100.0 if r.unit == "%" else 1.0
         for zone, v in today.items():
             if pd.isna(v):
@@ -101,7 +102,7 @@ def scan(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WI
     return out
 
 
-def evaluate(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int = WINDOW_DAYS,
+def evaluate(metrics: pd.DataFrame, day: pd.Timestamp, rules=RULES, window: int | None = WINDOW_DAYS,
              min_hist: int = MIN_HIST) -> list[dict]:
     """Fired signals for `day`, strongest first. metrics: zone, day, metric, value."""
     fired = [r for r in scan(metrics, day, rules, window, min_hist) if r["side"]]

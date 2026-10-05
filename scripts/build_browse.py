@@ -145,14 +145,15 @@ CTX_KEYS = ("zone", "metric", "value", "pct", "median", "p10", "p90", "n_hist", 
 
 def flags_export(now: datetime, days: int = FLAG_DAYS) -> list[dict]:
     """Signals of the newsletter framework for each of the last `days` complete CET days (newest first), plus the
-    overview of every rule metric per zone (value and percentile against the zone's own last 90 days) and the
+    overview of every rule metric per zone (value and percentile against every earlier day of the zone in the store) and the
     display-only context metrics. Spark spreads are never part of these files."""
-    from newsletter import build as NB  # reads the store again: 90-day window + `days`
+    from newsletter import build as NB  # raw rows for the last `days` + a margin; older days from the stored metrics_daily
     last = pd.Timestamp(now).tz_convert(M.CET).tz_localize(None).normalize() - pd.Timedelta(days=1)
-    da, ga, ld, fl = NB.load_window_all(last, back=SG.WINDOW_DAYS + 3 + days)
+    back = days + 3
+    da, ga, ld, fl = NB.load_window_all(last, back=back)
     if da.empty:
         return []
-    metrics = M.all_metrics(da, ga, None, ld, fl)
+    metrics = NB.with_history(M.all_metrics(da, ga, None, ld, fl), last, back=back)
     rules = [r for r in SG.RULES if not r.metric.startswith("spark")]
     base = metrics[metrics["metric"] == "baseload"]
     out = []

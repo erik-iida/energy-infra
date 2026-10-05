@@ -76,7 +76,12 @@ assert any(s["zone"] == "RO" and s["metric"] in ("tb2", "tb4") and s["side"] == 
 assert not any(s["zone"] == "HU" and s["metric"] == "tb4" for s in sig)
 assert sig == sorted(sig, key=lambda s: -s["score"])
 
-# ---- end to end
+# ---- end to end: the history the signals rank against comes from the stored metrics_daily (jobs.derive metrics writes it
+# in production); the build recomputes only the last build.RECENT_DAYS from raw rows
+from newsletter import registry as R  # noqa: E402
+st.write("metrics_daily", cm.assign(version=R.VERSION, fetched=fetched), log=lambda *_: None)
+hist = build.load_history(DAY, DAY - pd.Timedelta(days=build.RECENT_DAYS))
+assert hist["day"].max() < DAY - pd.Timedelta(days=build.RECENT_DAYS) and hist["day"].nunique() > 60, hist["day"].agg(["min", "max"])
 out = Path(tmp) / "out"
 build.main(["--day", "2026-10-02", "--out", str(out)])
 f = json.loads((out / "facts.json").read_text())

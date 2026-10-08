@@ -428,6 +428,11 @@ Keep the `Co-Authored-By: Claude ...` trailer in the commit message. Workflow co
 - **Reading feedback in a new chat**: `gh api "repos/erik-iida/energy-infra/issues?labels=newsletter-feedback&state=open"` (REST works from the
   cloud workspace), apply it to `newsletter/STYLE.md` and to the generator (`newsletter/build.py draft_brief`), comment on the issue with what
   changed and close it. STYLE.md is the memory of the format; keep it current.
+- **v4 (Oct 8 2026, issues #2/#3)**: the brief is now stories grouped by driver pattern (`build.stories`, `group_of`), max 3 figures per
+  paragraph, only metrics at P5/P95 reach the text (`TEXT_PCT`, context metrics included), headline = one signal with per-year counts
+  (`add_years`), "Renewables leaders in the last 24h", no congestion claim in Price decoupling (decoupling gets a `context` from the day frames),
+  hour blocks / dayparts instead of hour lists (`diagnose.hours_phrase`), `vre_phrase`. Rules in STYLE.md "Stories, not a metrics dump".
+  `facts.json` gained `lead`, `years` on signals, `decoupling[].context`. Open for Erik: brand name in the title, 90-day window, stored nuclear metric.
 - Not done: the draft is generated once per deploy from the store (no per-user login, no live comments, feedback is not shown back on the
   page); an email/LinkedIn export; residual load / net import sentences in the generated brief (listed in STYLE.md).
 

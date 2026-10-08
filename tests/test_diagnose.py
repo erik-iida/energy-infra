@@ -122,12 +122,15 @@ assert nb["BG"]["hours_split"] == 24 and nb["HU"]["net_import_event"] == 800
 assert [r["zone"] for r in d["neighbours"]][0] == "UA-IPS", "ordered by mean |net flow|"
 assert nb["HU"]["mix"][0]["cls"] == "nuclear" and nb["HU"]["stats"]["wind_share"] is None  # HU has no wind rows
 imp = next(x for x in d["drivers"] if x["key"] == "imports_in_peak")
-assert "mostly from Hungary (800 MW); in Hungary that was nuclear 98 %" in imp["text"], imp["text"]
+assert "mostly from Hungary; in Hungary the power came mostly from nuclear" in imp["text"], imp["text"]
+assert "imported from 18:00 to 22:00" in imp["text"] and "MW" not in imp["text"], imp["text"]   # block of hours, no hour list, no MW clause
 assert imp["numbers"]["counterparty_mw"] == 800 and "mix_nuclear" in imp["numbers"]
 s4s = dict(s4, streak=3)
 assert "the 3rd day running" in DG.render_text(DG.diagnose(s4s, DAY, frames, scan, fired))
 keys = [x["key"] for x in d["drivers"]]
 assert keys[:1] == ["peak_residual"] and "gas_in_peak" in keys and "imports_in_peak" in keys and "cheap_solar" in keys, keys
+assert "took in" not in " ".join(x["text"] for x in d["drivers"]) and "coincided with the evening peak in residual load" in d["drivers"][0]["text"]
+assert "other" not in " ".join(m["label"] for r in d["neighbours"] for m in r["mix"]), "no 'other 30 %' in a mix"
 assert "caused" not in t and "congest" not in t and "spark" not in t.lower() and "TTF" not in t
 assert "Romania" in t and "Hungary" in t and "Ukraine" in t and "price n/a" in t
 audit(d, t)
@@ -148,6 +151,14 @@ k2 = [x["key"] for x in d2["drivers"]]
 assert k2[:2] == ["vre_in_neg", "exports_in_neg"] and "neighbours_negative" in k2, k2
 assert "the highest of its last 90 days" in t2
 audit(d2, t2)
+# hour phrases: never a list of clock times
+labs = [f"{h:02d}" for h in range(24)]
+assert DG.hours_phrase(labs, [17, 18, 19, 21]) == "from 17:00 to 22:00"
+assert DG.hours_phrase(labs, [0, 1, 2, 3]) == "from 00:00 to 04:00"
+assert DG.hours_phrase(labs, [1, 2, 12, 13, 19]) == "overnight, around midday and in the evening"
+# "almost no wind or solar", and no 'wind peak' when the cheap hours have no more wind than the day
+assert DG.vre_phrase({"wind_share": 0.2, "solar_share": 0.4}, "in those hours")[0] == "there was almost no wind or solar in those hours"
+assert DG.vre_phrase({"wind_share": 1.0, "solar_share": 12.0}, "that day")[0].startswith("solar covered 12 %")
 
 # ---------------------------------------------------------------- DST day (25 Oct 2026: 25 hours), missing price hour, late generation
 DST = pd.Timestamp("2026-10-25")
@@ -186,4 +197,44 @@ try:
     raise AssertionError("audit must fail on a foreign number")
 except AssertionError as e:
     assert "4711" in str(e)
+
+# ---------------------------------------------------------------- the brief: stories, not a metrics dump (Erik, 6-7 Oct 2026)
+from newsletter import build as B  # noqa: E402
+d["years"] = {"prev": 2025, "cur": 2026, "n_prev": 12, "n_cur": 31, "days_prev": 365}
+d2["years"] = None
+ff = {"day": "2026-10-02", "diagnoses": [d, d2], "lead": {"zone": "GR", "metric": "neg_hours"}, "focus": ["RO", "GR"], "context": [],
+      "table": [{"zone": "RO", "baseload": 90, "tb2": 100, "tb4": 90, "neg_hours": 0, "wind_share_load": 3, "solar_share_load": 4},
+                {"zone": "GR", "baseload": 60, "tb2": 100, "tb4": 90, "neg_hours": 6, "wind_share_load": 27, "solar_share_load": 91}],
+      "tomorrow": {"day": "2026-10-03", "zones": [
+          {"zone": "RO", "baseload": 80, "tb2": 120, "tb4": 110, "neg_hours": 0, "max": 200, "max_at": "19:00", "min": 40, "min_at": "13:00"},
+          {"zone": "BG", "baseload": 70, "tb2": 90, "tb4": 80, "neg_hours": 2, "max": 150, "max_at": "19:00", "min": -5, "min_at": "13:00"}]},
+      "decoupling": [{"high": "RO", "low": "HU", "base_high": 90, "base_low": 70, "rel": 22, "hours_apart": 16, "hours": 24, "context": []}],
+      "fundamentals": [], "notes": []}
+md = B.draft_brief(ff)
+print(md[:2500])
+head = md.split("**Headline.** ")[1].split("\n")[0]
+assert "Greece" in head and "2025" not in head and head.count("%") == 0 and "of its last" not in head, head          # one signal, no percentile jargon
+paras = [p_ for p_ in md.split("\n\n") if p_.startswith("**") and p_.split("**")[1] in B.GROUPS.values()]
+assert len(paras) == 2 and paras[0].startswith("**Wind and solar surplus.**"), "the headline's story comes first"
+for p_ in paras:
+    assert B.figures(p_) <= B.FIGURES_MAX + 1, (B.figures(p_), p_)                                          # sentence 1 may overshoot, never the rest
+assert "(P" not in md and "bottleneck" not in md and "took in" not in md and ", 1" not in md.split("**Next 24 h.**")[0], md
+assert "prices separated in 16 of 24 hours, which is typical when the border limit is reached" in md.replace("Prices separated", "prices separated")
+assert "**Renewables leaders in the last 24h.**" in md and "Fundamentals (last 30 days)" not in md
+assert "Bulgaria (2 h)" in md and "TB4" not in md.split("| Zone |")[0]
+assert "Romania" in md.split("**Next 24 h.**")[1].split("\n")[0] or "Bulgaria" in md.split("**Next 24 h.**")[1].split("\n")[0]
+# rank wording
+assert B.rank_phrase(d) == "a level reached or exceeded on 12 days in 2025 and 31 days so far in 2026"
+assert B.rank_phrase(dict(d, years=None, n_hist=1000)) == "among the highest of the last 33 months"
+assert B.streak_phrase(5) == ", the 5th day in a row"
+# percentile gate: only P0-P5 / P95-P100 reach the text; a spread loses to a non-spread signal of its zone; at most 3 spread stories
+sg = [dict(sig("PL", "tb4", 90, pct=0.97), streak=1), dict(sig("PL", "res_peak", 7000, pct=0.96), streak=1),
+      dict(sig("CZ", "tb4", 90, pct=0.92), streak=1), dict(sig("HU", "tb4", 90, pct=0.99), streak=1)]
+ok = [s_ for s_ in sg if B.extreme(s_["pct"], s_["side"])]
+assert [s_["zone"] for s_ in ok] == ["PL", "PL", "HU"] and [s_["metric"] for s_ in B.story_candidates(ok, ["PL", "HU"]) if s_["zone"] == "PL"] == ["res_peak"]
+# what differed across a price gap comes from the frames only
+dec = B.decoupling_context([{"high": "RO", "low": "HU", "base_high": 90, "base_low": 70, "rel": 22, "hours_apart": 16, "hours": 24}], frames)
+for c in dec[0]["context"]:
+    assert all(int(n_) in DG.numbers_in(c["numbers"]) for n_ in re.findall(r"\d+", c["text"])), c
+
 print("diagnose tests passed")

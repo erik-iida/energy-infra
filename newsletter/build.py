@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -222,22 +223,81 @@ def tomorrow_block(da: pd.DataFrame, metrics: pd.DataFrame, day: pd.Timestamp, z
     return {"day": nxt.strftime("%Y-%m-%d"), "zones": rows}
 
 
-# story candidates for the diagnoses in facts.json: fired signals in the focus zones, no daily capture rates (STYLE.md) and
-# nothing fuel-derived, one signal per zone (its strongest), the top N by score
-DIAG_N = 6
+# story candidates for the diagnoses in facts.json and the brief. Erik, 6-7 Oct 2026: only metrics at the extremes of their own
+# history reach the text (P0-P5 or P95-P100), not only spreads (so context metrics at the extremes count too), no daily capture
+# rates, nothing fuel-derived, one signal per zone, at most SPREAD_MAX spread-family stories.
+TEXT_PCT = 0.05            # a metric reaches the text only at or beyond P5 / P95 of the zone's own history
+DIAG_N = 8
 DIAG_SKIP = ("cr_", "spark_")
+SPREAD = ("tb2", "tb4")
+SPREAD_MAX = 3
+CTX_SIDES = {"gen_wind_onshore": "high", "gen_wind_offshore": "high", "gen_solar": "high", "wind_share_load": "both",
+             "solar_share_load": "high", "vre_share": "high", "gas_share": "high", "load_mean": "high"}  # low solar is just winter
+VRE_GAP = 10.0             # percentage points of wind + solar share between two sides of a price gap that are worth a sentence
+CTX_WEIGHT = 0.8           # context extremes rank below the fired rules
+
+
+def extreme(p: float, side: str) -> bool:
+    return p >= 1 - TEXT_PCT if side == "high" else p <= TEXT_PCT
+
+
+def text_signals(sigs: list[dict], scan_rows: list[dict]) -> list[dict]:
+    """Fired signals at the extremes (P0-P5 / P95-P100) plus context metrics (wind, solar, demand, gas share) at the extremes,
+    strongest first. Same dict shape as signals.evaluate rows."""
+    out = [dict(s) for s in sigs if s.get("pct") is not None and extreme(s["pct"], s["side"])]
+    have = {(s["zone"], s["metric"]) for s in out}
+    for r in scan_rows:
+        want = CTX_SIDES.get(r["metric"])
+        if not want or r.get("pct") is None or r["status"] != "ok" or (r["zone"], r["metric"]) in have:
+            continue
+        for side in (("high", "low") if want == "both" else (want,)):
+            if extreme(r["pct"], side):
+                out.append(dict(r, side=side, score=round(CTX_WEIGHT * (r["pct"] if side == "high" else 1 - r["pct"]), 4), streak=1))
+                break
+    return sorted(out, key=lambda s: -s["score"])
 
 
 def story_candidates(sigs: list[dict], zones: list[str], n: int = DIAG_N) -> list[dict]:
-    out, seen = [], set()
-    for s in sigs:  # already strongest first
-        if s["zone"] not in zones or s["metric"].startswith(DIAG_SKIP) or s["zone"] in seen:
-            continue
-        seen.add(s["zone"])
+    """One signal per focus zone (a non-spread one when the zone has both), strongest first, at most SPREAD_MAX spread-family."""
+    ok = [s for s in sigs if s["zone"] in zones and not s["metric"].startswith(DIAG_SKIP)]
+    best = {}
+    for s in ok:  # already strongest first; a spread loses to any non-spread signal of the same zone
+        cur = best.get(s["zone"])
+        if cur is None or (cur["metric"] in SPREAD and s["metric"] not in SPREAD):
+            best[s["zone"]] = s
+    out, ns = [], 0
+    for s in sorted(best.values(), key=lambda s: -s["score"]):
+        if s["metric"] in SPREAD:
+            if ns >= SPREAD_MAX:
+                continue
+            ns += 1
         out.append(s)
         if len(out) >= n:
             break
     return out
+
+
+def pick_lead(cand: list[dict]) -> dict | None:
+    """Headline = the strongest candidate that did NOT fire yesterday, if there is one (Erik, 5 Oct 2026); else the strongest."""
+    new = [s for s in cand if s.get("streak", 1) == 1]
+    return (new or cand or [None])[0]
+
+
+def add_years(sigs: list[dict], metrics: pd.DataFrame, day: pd.Timestamp) -> list[dict]:
+    """`years` on every signal: how many earlier days of the same zone reached or passed today's value (on its side) in the
+    previous calendar year and so far in this one. 'A level seen on 12 days in 2025 and 31 days so far in 2026' reads better than
+    a second percentage (Erik, 6 Oct 2026). Days, not hours: the store keeps daily metrics for the history."""
+    for s in sigs:
+        h = metrics[(metrics["zone"] == s["zone"]) & (metrics["metric"] == s["metric"]) & (metrics["day"] < day)]
+        t = metrics[(metrics["zone"] == s["zone"]) & (metrics["metric"] == s["metric"]) & (metrics["day"] == day)]["value"]
+        if h.empty or t.empty:
+            continue
+        v = float(t.iloc[0])
+        beyond = (h["value"] >= v - 1e-9) if s["side"] == "high" else (h["value"] <= v + 1e-9)
+        yr = h["day"].dt.year
+        s["years"] = {"prev": int(day.year) - 1, "cur": int(day.year), "n_prev": int((beyond & (yr == day.year - 1)).sum()),
+                      "n_cur": int((beyond & (yr == day.year)).sum()), "days_prev": int((yr == day.year - 1).sum())}
+    return sigs
 
 
 STREAK_DAYS = 7
@@ -258,20 +318,41 @@ def add_streaks(sigs: list[dict], metrics: pd.DataFrame, day: pd.Timestamp, back
     return sigs
 
 
-def diagnoses(sigs: list[dict], metrics: pd.DataFrame, da, ga, ld, fl, day: pd.Timestamp, zones: list[str],
-              ga_day: pd.DataFrame | None = None) -> list[dict]:
+def diagnoses(cand: list[dict], scan: list[dict], sigs: list[dict], frames: dict, day: pd.Timestamp) -> list[dict]:
     """The structured diagnosis and its text block for each story candidate (newsletter/diagnose.py)."""
-    cand = story_candidates(sigs, zones)
-    if not cand:
-        return []
-    scan = S.scan(metrics, day, S.RULES + S.CONTEXT)
-    frames = DG.day_frames(M.hourly_prices(da), ga, M.hourly_load(ld), M.hourly_flows(fl), day, ga_full=ga_day)
     out = []
     for s in cand:
         d = DG.diagnose(s, day, frames, scan, sigs)
         d["text"] = DG.render_text(d)
         out.append(d)
     return out
+
+
+def decoupling_context(dec: list[dict], frames: dict) -> list[dict]:
+    """What differed between the two sides of the widest price gaps, from the day frames only (no speculation): wind + solar
+    share of consumption, net flow, own generation mix. `context` = [{key, text, numbers}] on each row."""
+    for r in dec:
+        hz, lz = frames.get(r["high"]), frames.get(r["low"])
+        ctx = []
+        if hz is not None and lz is not None:
+            H, L = DG.block_stats(hz), DG.block_stats(lz)
+            vs = lambda S: (S["wind_share"] or 0) + (S["solar_share"] or 0) if S["wind_share"] is not None or S["solar_share"] is not None else None
+            vh, vl = vs(H), vs(L)
+            if vh is not None and vl is not None and abs(vl - vh) >= VRE_GAP:
+                hi_side, lo_side = (r["low"], r["high"]) if vl > vh else (r["high"], r["low"])
+                ctx.append({"key": "vre_gap", "text": f"Wind and solar covered {DG._i(max(vl, vh))} % of consumption in {zn(hi_side)} against {DG._i(min(vl, vh))} % in {zn(lo_side)}.",
+                            "numbers": {"vre_high": max(vl, vh), "vre_low": min(vl, vh)}})
+            for z, S in ((r["low"], L), (r["high"], H)):
+                if S["net_import"] is not None and S["load"] and abs(S["net_import"]) >= DG.TH["flow_pts"] / 100 * S["load"]:
+                    ctx.append({"key": "flow_" + z, "text": f"{zn(z)} was a net {'importer' if S['net_import'] > 0 else 'exporter'} over the day, {DG._i(abs(S['net_import']))} MW on average.",
+                                "numbers": {"net": abs(S["net_import"])}})
+                    break
+            mx = DG.mix_stats(lz, None)
+            if mx:
+                ctx.append({"key": "mix_low", "text": f"{zn(r['low'])}'s own output was mostly " + DG._join([m["label"] for m in mx[:3]]) + ".",
+                            "numbers": {f"mix_{m['cls']}": m["share"] for m in mx[:3]}})
+        r["context"] = ctx[:3]
+    return dec
 
 
 def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.Series | None = None,
@@ -282,6 +363,9 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
     metrics = with_history(M.all_metrics(da, ga, srmc, ld, fl), day, hist=hist)
     focus, ctx = FOCUS + CONTEXT, CONTEXT
     sigs = add_streaks(S.evaluate(metrics, day), metrics, day)
+    scan_rows = S.scan(metrics, day, S.RULES + S.CONTEXT)
+    tsigs = add_years(text_signals(sigs, scan_rows), metrics, day)
+    add_years(sigs, metrics, day)
     zones_day = set(metrics.loc[(metrics["day"] == day) & (metrics["metric"] == "baseload"), "zone"])
     prices_seen = set(da["zone"]) if not da.empty else set()
     notes = []
@@ -315,13 +399,16 @@ def build_facts(da: pd.DataFrame, ga: pd.DataFrame, day: pd.Timestamp, srmc: pd.
         fstats = fund_stats(fund)
         if not fund:
             notes.append("No generation in the store for the 30-day window: fundamentals skipped.")
-    dec = decoupling(da, fl, day, focus)
-    diag = diagnoses(sigs, metrics, da, ga, ld, fl, day, focus, ga_day)
+    cand = story_candidates(tsigs, focus)
+    frames = DG.day_frames(M.hourly_prices(da), ga, M.hourly_load(ld), M.hourly_flows(fl), day, ga_full=ga_day)
+    dec = decoupling_context(decoupling(da, fl, day, focus), frames)
+    diag = diagnoses(cand, scan_rows, sigs, frames, day)
+    lead = pick_lead(cand)
     return {
         "day": day.strftime("%Y-%m-%d"), "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "focus": FOCUS, "context": ctx, "window_days": S.WINDOW_DAYS, "price_zones_in_store": len(prices_seen),
         "fundamentals": fund, "fundamentals_stats": fstats, "decoupling": dec, "zone_names": {z: zn(z) for z in focus},
-        "table": table, "signals": sigs, "diagnoses": diag, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
+        "table": table, "signals": sigs, "diagnoses": diag, "lead": {"zone": lead["zone"], "metric": lead["metric"]} if lead else None, "tomorrow": tomorrow_block(da, metrics, day, focus), "notes": notes,
         "definitions": {"tb2": "mean of the 2 highest minus the 2 lowest hourly day-ahead prices of the CET day",
                         "tb4": "same with 4 hours", "share_load": "wind (onshore + offshore) or solar output / actual load, energy",
                         "cr_30d": "30-day capture rate: output-weighted price / mean price over the window",
@@ -343,17 +430,11 @@ def fund_stats(fund: list[dict]) -> dict | None:
     return out
 
 
-def _ord(p: float) -> str:
-    n = int(round(p * 100))
-    suf = "th" if 10 <= n % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(n % 10, "th")
-    return f"{n}{suf}"
-
-
-# daily capture rates are not quoted (feedback #1: a day is too short to separate them from the baseload); TB spreads
-# only when nothing else fired
+# daily capture rates are not quoted (feedback #1: a day is too short to separate them from the baseload)
 TEXT_SKIP = ("cr_",)
-TB = ("tb2", "tb4")
+TB = SPREAD
 PREFER_NEW = True  # headline = the strongest signal that did NOT fire yesterday, if there is one (Erik, 5 Oct 2026)
+FIGURES_MAX = 3    # numbers per story paragraph (Erik, 7 Oct 2026); the first sentence of a story is always kept
 
 
 def _i(v) -> int:
@@ -362,90 +443,211 @@ def _i(v) -> int:
     return int(math.floor(float(v) + 0.5))  # half up (Python's round() rounds 34.5 to 34)
 
 
-def _sig_text(s: dict) -> str:
-    unit = "%" if s["unit"] == "%" else f" {s['unit'].replace('EUR/MWh', '€/MWh')}"
-    p = round(s["pct"] * 100)
-    rank = (f"the {'highest' if s['side'] == 'high' else 'lowest'} of its last {s['n_hist']} days" if p in (0, 100)
-            else f"{'higher' if s['side'] == 'high' else 'lower'} than on {p if s['side'] == 'high' else 100 - p} % of its last {s['n_hist']} days")
-    return f"{zn(s['zone'])}: {DG.signal_phrase(dict(s, unit=unit.strip()))}, {rank}{DG._streak_text(s.get('streak'))}."
+def _ord(n: int) -> str:
+    return f"{n}{'th' if 10 <= n % 100 <= 20 else {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')}"
 
 
-def _diag_line(d: dict) -> str:
-    """One sentence per story candidate in the brief: the top driver, else the most unusual context rows, else the data gap."""
-    if d["drivers"]:
-        return d["drivers"][0]["text"]
-    if d["unusual"]:
-        rows = sorted(d["unusual"], key=lambda r: -abs(r["pct100"] - 50))[:2]
-        return "Also unusual that day: " + "; ".join(
-            f"{r['label']} {_i(r['value'])}{'%' if r['unit'] == '%' else ' ' + r['unit'].replace('EUR/MWh', '€/MWh')} (P{r['pct100']})" for r in rows) + "."
-    if d["data"] and d["data"]["notes"]:
-        return "Data: " + "; ".join(d["data"]["notes"]) + "."
-    return "Nothing else in the day's numbers stood out."
+def figures(text: str) -> int:
+    """Numbers a reader has to take in: every number except clock times (17:00) and years."""
+    t = re.sub(r"\b\d{1,2}[′']?:\d{2}\b", " ", text)
+    t = re.sub(r"\b20\d\d\b", " ", t)
+    return len(re.findall(r"\d+", t))
+
+
+def rank_phrase(d: dict) -> str:
+    """How unusual the value is, without percentiles or day counts: where it has been reached before (days in the previous
+    year and so far this year), else 'among the highest of the last N months' (Erik, 6-7 Oct 2026)."""
+    y, hi = d.get("years"), d["side"] == "high"
+    word = "reached or exceeded" if hi else "reached or undercut"
+    if y and y["days_prev"] > 0:
+        a, b = y["n_prev"], y["n_cur"]
+        day = lambda n: f"{n} day{'' if n == 1 else 's'}"
+        if a == 0 and b == 0:
+            return f"a level not {'reached' if hi else 'seen'} on any day in {y['prev']} or so far in {y['cur']}"
+        return f"a level {word} on {day(a)} in {y['prev']} and {day(b)} so far in {y['cur']}"
+    months = max(1, round(d["n_hist"] / 30.4))
+    return f"among the {'highest' if hi else 'lowest'} of the last {months} months"
+
+
+def streak_phrase(n) -> str:
+    return f", the {_ord(n)} day in a row" if n and n > 1 else ""
+
+
+# story groups: the driver pattern behind a signal (spec 4 driver keys), in the order they are told when equally strong
+GROUPS = {"tight": "Tight supply.", "surplus": "Wind and solar surplus.", "cheap_night": "Cheap overnight hours.",
+          "imports": "Imports.", "other": "Also unusual."}
+SURPLUS_CTX = {"gen_wind_onshore", "gen_wind_offshore", "gen_solar", "solar_share_load", "vre_share"}
+KIND = {"tb2": "wide storage spreads", "tb4": "wide storage spreads", "neg_hours": "negative-price hours", "res_peak": "a high residual-load peak",
+        "res_min": "very low residual load", "res_ramp3": "a steep residual-load ramp", "load_mean": "high demand", "gas_share": "a high gas share",
+        "gen_wind_onshore": "strong onshore wind output", "gen_wind_offshore": "strong offshore wind output", "gen_solar": "strong solar output",
+        "wind_share_load": "very high wind output", "solar_share_load": "very high solar output", "vre_share": "a very high wind and solar share"}
+# order in which driver sentences are told, per group (the rest follow in the diagnosis order)
+PRIORITY = {"tight": ["peak_residual", "imports_in_peak", "own_mix_peak", "low_wind_day", "gas_in_peak", "high_load", "hour", "imports_then", "ramp_parts"],
+            "surplus": ["vre_in_neg", "exports_in_neg", "cheap_solar", "cheap_wind", "imports_in_neg", "low_load", "neighbours_negative", "res_min", "high_vre_day"],
+            "cheap_night": ["cheap_night", "exports_in_trough"], "imports": ["top_border", "wind_day", "gas_day"], "other": []}
+NOT_TOLD = ("neighbours_same", "price_then", "capture")  # the take names the zones already; price_then repeats the spread
+
+
+def group_of(d: dict) -> str:
+    m, side, keys = d["metric"], d["side"], {x["key"] for x in d["drivers"]}
+    if m == "import_share":
+        return "imports"
+    if m in SURPLUS_CTX and side == "high":
+        return "surplus"
+    if m in SPREAD and "peak_residual" in keys:
+        return "tight"  # the expensive evening is the story; the cheap midday is its other side
+    if m in ("neg_hours", "res_min") or keys & {"cheap_solar", "cheap_wind"}:
+        return "surplus"
+    if "cheap_night" in keys and "peak_residual" not in keys:
+        return "cheap_night"
+    if m in (*SPREAD, "res_peak", "res_ramp3", "load_mean", "gas_share") or (m == "baseload" and side == "high") or (m in ("wind_share_load", "gen_wind_onshore") and side == "low"):
+        return "tight"
+    return "other"
+
+
+def kind_of(d: dict) -> str:
+    if d["metric"] == "import_share":
+        return "heavy exports" if d["value"] < 0 else "heavy imports"
+    if d["metric"] == "baseload":
+        return "high prices" if d["side"] == "high" else "low prices"
+    return KIND.get(d["metric"], DG.plain(d["label"]))
+
+
+def _names_join(zones: list[str]) -> str:
+    n = [zn(z) for z in zones]
+    return n[0] if len(n) == 1 else ", ".join(n[:-1]) + " and " + n[-1]
+
+
+def pick_sentences(d: dict, group: str, n: int) -> list[str]:
+    """Up to `n` driver sentences of the diagnosis, in the group's priority order, while the paragraph stays within FIGURES_MAX
+    numbers; the first is always kept."""
+    pri = PRIORITY.get(group, [])
+    ds = [x for x in d["drivers"] if x["key"] not in NOT_TOLD]
+    ds = sorted(ds, key=lambda x: pri.index(x["key"]) if x["key"] in pri else len(pri))
+    out, used = [], 0
+    for x in ds:
+        f = figures(x["text"])
+        if out and (len(out) >= n or used + f > FIGURES_MAX):
+            continue
+        out.append(x["text"])
+        used += f
+    return out
+
+
+def stories(f: dict, maxn: int = 3) -> list[dict]:
+    """The diagnosed candidates grouped by driver pattern: [{group, title, members: [diagnosis], lead}], the group of the
+    headline first (it gets the longest paragraph), the rest by their strongest member's score. At most `maxn`."""
+    diag = f.get("diagnoses") or []
+    if not diag:
+        return []
+    lead = f.get("lead") or {"zone": diag[0]["zone"], "metric": diag[0]["metric"]}
+    by = {}
+    for d in diag:
+        by.setdefault(group_of(d), []).append(d)
+    lead_g = next((g for g, ms in by.items() if any(m["zone"] == lead["zone"] and m["metric"] == lead["metric"] for m in ms)), None)
+    order = sorted(by, key=lambda g: (g != lead_g, -max((m.get("score") or 0) for m in by[g])))
+    out = []
+    for g in order[:maxn]:
+        ms = sorted(by[g], key=lambda m: (not (m["zone"] == lead["zone"] and m["metric"] == lead["metric"]), -(m.get("score") or 0)))
+        out.append({"group": g, "title": GROUPS[g], "members": ms, "lead": ms[0]})
+    return out
+
+
+def story_text(st: dict, headline: bool) -> str:
+    ms, ld = st["members"], st["lead"]
+    kinds = []
+    for m in ms:
+        k = kind_of(m)
+        if k not in kinds:
+            kinds.append(k)
+    zones = list(dict.fromkeys(m["zone"] for m in ms))
+    take = f"{_names_join(zones)} stood out for {DG._join(kinds[:2])}."
+    sents = pick_sentences(ld, st["group"], 3 if headline else 2)
+    same = [m["zone"] for m in ms[1:] if m["drivers"] and ld["drivers"] and m["drivers"][0]["key"] == ld["drivers"][0]["key"]]
+    if len(ms) > 1 and same:
+        sents.append(f"The same pattern showed in {_names_join(list(dict.fromkeys(same)))}.")
+    if not sents and not ld["unusual"]:
+        sents.append(_sig_text(ld))
+    if not sents:
+        un = sorted(ld["unusual"], key=lambda r: -abs(r["pct100"] - 50))[:2]
+        if un:
+            sents.append(f"{ld['name']} was also unusual in " + DG._join([DG.plain(r["label"]) for r in un]) + ".")
+    return f"**{st['title']}** {take} " + " ".join(sents)
+
+
+def _sig_text(d: dict) -> str:
+    return f"{d['name']}: {DG.signal_phrase(d)}, {rank_phrase(d)}{streak_phrase(d.get('streak'))}."
+
+
+def tomorrow_why(r: dict) -> str:
+    """One line on when the low and the peak fall (dayparts), with the usual daily shape; no causation claimed."""
+    lo, hi = int(r["min_at"][:2]), int(r["max_at"][:2])
+    bits = []
+    if 10 <= lo < 16:
+        bits.append("the low falls around midday, when solar output usually peaks")
+    elif lo < 6 or lo >= 22:
+        bits.append("the low falls overnight, when demand is lowest")
+    if 16 <= hi < 22:
+        bits.append("the peak comes in the evening ramp, after solar fades")
+    return ("; ".join(bits)[0].upper() + "; ".join(bits)[1:] + ".") if bits else ""
 
 
 def draft_brief(f: dict) -> str:
-    """Short on purpose (feedback #1): one signal in the headline, the widest price split between connected zones, the
-    auction for tomorrow, wind and solar as share of load. Country names in full; no daily capture rates."""
+    """Stories, not a metrics dump (Erik, 6-7 Oct 2026): one headline signal, then at most three stories grouped by driver
+    pattern (each paragraph answers why, at most FIGURES_MAX numbers, no percentiles / day counts / hour lists), the widest
+    price gap with what differed, tomorrow's auction, the renewables leaders. Country names in full; no daily capture rates."""
     day = datetime.strptime(f["day"], "%Y-%m-%d")
     t = f["table"]
     g = lambda v: "-" if v is None else f"{_i(v)}"
     lines = [f"# Radial Economics daily - {day:%a %-d %b %Y}", ""]
-    fs = [s for s in f["signals"] if s["zone"] in f["focus"] + f["context"] and not s["metric"].startswith(TEXT_SKIP)]
-    lead = [s for s in fs if s["metric"] not in TB] or fs
-    if PREFER_NEW:  # a signal that also fired yesterday is persistence, not today's news
-        lead = [s for s in lead if s.get("streak", 1) == 1] or lead
-    diag = {(d["zone"], d["metric"]): d for d in f.get("diagnoses") or []}
-    if lead:
-        head = "**Headline.** " + _sig_text(lead[0])
-        dh = diag.get((lead[0]["zone"], lead[0]["metric"]))
-        if dh and dh["drivers"]:
-            head += " " + dh["drivers"][0]["text"]
-        lines += [head, ""]
-        rest = [d for d in (f.get("diagnoses") or []) if (d["zone"], d["metric"]) != (lead[0]["zone"], lead[0]["metric"])]
-        if rest:
-            lines += ["**Why they fired.** Other metrics outside their own historical range, with what the data shows for the same hours "
-                      "(co-occurrence, not causation):"]
-            for d in rest:
-                st = DG._streak_text(d.get("streak")).replace(", the", "").replace(" running", "")
-                lines.append(f"- {d['name']}: {DG.signal_phrase(d)} (P{d['pct100']}{',' + st if st else ''}). {_diag_line(d)}")
-            lines.append("")
+    diag = f.get("diagnoses") or []
+    lead = f.get("lead")
+    dl = next((d for d in diag if lead and d["zone"] == lead["zone"] and d["metric"] == lead["metric"]), diag[0] if diag else None)
+    if dl:
+        lines += ["**Headline.** " + _sig_text(dl), ""]
+        sts = stories(dict(f, lead={"zone": dl["zone"], "metric": dl["metric"]}))
+        for i, st in enumerate(sts):
+            lines += [story_text(st, headline=i == 0), ""]
     else:
-        lines += [f"**Headline.** No CEE/SEE metric left its own normal range on {day:%-d %b}.", ""]
+        lines += [f"**Headline.** No CEE/SEE metric reached the extremes of its own history on {day:%-d %b}.", ""]
     dec = f.get("decoupling") or []
     if dec:
         d = dec[0]
         txt = (f"**Price decoupling.** The widest price gap between connected zones was {zn(d['high'])} and {zn(d['low'])}: "
-               f"average power price {_i(d['base_high'])} against {_i(d['base_low'])} €/MWh, {_i(d['rel'])} % apart, with prices split in "
-               f"{d['hours_apart']} of {d['hours']} hours. In coupled markets prices only separate when the cross-border "
-               "capacity is fully used, so the border was the bottleneck in those hours.")
+               f"average power price {_i(d['base_high'])} against {_i(d['base_low'])} €/MWh, {_i(d['rel'])} % apart. Prices separated in "
+               f"{d['hours_apart']} of {d['hours']} hours, which is typical when the border limit is reached.")
+        if d.get("context"):
+            txt += " " + " ".join(c["text"] for c in d["context"][:2])
         if len(dec) > 1:
-            txt += f" Next: {zn(dec[1]['high'])} and {zn(dec[1]['low'])} ({_i(dec[1]['rel'])} % apart)."
+            txt += f" The next-widest gap was between {zn(dec[1]['high'])} and {zn(dec[1]['low'])}."
         lines += [txt, ""]
     tm = f["tomorrow"]
     if tm["zones"]:
         tz = tm["zones"]
-        wide = max(tz, key=lambda r: r["tb4"])
-        neg = [zn(r["zone"]) for r in tz if r["neg_hours"] > 0]
-        txt = (f"**Next 24 h.** Tomorrow's auction puts {zn(wide['zone'])} at the widest TB4, {_i(wide['tb4'])} €/MWh "
+        told = {m["zone"] for st in stories(f) for m in st["members"] if m["metric"] in SPREAD} if diag else set()
+        pool = [r for r in tz if r["zone"] not in told] or tz
+        shown = len(pool) < len(tz)  # do not repeat the zone whose storage spread was told above
+        wide = max(pool, key=lambda r: r["tb4"])
+        neg = [f"{zn(r['zone'])} ({r['neg_hours']} h)" for r in tz if r["neg_hours"] > 0]
+        txt = (f"**Next 24 h.** Tomorrow's auction puts {zn(wide['zone'])} at the widest 4-hour storage spread"
+               f"{' of the zones not covered above' if shown else ''}, {_i(wide['tb4'])} €/MWh "
                f"(peak {_i(wide['max'])} at {wide['max_at']} CET, low {_i(wide['min'])} at {wide['min_at']}).")
+        why = tomorrow_why(wide)
+        txt += (" " + why) if why else ""
         txt += (" Negative hours expected in " + ", ".join(neg) + ".") if neg else " No negative-price hours in the CEE/SEE zones."
         lines += [txt, ""]
     else:
         lines += ["**Next 24 h.** Tomorrow's day-ahead prices are not in the store yet (results arrive ~12:45 CET).", ""]
+    tw = sorted([r for r in t if r.get("wind_share_load") is not None], key=lambda r: -r["wind_share_load"])
+    ts = sorted([r for r in t if r.get("solar_share_load") is not None], key=lambda r: -r["solar_share_load"])
+    if tw or ts:
+        txt = "**Renewables leaders in the last 24h.** Relative to average consumption,"
+        if tw:
+            txt += " wind output was highest in " + DG._join([f"{zn(r['zone'])} ({_i(r['wind_share_load'])} %)" for r in tw[:3]])
+        if ts:
+            txt += (";" if tw else "") + " solar output was highest in " + DG._join([f"{zn(r['zone'])} ({_i(r['solar_share_load'])} %)" for r in ts[:3]])
+        lines += [txt + ".", ""]
     fr = f.get("fundamentals", [])
-    fw = sorted([r for r in fr if r.get("wind_share") is not None], key=lambda r: -r["wind_share"])
-    fsol = sorted([r for r in fr if r.get("solar_share") is not None], key=lambda r: -r["solar_share"])
-    if fw or fsol:
-        txt = "**Fundamentals (last 30 days).**"
-        if fw:
-            txt += " Wind output covered the largest share of consumption in " + ", ".join(f"{zn(r['zone'])} ({_i(r['wind_share'])} %)" for r in fw[:3]) + "."
-        if fsol:
-            txt += " Solar did in " + ", ".join(f"{zn(r['zone'])} ({_i(r['solar_share'])} %)" for r in fsol[:3]) + "."
-        st = f.get("fundamentals_stats")
-        if st and st.get("spearman_vre_neg_hours") is not None:
-            txt += (f" Across {st['n']} zones the rank correlation of the wind + solar share of consumption with negative hours is "
-                    f"{st['spearman_vre_neg_hours']:+g}" + (f" and with the mean TB4 {st['spearman_vre_tb4']:+g}." if st.get("spearman_vre_tb4") is not None else "."))
-        lines += [txt, ""]
     if f["notes"]:
         lines += ["_Data notes: " + " ".join(f["notes"]) + "_", ""]
     sp = any(r.get("spark_top4") is not None for r in t)  # the spark column only exists when fuel prices were available
@@ -463,8 +665,8 @@ def draft_brief(f: dict) -> str:
         lines += ["", "30-day window ending on the brief's day. Wind = onshore + offshore. Share of consumption = output / actual load (energy). "
                   "CF = mean output / the highest hourly output in the last 90 days (a proxy for installed capacity, so it reads higher "
                   "than a nameplate capacity factor). Capture rate = output-weighted day-ahead price / average power price. Avg. power price = mean hourly day-ahead price (baseload)."]
-    lines += ["", "Prices €/MWh. TB2/TB4: mean of the 2/4 highest minus 2/4 lowest hourly day-ahead prices of the CET day. "
-              "Source: ENTSO-E Transparency Platform."]
+    lines += ["", "Prices €/MWh. Storage spread: the 2-hour (TB2) or 4-hour (TB4) spread is the mean of the 2/4 highest minus the 2/4 lowest hourly "
+              "day-ahead prices of the CET day. Source: ENTSO-E Transparency Platform."]
     return "\n".join(lines) + "\n"
 
 

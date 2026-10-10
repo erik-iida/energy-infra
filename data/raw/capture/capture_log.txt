@@ -1,3 +1,6 @@
-0 (zone, month) cells to fetch
-fetched 0 cells with 0 calls in 0 s; 0 left for the next run
+fx: UAH/EUR 50.3138 on 2026-10-12
+fx: ECB data-api: 964 GBP rows
+fx: GBP/EUR 0.84763 on 2026-10-09 (964 days)
+112 (zone, month) cells to fetch
+fetched 112 cells with 224 calls in 97 s; 0 left for the next run
 wrote data/static/capture.json: 44 zones, 24 months, 360 kB

@@ -1,12 +1,12 @@
 connection points: 789; keys ['pointKey', 'pointLabel', 'isSingleOperator', 'pointTooltip', 'pointEicCode', 'controlPointType', 'tpMapX', 'tpMapY', 'pointType', 'commercialType', 'importFromCountryKey', 'importFromCountryLabel', 'hasVirtualPoint', 'virtualPointKey', 'virtualPointLabel', 'hasData', 'isPlanned', 'isInterconnection', 'isImport', 'infrastructureKey', 'infrastructureLabel', 'isCrossBorder', 'euCrossing', 'isInvalid', 'isMacroPoint', 'isCAMRelevant', 'isPipeInPipe', 'isCMPRelevant', 'id', 'dataSet']
 interconnections: 1186; keys ['pointKey', 'pointLabel', 'isSingleOperator', 'pointTpMapX', 'pointTpMapY', 'fromSystemLabel', 'fromInfrastructureTypeLabel', 'fromCountryKey', 'fromCountryLabel', 'fromBzKey', 'fromBzLabel', 'fromBzLabelLong', 'fromOperatorKey', 'fromOperatorLabel', 'fromOperatorLongLabel', 'fromPointKey', 'fromPointLabel', 'fromIsCAM', 'fromIsCMP', 'fromBookingPlatformKey', 'fromBookingPlatformLabel', 'fromBookingPlatformURL', 'toIsCAM', 'toIsCMP', 'toBookingPlatformKey', 'toBookingPlatformLabel', 'toBookingPlatformURL', 'fromTsoItemIdentifier', 'fromTsoPointLabel', 'fromDirectionKey', 'fromHasData', 'toSystemLabel', 'toInfrastructureTypeLabel', 'toCountryKey', 'toCountryLabel', 'toBzKey', 'toBzLabel', 'toBzLabelLong', 'toOperatorKey', 'toOperatorLabel', 'toOperatorLongLabel', 'toPointKey', 'toPointLabel', 'toDirectionKey', 'toHasData', 'toTsoItemIdentifier', 'toTsoPointLabel', 'validFrom', 'validto', 'lastUpdateDateTime', 'isInvalid', 'entryTpNeMoUsage', 'exitTpNeMoUsage', 'id', 'dataSet']
-flows 2026-10-01: 980 rows; keys ['id', 'dataSet', 'indicator', 'periodType', 'periodFrom', 'periodTo', 'operatorKey', 'tsoEicCode', 'operatorLabel', 'pointKey', 'pointLabel', 'tsoItemIdentifier', 'directionKey', 'unit', 'itemRemarks', 'generalRemarks', 'value', 'lastUpdateDateTime', 'isUnlimited', 'flowStatus', 'interruptionType', 'restorationInformation', 'capacityType', 'capacityBookingStatus', 'isCamRelevant', 'isNA', 'originalPeriodFrom', 'isCmpRelevant', 'bookingPlatformKey', 'bookingPlatformLabel', 'bookingPlatformURL', 'interruptionCalculationRemark', 'pointType', 'idPointType', 'isArchived']
-flows 2026-10-02: 980 rows
+flows 2026-10-02: 980 rows; keys ['id', 'dataSet', 'indicator', 'periodType', 'periodFrom', 'periodTo', 'operatorKey', 'tsoEicCode', 'operatorLabel', 'pointKey', 'pointLabel', 'tsoItemIdentifier', 'directionKey', 'unit', 'itemRemarks', 'generalRemarks', 'value', 'lastUpdateDateTime', 'isUnlimited', 'flowStatus', 'interruptionType', 'restorationInformation', 'capacityType', 'capacityBookingStatus', 'isCamRelevant', 'isNA', 'originalPeriodFrom', 'isCmpRelevant', 'bookingPlatformKey', 'bookingPlatformLabel', 'bookingPlatformURL', 'interruptionCalculationRemark', 'pointType', 'idPointType', 'isArchived']
 flows 2026-10-03: 980 rows
 flows 2026-10-04: 980 rows
 flows 2026-10-05: 980 rows
 flows 2026-10-06: 963 rows
 flows 2026-10-07: 963 rows
-flows 2026-10-08: 797 rows
+flows 2026-10-08: 964 rows
+flows 2026-10-09: 813 rows
 georef: 54 anchor points
-wrote data/static/gas.json: 131 points (ip 68, imp 15, lng 26, prod 22), 26 countries, 26 kB
+wrote data/static/gas.json: 130 points (ip 68, imp 15, lng 25, prod 22), 26 countries, 25 kB
